@@ -1,0 +1,61 @@
+# DeenList Reverse Engineering Checklist
+
+- [x] Visit products/browse page: `https://deenlist.co/products/`
+- [x] Take a screenshot of the full products/browse page. (Done: browse_products_full_1784453514952.png)
+- [x] Extract from DOM:
+  - [x] ALL category names and their URL slugs:
+    - 🕌 Prayer & Salah: `prayer-salah`
+    - ⚡ Productivity: `productivity`
+    - 📖 Quran & Tajweed: `quran-tajweed`
+    - 📚 Books & Reading: `books-reading`
+    - 🎓 Islamic Education: `islamic-education`
+    - 🤲 Charity & Zakat: `charity-zakat`
+    - 💰 Finance & Banking: `finance-banking`
+    - Hadith & Sunnah: `hadith-sunnah`
+    - 🔷 Other: `other`
+  - [x] Sort options available (newest, top, comments)
+  - [x] Exact number of products shown (37 products)
+  - [x] Text content of at least 5 product cards (title, description snippet, category badge text, upvote count)
+- [x] Click on the sort "Top" or "Newest" and take another screenshot. (Done: browse_products_top_1784453722634.png)
+- [x] Click on at least 2 different category filters and take screenshots. (Done: category_prayer_salah_1784453735799.png, category_productivity_1784453747575.png)
+- [x] Click on one product card to go to its detail page.
+  - [x] Get the exact URL (https://deenlist.co/products/jamah-journal)
+  - [x] Get the full title (Jamā'ah Journal)
+  - [x] Get the full description (Jamā'ah Journal helps users build consistency...)
+  - [x] Note ALL tabs visible (All, Features, Bugs)
+  - [x] Note the "Get It" button text and destination URL format ("Website" -> https://jamaah-journal-2-0.vercel.app/)
+  - [x] Note any screenshot/video section (4 screenshots with navigation arrows)
+  - [x] Note any sidebar content (developer info, category, tags, platform, etc.)
+  - [x] Note the upvote count (7 Upvote)
+  - [x] Note any version/changelog info (None visible on this product page, but let's check other products for version info)
+  - [x] Take a screenshot of the full detail page (Done: jamah_journal_detail_top_1784453699713.png, jamah_journal_detail_1784453617510.png)
+- [x] Go to `https://deenlist.co/guidelines/` and read ALL FAQ Q&As. List every Q&A pair.
+  - **Q1: Is it really free to list my product?**
+    - **A1:** Yes — completely free, with no hidden fees, no premium tiers, and no time limits. Deenlist is built as an act of dawah. Listing your product, promoting it on social media, and maintaining the directory are all provided free of charge. We intend to keep it this way, insha'Allah.
+  - **Q2: Can I submit an app that isn't exclusively Islamic but is useful for Muslims?**
+    - **A2:** Yes, as long as it serves or benefits the Muslim community and contains nothing contrary to Islamic values. For example, a general productivity tool, a halal food delivery app, or a Muslim-owned business directory would all qualify. When in doubt, submit it — we'll review it and let you know if it's a fit.
+  - **Q3: How long does the review process take?**
+    - **A3:** We aim to review all submissions within 24–48 hours on business days. During busy periods this may extend slightly. You will receive an email notification when your product is approved or if we require additional information. Please ensure your email address is correct in your account settings.
+  - **Q4: What happens if my submission is rejected?**
+    - **A4:** If your submission doesn't meet our guidelines, we'll notify you by email and explain why. In many cases you can address the issue and resubmit — for example, if your description needs more clarity or your product URL wasn't working at the time of review. Submissions that contain content contrary to Islamic values will not be reconsidered.
+  - **Q5: Can I submit someone else's Islamic app on their behalf?**
+    - **A5:** We strongly prefer that submissions come from the creator or an authorised representative of the product. If you are submitting on behalf of a developer, please note this in your submission description. Unsolicited submissions from third parties may be removed if the original developer objects.
+  - **Q6: How does social media promotion work?**
+    - **A6:** Once your product is approved, our team creates a promotional post and shares it on our Facebook page, LinkedIn profile, and Twitter/X account. We include your product's name, a brief description, and a link back to your Deenlist listing. This is done at no cost to you and forms part of our mission to spread beneficial Islamic technology.
+  - **Q7: Can I update my product listing after it's approved?**
+    - **A7:** Yes. Log into your Deenlist account, go to your Dashboard, and you can edit your product details at any time. Significant changes (e.g., rebranding) may trigger a brief re-review to ensure the listing remains accurate and compliant with our guidelines.
+  - **Q8: My app is no longer available. What should I do?**
+    - **A8:** Please notify us via the contact page or update your listing from your dashboard. Keeping listings accurate is important for the community. Products with broken links for an extended period may be marked as inactive or removed from the directory.
+- [x] Check page source of the homepage `https://deenlist.co/` for:
+  - [x] Meta tags:
+    - Title: `<title>Islamic Apps & Tools — Deenlist</title>`
+    - Description: Directory of Islamic apps, tools, and resources.
+    - Viewport: Standard responsive viewport `<meta name="viewport" content="..." />`
+  - [x] Framework hints:
+    - CSS Framework: Tailwind CSS + DaisyUI (using class names like `btn-primary`, `btn-ghost`, `btn-outline`, `btn-social`)
+    - Web Server: LiteSpeed Web Server
+  - [x] Script src URLs:
+    - Google Fonts / Material Symbols Rounded (`https://fonts.gstatic.com/s/materialsymbolsrounded/v362/sykg-zNym6YjUruM-QrEh7-nyTnjDwKNJ_190Fjzag.woff2`)
+    - Cookie Consent: Silktide Cookie Consent Widget
+  - [x] Analytics scripts:
+    - Cloudflare Web Analytics (`https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496`)
