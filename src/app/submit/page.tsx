@@ -4,6 +4,7 @@ import { useActionState, useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { submitProject } from '@/app/actions/submit'
 import { Upload, X, Loader2, CheckCircle, Globe, GitBranch, Image as ImageIcon } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
 const PLATFORMS = ['web', 'ios', 'android', 'windows', 'macos', 'linux', 'browser_extension']
@@ -42,13 +43,34 @@ export default function SubmitPage() {
   const [screenshotUrls, setScreenshotUrls] = useState<string[]>([])
   const [uploadingIcon, setUploadingIcon] = useState(false)
   const [uploadingScreenshot, setUploadingScreenshot] = useState(false)
+  const router = useRouter()
   const [userId, setUserId] = useState<string | null>(null)
+  const [checkingAuth, setCheckingAuth] = useState(true)
 
   useEffect(() => {
     const supabase = createClient()
-    supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null))
+    supabase.auth.getUser().then(({ data }) => {
+      if (!data.user) {
+        router.push('/login?redirectTo=/submit')
+      } else {
+        setUserId(data.user.id)
+        setCheckingAuth(false)
+      }
+    })
     supabase.from('categories').select('id, name, slug').order('name').then(({ data }) => setCategories(data ?? []))
-  }, [])
+  }, [router])
+
+  if (checkingAuth) {
+    return (
+      <div style={{
+        minHeight: '100vh', background: '#141414',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        color: '#FFFFFF',
+      }}>
+        <Loader2 size={36} className="animate-spin" style={{ color: '#E50914' }} />
+      </div>
+    )
+  }
 
   function togglePlatform(p: string) {
     setSelectedPlatforms(prev => prev.includes(p) ? prev.filter(x => x !== p) : [...prev, p])

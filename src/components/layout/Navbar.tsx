@@ -7,7 +7,7 @@ import { createClient } from '@/lib/supabase/client'
 import { signOut } from '@/app/actions/auth'
 import {
   Flame, Search, PlusCircle, LogOut, User, Menu, X, Shield,
-  FolderKanban, BarChart2, Settings, ChevronDown,
+  FolderKanban, BarChart2, Settings, ChevronDown, Bookmark,
 } from 'lucide-react'
 import type { User as SupabaseUser } from '@supabase/supabase-js'
 
@@ -78,7 +78,8 @@ export default function Navbar() {
 
   const navLinks = [
     { href: '/browse', label: 'Browse' },
-    ...(user ? [{ href: '/submit', label: 'Submit Project' }] : []),
+    { href: '/bookmarks', label: 'Bookmarks' },
+    { href: '/submit', label: 'Submit Project' },
   ]
 
   const displayName = profile?.display_name || profile?.username || user?.email?.split('@')[0] || 'Account'
@@ -212,6 +213,7 @@ export default function Navbar() {
                     {/* Menu items */}
                     <div style={{ padding: '0.35rem' }}>
                       {[
+                        { href: '/bookmarks',             icon: <Bookmark size={14} />,      label: 'My Bookmarks' },
                         { href: '/account',               icon: <Settings size={14} />,      label: 'My Account' },
                         { href: '/dashboard/projects',    icon: <FolderKanban size={14} />,  label: 'My Projects' },
                         { href: '/dashboard/analytics',   icon: <BarChart2 size={14} />,     label: 'Analytics' },

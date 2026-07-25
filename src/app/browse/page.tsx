@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import ProjectCard from '@/components/projects/ProjectCard'
-import { TrendingUp, Clock, Flame, ChevronLeft, ChevronRight } from 'lucide-react'
+import { TrendingUp, Clock, Flame, ChevronLeft, ChevronRight, Bookmark } from 'lucide-react'
 import type { User } from '@supabase/supabase-js'
 import NetflixHorizonDivider from '@/components/ui/NetflixHorizonDivider'
 import NetflixTrendingRow from '@/components/projects/NetflixTrendingRow'
@@ -27,12 +27,13 @@ interface Project {
   categories: { name: string; slug: string } | null
 }
 
-type SortOption = 'top' | 'newest' | 'trending'
+type SortOption = 'top' | 'newest' | 'trending' | 'bookmarked'
 
 const SORT_OPTIONS: { value: SortOption; label: string; icon: React.ReactNode }[] = [
-  { value: 'top',      label: 'Top',     icon: <TrendingUp size={14} /> },
-  { value: 'newest',   label: 'Newest',  icon: <Clock size={14} /> },
-  { value: 'trending', label: 'Hot',     icon: <Flame size={14} /> },
+  { value: 'top',        label: 'Top',        icon: <TrendingUp size={14} /> },
+  { value: 'newest',     label: 'Newest',     icon: <Clock size={14} /> },
+  { value: 'trending',   label: 'Hot',        icon: <Flame size={14} /> },
+  { value: 'bookmarked', label: 'Bookmarked', icon: <Bookmark size={14} /> },
 ]
 
 export default function BrowsePage() {
@@ -95,7 +96,27 @@ export default function BrowsePage() {
       query = query.ilike('name', `%${debouncedSearch}%`)
     }
 
-    if (sort === 'top') {
+    if (sort === 'bookmarked') {
+      if (user) {
+        const { data: userBookmarks } = await supabase
+          .from('bookmarks')
+          .select('project_id')
+          .eq('user_id', user.id)
+
+        const bookmarkedIds = (userBookmarks ?? []).map(b => b.project_id)
+        if (bookmarkedIds.length > 0) {
+          query = query.in('id', bookmarkedIds)
+        } else {
+          setProjects([])
+          setLoading(false)
+          return
+        }
+      } else {
+        setProjects([])
+        setLoading(false)
+        return
+      }
+    } else if (sort === 'top') {
       query = query.order('upvote_count', { ascending: false })
     } else if (sort === 'newest') {
       query = query.order('created_at', { ascending: false })
@@ -298,227 +319,226 @@ export default function BrowsePage() {
           {/* Netflix Trending Top 10 Row */}
           <NetflixTrendingRow projects={projects} title="Trending Now" />
 
-          <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '0 1.5rem 1.5rem', display: 'flex', gap: '1.5rem', alignItems: 'flex-start' }}>
-        {/* Sidebar — category filter */}
-        <aside style={{
-          width: '200px', flexShrink: 0,
-          position: 'sticky', top: '76px',
-          display: 'none',
-        }} className="hidden md:block">
-          <p style={{ fontSize: '0.7rem', fontWeight: 700, color: '#555', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '0.6rem' }}>
-            Categories
-          </p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
-            <button
-              id="cat-all"
-              onClick={() => setSelectedCategory('all')}
-              style={{
-                textAlign: 'left', padding: '0.5rem 0.75rem',
-                background: selectedCategory === 'all' ? 'rgba(229,9,20,0.12)' : 'transparent',
-                color: selectedCategory === 'all' ? '#FFFFFF' : '#AAAAAA',
-                fontWeight: selectedCategory === 'all' ? 600 : 400,
-                border: 'none', borderRadius: '0.4rem', cursor: 'pointer',
-                fontSize: '0.875rem', transition: 'all 0.15s', width: '100%',
-              }}
-            >
-              All Projects
-            </button>
-            {categories.map(cat => (
-              <button
-                key={cat.id}
-                id={`cat-${cat.slug}`}
-                onClick={() => setSelectedCategory(cat.slug)}
-                style={{
-                  textAlign: 'left', padding: '0.5rem 0.75rem',
-                  background: selectedCategory === cat.slug ? 'rgba(229,9,20,0.12)' : 'transparent',
-                  color: selectedCategory === cat.slug ? '#FFFFFF' : '#AAAAAA',
-                  fontWeight: selectedCategory === cat.slug ? 600 : 400,
-                  border: 'none', borderRadius: '0.4rem', cursor: 'pointer',
-                  fontSize: '0.875rem', transition: 'all 0.15s', width: '100%',
-                }}
-              >
-                {cat.icon && <span style={{ marginRight: '0.4rem' }}>{cat.icon}</span>}
-                {cat.name}
-              </button>
-            ))}
-          </div>
-        </aside>
-
-
-        {/* Main content */}
-        <main style={{ flex: 1, minWidth: 0 }}>
-          {/* Category scroller with arrows */}
-          <div style={{ position: 'relative', marginBottom: '1rem' }}>
-            {/* Left arrow */}
-            <button
-              id="cat-scroll-left"
-              type="button"
-              onClick={() => scroll(catScrollRef, 'left')}
-              aria-label="Scroll categories left"
-              style={{
-                position: 'absolute', left: 0, top: '50%', transform: 'translateY(-50%)',
-                zIndex: 10, width: '32px', height: '32px',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                background: 'linear-gradient(to right, #141414 60%, transparent)',
-                border: 'none', cursor: 'pointer', color: '#AAAAAA',
-                paddingLeft: '2px',
-              }}
-            >
-              <ChevronLeft size={18} />
-            </button>
-
-            {/* Scrollable pill strip */}
-            <div
-              ref={catScrollRef}
-              style={{
-                display: 'flex', gap: '0.5rem', overflowX: 'auto',
-                paddingBottom: '0.25rem', paddingLeft: '32px', paddingRight: '32px',
-                scrollbarWidth: 'none',
-              }}
-            >
-              {[{ id: 0, name: 'All', slug: 'all', icon: null }, ...categories].map(cat => (
+          <div style={{ maxWidth: '1360px', margin: '0 auto', padding: '0 2rem 3rem', display: 'flex', gap: '2rem', alignItems: 'flex-start' }}>
+            {/* Sidebar — category filter */}
+            <aside style={{
+              width: '210px', flexShrink: 0,
+              position: 'sticky', top: '90px',
+              display: 'none',
+              background: '#1A1A1A',
+              padding: '1.25rem',
+              borderRadius: '0.85rem',
+              border: '1px solid rgba(255,255,255,0.08)',
+              boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
+            }} className="hidden md:block">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
+                <div style={{ width: '3px', height: '14px', background: '#E50914', borderRadius: '2px' }} />
+                <p style={{ fontSize: '0.75rem', fontWeight: 800, color: '#FFFFFF', letterSpacing: '0.08em', textTransform: 'uppercase', margin: 0 }}>
+                  Categories
+                </p>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
                 <button
-                  key={cat.slug}
-                  id={`cat-pill-${cat.slug}`}
-                  onClick={() => setSelectedCategory(cat.slug)}
+                  id="cat-all"
+                  onClick={() => setSelectedCategory('all')}
                   style={{
-                    flexShrink: 0, padding: '0.4rem 0.9rem',
-                    background: selectedCategory === cat.slug ? '#E50914' : '#1F1F1F',
-                    color: '#FFFFFF', border: `1px solid ${selectedCategory === cat.slug ? '#E50914' : '#2B2B2B'}`,
-                    borderRadius: '9999px', fontSize: '0.8rem', fontWeight: 500, cursor: 'pointer',
-                    transition: 'all 0.15s', whiteSpace: 'nowrap',
+                    textAlign: 'left', padding: '0.6rem 0.85rem',
+                    background: selectedCategory === 'all' ? '#E50914' : 'transparent',
+                    color: selectedCategory === 'all' ? '#FFFFFF' : '#AAAAAA',
+                    fontWeight: selectedCategory === 'all' ? 700 : 400,
+                    border: 'none', borderRadius: '0.45rem', cursor: 'pointer',
+                    fontSize: '0.875rem', transition: 'all 0.15s', width: '100%',
+                    boxShadow: selectedCategory === 'all' ? '0 4px 14px rgba(229, 9, 20, 0.4)' : 'none',
                   }}
                 >
-                  {cat.icon && <span style={{ marginRight: '0.3rem' }}>{cat.icon}</span>}
-                  {cat.name}
+                  All Projects
                 </button>
-              ))}
-            </div>
-
-            {/* Right arrow */}
-            <button
-              id="cat-scroll-right"
-              type="button"
-              onClick={() => scroll(catScrollRef, 'right')}
-              aria-label="Scroll categories right"
-              style={{
-                position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)',
-                zIndex: 10, width: '32px', height: '32px',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                background: 'linear-gradient(to left, #141414 60%, transparent)',
-                border: 'none', cursor: 'pointer', color: '#AAAAAA',
-                paddingRight: '2px',
-              }}
-            >
-              <ChevronRight size={18} />
-            </button>
-          </div>
-
-          {/* Sort tabs with arrows */}
-          <div style={{ position: 'relative', marginBottom: '1.25rem' }}>
-            {/* Left arrow */}
-            <button
-              id="sort-scroll-left"
-              type="button"
-              onClick={() => scroll(sortScrollRef, 'left')}
-              aria-label="Scroll sort left"
-              style={{
-                position: 'absolute', left: 0, top: '50%', transform: 'translateY(-50%)',
-                zIndex: 10, width: '28px', height: '28px',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                background: 'linear-gradient(to right, #141414 60%, transparent)',
-                border: 'none', cursor: 'pointer', color: '#666',
-              }}
-            >
-              <ChevronLeft size={16} />
-            </button>
-
-            <div
-              ref={sortScrollRef}
-              style={{
-                display: 'flex', gap: '0.25rem', overflowX: 'auto',
-                paddingLeft: '28px', paddingRight: '28px',
-                scrollbarWidth: 'none',
-              }}
-            >
-              {SORT_OPTIONS.map(opt => (
-                <button
-                  key={opt.value}
-                  id={`sort-${opt.value}`}
-                  onClick={() => setSort(opt.value)}
-                  style={{
-                    flexShrink: 0,
-                    display: 'flex', alignItems: 'center', gap: '0.35rem',
-                    padding: '0.4rem 0.9rem', fontSize: '0.85rem', fontWeight: sort === opt.value ? 600 : 400,
-                    background: sort === opt.value ? 'rgba(229,9,20,0.12)' : 'transparent',
-                    color: sort === opt.value ? '#FFFFFF' : '#AAAAAA',
-                    border: `1px solid ${sort === opt.value ? 'rgba(229,9,20,0.3)' : 'transparent'}`,
-                    borderRadius: '0.4rem', cursor: 'pointer', transition: 'all 0.15s',
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  {opt.icon}
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-
-            {/* Right arrow */}
-            <button
-              id="sort-scroll-right"
-              type="button"
-              onClick={() => scroll(sortScrollRef, 'right')}
-              aria-label="Scroll sort right"
-              style={{
-                position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)',
-                zIndex: 10, width: '28px', height: '28px',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                background: 'linear-gradient(to left, #141414 60%, transparent)',
-                border: 'none', cursor: 'pointer', color: '#666',
-              }}
-            >
-              <ChevronRight size={16} />
-            </button>
-          </div>
-
-          {/* Grid */}
-          {loading ? (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1rem' }}>
-              {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="skeleton" style={{ height: '180px', borderRadius: '0.75rem' }} />
-              ))}
-            </div>
-          ) : projects.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '4rem 1rem' }}>
-              <p style={{ fontSize: '3rem', marginBottom: '1rem' }}>🔍</p>
-              <h3 style={{ color: '#FFFFFF', fontSize: '1.1rem', fontWeight: 600, marginBottom: '0.5rem' }}>
-                No projects found
-              </h3>
-              <p style={{ color: '#AAAAAA', fontSize: '0.875rem' }}>
-                {debouncedSearch ? `No results for "${debouncedSearch}"` : 'No approved projects in this category yet.'}
-              </p>
-            </div>
-          ) : (
-            <>
-              <p style={{ color: '#555', fontSize: '0.8rem', marginBottom: '1rem' }}>
-                {projects.length} project{projects.length !== 1 ? 's' : ''}
-              </p>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1rem' }}>
-                {projects.map(project => (
-                  <ProjectCard
-                    key={project.id}
-                    project={project}
-                    isUpvoted={upvotedIds.has(project.id)}
-                    isAuthenticated={!!user}
-                  />
+                {categories.map(cat => (
+                  <button
+                    key={cat.id}
+                    id={`cat-${cat.slug}`}
+                    onClick={() => setSelectedCategory(cat.slug)}
+                    style={{
+                      textAlign: 'left', padding: '0.6rem 0.85rem',
+                      background: selectedCategory === cat.slug ? '#E50914' : 'transparent',
+                      color: selectedCategory === cat.slug ? '#FFFFFF' : '#AAAAAA',
+                      fontWeight: selectedCategory === cat.slug ? 700 : 400,
+                      border: 'none', borderRadius: '0.45rem', cursor: 'pointer',
+                      fontSize: '0.875rem', transition: 'all 0.15s', width: '100%',
+                      boxShadow: selectedCategory === cat.slug ? '0 4px 14px rgba(229, 9, 20, 0.4)' : 'none',
+                    }}
+                  >
+                    {cat.icon && <span style={{ marginRight: '0.45rem' }}>{cat.icon}</span>}
+                    {cat.name}
+                  </button>
                 ))}
               </div>
-            </>
-          )}
-        </main>
+            </aside>
+
+            {/* Main content */}
+            <main style={{ flex: 1, minWidth: 0 }}>
+              {/* Category scroller with arrows */}
+              <div style={{ position: 'relative', marginBottom: '1.25rem' }}>
+                <button
+                  id="cat-scroll-left"
+                  type="button"
+                  onClick={() => scroll(catScrollRef, 'left')}
+                  aria-label="Scroll categories left"
+                  style={{
+                    position: 'absolute', left: 0, top: '50%', transform: 'translateY(-50%)',
+                    zIndex: 10, width: '32px', height: '32px',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    background: 'linear-gradient(to right, #141414 60%, transparent)',
+                    border: 'none', cursor: 'pointer', color: '#FFFFFF',
+                  }}
+                >
+                  <ChevronLeft size={20} />
+                </button>
+
+                {/* Scrollable pill strip */}
+                <div
+                  ref={catScrollRef}
+                  style={{
+                    display: 'flex', gap: '0.6rem', overflowX: 'auto',
+                    paddingBottom: '0.4rem', paddingLeft: '32px', paddingRight: '32px',
+                    scrollbarWidth: 'none',
+                  }}
+                >
+                  {[{ id: 0, name: 'All', slug: 'all', icon: null }, ...categories].map(cat => (
+                    <button
+                      key={cat.slug}
+                      id={`cat-pill-${cat.slug}`}
+                      onClick={() => setSelectedCategory(cat.slug)}
+                      style={{
+                        flexShrink: 0, padding: '0.5rem 1.1rem',
+                        background: selectedCategory === cat.slug ? '#E50914' : '#1A1A1A',
+                        color: '#FFFFFF',
+                        border: `1px solid ${selectedCategory === cat.slug ? '#E50914' : 'rgba(255,255,255,0.1)'}`,
+                        boxShadow: selectedCategory === cat.slug ? '0 4px 14px rgba(229, 9, 20, 0.45)' : 'none',
+                        borderRadius: '9999px', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer',
+                        transition: 'all 0.2s ease', whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {cat.icon && <span style={{ marginRight: '0.35rem' }}>{cat.icon}</span>}
+                      {cat.name}
+                    </button>
+                  ))}
+                </div>
+
+                <button
+                  id="cat-scroll-right"
+                  type="button"
+                  onClick={() => scroll(catScrollRef, 'right')}
+                  aria-label="Scroll categories right"
+                  style={{
+                    position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)',
+                    zIndex: 10, width: '32px', height: '32px',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    background: 'linear-gradient(to left, #141414 60%, transparent)',
+                    border: 'none', cursor: 'pointer', color: '#FFFFFF',
+                  }}
+                >
+                  <ChevronRight size={20} />
+                </button>
+              </div>
+
+              {/* Header + Sort controls bar */}
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginBottom: '1.5rem',
+                flexWrap: 'wrap',
+                gap: '1rem',
+                paddingBottom: '0.75rem',
+                borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+              }}>
+                {/* Netflix-style Title Header */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <div style={{ width: '4px', height: '24px', background: '#E50914', borderRadius: '2px' }} />
+                  <h2 style={{ fontSize: '1.4rem', fontWeight: 800, color: '#FFFFFF', letterSpacing: '-0.02em', margin: 0 }}>
+                    {selectedCategory === 'all'
+                      ? 'Explore All Projects'
+                      : categories.find(c => c.slug === selectedCategory)?.name || 'Projects'}
+                  </h2>
+                  <span style={{
+                    fontSize: '0.8rem',
+                    fontWeight: 700,
+                    color: '#E50914',
+                    background: 'rgba(229, 9, 20, 0.15)',
+                    padding: '0.15rem 0.55rem',
+                    borderRadius: '9999px',
+                    border: '1px solid rgba(229, 9, 20, 0.3)',
+                  }}>
+                    {projects.length}
+                  </span>
+                </div>
+
+                {/* Sort tabs */}
+                <div style={{ display: 'flex', gap: '0.35rem', alignItems: 'center' }}>
+                  {SORT_OPTIONS.map(opt => (
+                    <button
+                      key={opt.value}
+                      id={`sort-${opt.value}`}
+                      onClick={() => setSort(opt.value)}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: '0.4rem',
+                        padding: '0.45rem 0.95rem', fontSize: '0.85rem',
+                        fontWeight: sort === opt.value ? 700 : 500,
+                        background: sort === opt.value ? 'rgba(229, 9, 20, 0.2)' : '#1A1A1A',
+                        color: sort === opt.value ? '#FFFFFF' : '#AAAAAA',
+                        border: `1px solid ${sort === opt.value ? '#E50914' : 'rgba(255,255,255,0.08)'}`,
+                        borderRadius: '0.45rem', cursor: 'pointer', transition: 'all 0.2s',
+                        whiteSpace: 'nowrap',
+                        boxShadow: sort === opt.value ? '0 4px 12px rgba(229, 9, 20, 0.25)' : 'none',
+                      }}
+                    >
+                      {opt.icon}
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Grid */}
+              {loading ? (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.25rem' }}>
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <div key={i} className="skeleton" style={{ height: '210px', borderRadius: '0.85rem', background: '#1F1F1F' }} />
+                  ))}
+                </div>
+              ) : projects.length === 0 ? (
+                <div style={{
+                  textAlign: 'center',
+                  padding: '4rem 1rem',
+                  background: '#1A1A1A',
+                  borderRadius: '0.85rem',
+                  border: '1px solid rgba(255,255,255,0.08)',
+                }}>
+                  <p style={{ fontSize: '3rem', marginBottom: '1rem' }}>🔍</p>
+                  <h3 style={{ color: '#FFFFFF', fontSize: '1.15rem', fontWeight: 700, marginBottom: '0.5rem' }}>
+                    No projects found
+                  </h3>
+                  <p style={{ color: '#AAAAAA', fontSize: '0.875rem' }}>
+                    {debouncedSearch ? `No results found for "${debouncedSearch}"` : 'No approved projects in this category yet.'}
+                  </p>
+                </div>
+              ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.25rem' }}>
+                  {projects.map(project => (
+                    <ProjectCard
+                      key={project.id}
+                      project={project}
+                      isUpvoted={upvotedIds.has(project.id)}
+                      isAuthenticated={!!user}
+                    />
+                  ))}
+                </div>
+              )}
+            </main>
+          </div>
+        </div>
       </div>
     </div>
-  </div>
-</div>
-)
+  )
 }

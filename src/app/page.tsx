@@ -4,6 +4,8 @@ import { Flame, ArrowRight, Zap, Shield, BarChart3, Users } from 'lucide-react'
 import NetflixHorizonDivider from '@/components/ui/NetflixHorizonDivider'
 import NetflixTrendingRow from '@/components/projects/NetflixTrendingRow'
 import HeroGetStartedButton from '@/components/ui/HeroGetStartedButton'
+import NetflixReasonCards from '@/components/ui/NetflixReasonCards'
+import NetflixFAQSection from '@/components/ui/NetflixFAQSection'
 
 async function getFeaturedProjects() {
   try {
@@ -246,42 +248,11 @@ export default async function HomePage() {
         </section>
       )}
 
-      {/* ── Features grid ─────────────────────────────────────────────── */}
-      <section style={{
-        padding: '3rem 1.5rem 4rem',
-        background: 'linear-gradient(180deg, #141414 0%, #1a0a0a 100%)',
-        borderTop: '1px solid #2B2B2B',
-      }}>
-        <div style={{ maxWidth: '1280px', margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
-            <div className="accent-line" style={{ width: '2rem', margin: '0 auto 0.75rem' }} />
-            <h2 style={{ fontSize: '1.75rem', fontWeight: 800, color: '#FFFFFF', letterSpacing: '-0.03em', marginBottom: '0.5rem' }}>
-              Built for student builders
-            </h2>
-            <p style={{ color: '#AAAAAA', fontSize: '0.95rem' }}>
-              Everything you need to showcase your work and get discovered.
-            </p>
-          </div>
+      {/* ── More reasons to join (Netflix visual style cards) ──────────────── */}
+      <NetflixReasonCards />
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1rem' }}>
-            {FEATURES.map(f => (
-              <div key={f.title} className="card-hover" style={{
-                background: '#1F1F1F', border: '1px solid #2B2B2B',
-                borderRadius: '0.75rem', padding: '1.5rem',
-                transition: 'border-color 0.2s',
-              }}>
-                <div style={{ marginBottom: '0.75rem' }}>{f.icon}</div>
-                <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#FFFFFF', marginBottom: '0.4rem' }}>
-                  {f.title}
-                </h3>
-                <p style={{ color: '#AAAAAA', fontSize: '0.875rem', lineHeight: 1.55 }}>
-                  {f.desc}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* ── Frequently Asked Questions (Netflix Accordion style) ───────────── */}
+      <NetflixFAQSection />
 
       {/* ── CTA Banner ────────────────────────────────────────────────── */}
       <section style={{

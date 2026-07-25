@@ -4,6 +4,7 @@ import Link from 'next/link'
 import UpvoteButton from '@/components/projects/UpvoteButton'
 import BookmarkButton from '@/components/projects/BookmarkButton'
 import { Globe, GitBranch, ExternalLink, Calendar, Tag, Monitor, Smartphone } from 'lucide-react'
+import ProductGallery from '@/components/projects/ProductGallery'
 import type { Metadata } from 'next'
 
 interface Props {
@@ -209,25 +210,8 @@ export default async function ProjectDetailPage({ params }: Props) {
         {/* Left — screenshots + description */}
         <div style={{ flex: 1, minWidth: '280px' }}>
 
-          {/* Screenshots */}
-          {screenshots.length > 0 && (
-            <div style={{ marginBottom: '2rem' }}>
-              <h2 style={{ fontSize: '1rem', fontWeight: 700, color: '#FFFFFF', marginBottom: '0.75rem' }}>Screenshots</h2>
-              <div style={{ display: 'flex', gap: '0.75rem', overflowX: 'auto', paddingBottom: '0.5rem', scrollbarWidth: 'none' }}>
-                {screenshots.map((img: any) => (
-                  <img
-                    key={img.id}
-                    src={img.image_url}
-                    alt={`${project.name} screenshot`}
-                    style={{
-                      height: '200px', width: 'auto', borderRadius: '0.5rem',
-                      border: '1px solid #2B2B2B', flexShrink: 0, objectFit: 'cover',
-                    }}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
+          {/* Screenshots Gallery with Arrows & Lightbox */}
+          <ProductGallery screenshots={screenshots} projectName={project.name} />
 
           {/* Description */}
           <div>
