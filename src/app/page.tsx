@@ -1,6 +1,8 @@
 import Link from 'next/link'
 import { createServerClient } from '@/lib/supabase/server'
 import { Flame, ArrowRight, Zap, Shield, BarChart3, Users } from 'lucide-react'
+import NetflixHorizonDivider from '@/components/ui/NetflixHorizonDivider'
+import NetflixTrendingRow from '@/components/projects/NetflixTrendingRow'
 
 async function getFeaturedProjects() {
   try {
@@ -199,6 +201,15 @@ export default async function HomePage() {
         </div>
       </section>
 
+      {/* ── Content Section (Overlaying Hero) ────────────────────── */}
+      <div style={{ position: 'relative', zIndex: 10 }}>
+        {/* Netflix Horizon Arc Divider Overlay */}
+        <NetflixHorizonDivider fillColor="#080808" />
+
+        <div style={{ background: '#080808', minHeight: '60vh' }}>
+          {/* Netflix Trending Top 10 Row */}
+          <NetflixTrendingRow projects={featured} title="Trending Now" />
+
       {/* ── Featured Projects ─────────────────────────────────────────── */}
       {featured.length > 0 && (
         <section style={{ padding: '3rem 1.5rem', maxWidth: '1280px', margin: '0 auto' }}>
@@ -320,6 +331,8 @@ export default async function HomePage() {
           Get started — it&apos;s free <ArrowRight size={18} />
         </Link>
       </section>
+      </div>
+      </div>
 
       {/* Footer */}
       <footer style={{

@@ -5,6 +5,8 @@ import { createClient } from '@/lib/supabase/client'
 import ProjectCard from '@/components/projects/ProjectCard'
 import { TrendingUp, Clock, Flame, ChevronLeft, ChevronRight } from 'lucide-react'
 import type { User } from '@supabase/supabase-js'
+import NetflixHorizonDivider from '@/components/ui/NetflixHorizonDivider'
+import NetflixTrendingRow from '@/components/projects/NetflixTrendingRow'
 
 interface Category {
   id: number
@@ -285,16 +287,18 @@ export default function BrowsePage() {
           </p>
         </div>
 
-        {/* Bottom fade into content */}
-        <div style={{
-          position: 'absolute', bottom: 0, left: 0, right: 0, height: '120px',
-          background: 'linear-gradient(to bottom, transparent, #141414)',
-          pointerEvents: 'none',
-        }} />
       </section>
 
-      {/* ── Filter + Browse Content ───────────────────────────── */}
-      <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '1.5rem', display: 'flex', gap: '1.5rem', alignItems: 'flex-start' }}>
+      {/* ── Filter + Browse Content Section (Overlaying Hero) ────── */}
+      <div style={{ position: 'relative', zIndex: 10 }}>
+        {/* Netflix Horizon Arc Divider Overlay */}
+        <NetflixHorizonDivider fillColor="#141414" />
+
+        <div style={{ background: '#141414', minHeight: '60vh' }}>
+          {/* Netflix Trending Top 10 Row */}
+          <NetflixTrendingRow projects={projects} title="Trending Now" />
+
+          <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '0 1.5rem 1.5rem', display: 'flex', gap: '1.5rem', alignItems: 'flex-start' }}>
         {/* Sidebar — category filter */}
         <aside style={{
           width: '200px', flexShrink: 0,
@@ -514,5 +518,7 @@ export default function BrowsePage() {
         </main>
       </div>
     </div>
-  )
+  </div>
+</div>
+)
 }
