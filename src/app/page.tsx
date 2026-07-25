@@ -71,15 +71,22 @@ export default async function HomePage() {
           }}
         />
 
-        {/* Multi-layer dark overlay */}
+        {/* Multi-layer dark overlay — Netflix style */}
         <div style={{
           position: 'absolute', inset: 0,
           background: 'linear-gradient(to bottom, rgba(20,20,20,0.15) 0%, rgba(20,20,20,0.35) 50%, rgba(20,20,20,0.92) 100%)',
           pointerEvents: 'none',
-          zIndex: 0,
+          zIndex: 1,
+        }} />
+        {/* Red radial glow from center */}
+        <div style={{
+          position: 'absolute', inset: 0,
+          background: 'radial-gradient(ellipse at 50% 40%, rgba(229,9,20,0.22) 0%, transparent 65%)',
+          pointerEvents: 'none',
+          zIndex: 1,
         }} />
 
-        <div style={{ position: 'relative', zIndex: 1, maxWidth: '760px', margin: '0 auto' }}>
+        <div style={{ position: 'relative', zIndex: 2, maxWidth: '760px', margin: '0 auto' }}>
           {/* Badge */}
           <div style={{
             display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
@@ -185,9 +192,9 @@ export default async function HomePage() {
       {/* ── Content Section (Overlaying Hero) ────────────────────── */}
       <div style={{ position: 'relative', zIndex: 10 }}>
         {/* Netflix Horizon Arc Divider Overlay */}
-        <NetflixHorizonDivider fillColor="#080808" />
+        <NetflixHorizonDivider fillColor="#141414" />
 
-        <div style={{ background: '#080808', minHeight: '60vh' }}>
+        <div style={{ background: '#141414', minHeight: '60vh' }}>
           {/* Netflix Trending Top 10 Row */}
           <NetflixTrendingRow projects={featured} title="Trending Now" />
 
