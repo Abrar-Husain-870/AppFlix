@@ -29,6 +29,16 @@ interface Project {
 
 type SortOption = 'top' | 'newest' | 'trending' | 'bookmarked'
 
+const PLATFORM_FILTERS = [
+  { id: 'p-web',     name: 'Web',               slug: 'web',               icon: '🌐' },
+  { id: 'p-ios',     name: 'iOS',               slug: 'ios',               icon: '📱' },
+  { id: 'p-android', name: 'Android',           slug: 'android',           icon: '🤖' },
+  { id: 'p-win',     name: 'Windows',           slug: 'windows',           icon: '💻' },
+  { id: 'p-mac',     name: 'macOS',             slug: 'macos',             icon: '🖥️' },
+  { id: 'p-linux',   name: 'Linux',             slug: 'linux',             icon: '🐧' },
+  { id: 'p-ext',     name: 'Browser Extension', slug: 'browser_extension', icon: '🧩' },
+]
+
 const SORT_OPTIONS: { value: SortOption; label: string; icon: React.ReactNode }[] = [
   { value: 'top',        label: 'Top',        icon: <TrendingUp size={14} /> },
   { value: 'newest',     label: 'Newest',     icon: <Clock size={14} /> },
@@ -88,8 +98,13 @@ export default function BrowsePage() {
       .is('deleted_at', null)
 
     if (selectedCategory !== 'all') {
-      const cat = categories.find(c => c.slug === selectedCategory)
-      if (cat) query = query.eq('category_id', cat.id)
+      const isPlatform = PLATFORM_FILTERS.some(p => p.slug === selectedCategory)
+      if (isPlatform) {
+        query = query.contains('platforms', [selectedCategory])
+      } else {
+        const cat = categories.find(c => c.slug === selectedCategory)
+        if (cat) query = query.eq('category_id', cat.id)
+      }
     }
 
     if (debouncedSearch.trim()) {
@@ -237,7 +252,7 @@ export default function BrowsePage() {
             maxWidth: '480px',
             margin: '0 auto 2.25rem',
           }}>
-            Browse, upvote, and submit university projects — all in one place.
+            Browse, upvote, and submit university apps — all in one place.
           </p>
 
           {/* Hero search bar — Netflix style */}
@@ -247,7 +262,7 @@ export default function BrowsePage() {
             marginBottom: '0.85rem',
             fontWeight: 500,
           }}>
-            Ready to explore? Search projects to discover student innovations.
+            Ready to explore? Search apps to discover student innovations.
           </p>
 
           <form onSubmit={e => e.preventDefault()} style={{
@@ -259,7 +274,7 @@ export default function BrowsePage() {
             <input
               id="hero-search"
               type="search"
-              placeholder="Search projects or categories…"
+              placeholder="Search apps or categories…"
               value={search}
               onChange={e => setSearch(e.target.value)}
               style={{
@@ -338,24 +353,9 @@ export default function BrowsePage() {
                 </p>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                <button
-                  id="cat-all"
-                  onClick={() => setSelectedCategory('all')}
-                  style={{
-                    textAlign: 'left', padding: '0.6rem 0.85rem',
-                    background: selectedCategory === 'all' ? '#E50914' : 'transparent',
-                    color: selectedCategory === 'all' ? '#FFFFFF' : '#AAAAAA',
-                    fontWeight: selectedCategory === 'all' ? 700 : 400,
-                    border: 'none', borderRadius: '0.45rem', cursor: 'pointer',
-                    fontSize: '0.875rem', transition: 'all 0.15s', width: '100%',
-                    boxShadow: selectedCategory === 'all' ? '0 4px 14px rgba(229, 9, 20, 0.4)' : 'none',
-                  }}
-                >
-                  All Projects
-                </button>
-                {categories.map(cat => (
+                {[{ id: 'all-0', name: 'All Projects', slug: 'all', icon: null }, ...PLATFORM_FILTERS, ...categories].map(cat => (
                   <button
-                    key={cat.id}
+                    key={cat.slug}
                     id={`cat-${cat.slug}`}
                     onClick={() => setSelectedCategory(cat.slug)}
                     style={{
@@ -404,7 +404,7 @@ export default function BrowsePage() {
                     scrollbarWidth: 'none',
                   }}
                 >
-                  {[{ id: 0, name: 'All', slug: 'all', icon: null }, ...categories].map(cat => (
+                  {[{ id: 'all-0', name: 'All', slug: 'all', icon: null }, ...PLATFORM_FILTERS, ...categories].map(cat => (
                     <button
                       key={cat.slug}
                       id={`cat-pill-${cat.slug}`}
@@ -458,8 +458,8 @@ export default function BrowsePage() {
                   <div style={{ width: '4px', height: '24px', background: '#E50914', borderRadius: '2px' }} />
                   <h2 style={{ fontSize: '1.4rem', fontWeight: 800, color: '#FFFFFF', letterSpacing: '-0.02em', margin: 0 }}>
                     {selectedCategory === 'all'
-                      ? 'Explore All Projects'
-                      : categories.find(c => c.slug === selectedCategory)?.name || 'Projects'}
+                      ? 'Explore All Apps'
+                      : categories.find(c => c.slug === selectedCategory)?.name || 'Apps'}
                   </h2>
                   <span style={{
                     fontSize: '0.8rem',
@@ -517,10 +517,10 @@ export default function BrowsePage() {
                 }}>
                   <p style={{ fontSize: '3rem', marginBottom: '1rem' }}>🔍</p>
                   <h3 style={{ color: '#FFFFFF', fontSize: '1.15rem', fontWeight: 700, marginBottom: '0.5rem' }}>
-                    No projects found
+                    No apps found
                   </h3>
                   <p style={{ color: '#AAAAAA', fontSize: '0.875rem' }}>
-                    {debouncedSearch ? `No results found for "${debouncedSearch}"` : 'No approved projects in this category yet.'}
+                    {debouncedSearch ? `No results found for "${debouncedSearch}"` : 'No approved apps in this category yet.'}
                   </p>
                 </div>
               ) : (

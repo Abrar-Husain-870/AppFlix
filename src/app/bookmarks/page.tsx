@@ -100,7 +100,7 @@ export default function BookmarksPage() {
               My Bookmarks
             </h1>
             <p style={{ fontSize: '0.85rem', color: '#AAAAAA', margin: '0.2rem 0 0' }}>
-              Your saved student projects for quick reference
+              Your saved student apps for quick reference
             </p>
           </div>
           <span style={{
@@ -154,7 +154,7 @@ export default function BookmarksPage() {
               No bookmarks saved yet
             </h2>
             <p style={{ color: '#AAAAAA', fontSize: '0.9rem', marginBottom: '1.5rem', maxWidth: '400px', margin: '0 auto 1.5rem' }}>
-              Click the bookmark icon on any app page to save projects to your personal collection.
+              Click the bookmark icon on any app card to save apps to your personal collection.
             </p>
             <Link
               href="/browse"
@@ -165,7 +165,7 @@ export default function BookmarksPage() {
                 boxShadow: '0 4px 14px rgba(229, 9, 20, 0.4)',
               }}
             >
-              Explore Projects <ArrowRight size={16} />
+              Explore Apps <ArrowRight size={16} />
             </Link>
           </div>
         ) : (

@@ -114,7 +114,7 @@ export default function SubmitPage() {
         <div style={{ marginBottom: '2rem' }}>
           <div className="accent-line" style={{ width: '2rem', marginBottom: '0.5rem' }} />
           <h1 style={{ fontSize: '1.75rem', fontWeight: 900, color: '#FFFFFF', letterSpacing: '-0.03em', marginBottom: '0.35rem' }}>
-            Submit Your Project
+            Submit Your App
           </h1>
           <p style={{ color: '#AAAAAA', fontSize: '0.9rem' }}>
             Share what you've built with the university community. All submissions are reviewed by an admin before going live.
@@ -178,7 +178,7 @@ export default function SubmitPage() {
             <h2 style={{ fontSize: '0.9rem', fontWeight: 700, color: '#FFFFFF', margin: 0 }}>Basic Info</h2>
 
             <div>
-              <Label required>Project Name</Label>
+              <Label required>App Name</Label>
               <input id="project-name" name="name" type="text" placeholder="e.g. CampusMap" required maxLength={60} style={inputStyle}
                 onFocus={e => e.currentTarget.style.borderColor = '#E50914'}
                 onBlur={e => e.currentTarget.style.borderColor = '#2B2B2B'} />

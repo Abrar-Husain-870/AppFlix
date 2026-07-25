@@ -123,7 +123,7 @@ export default function AccountPage() {
         {/* Quick links */}
         <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '2rem' }}>
           {[
-            { href: '/dashboard/projects', icon: <FolderKanban size={14} />, label: 'My Projects' },
+            { href: '/dashboard/projects', icon: <FolderKanban size={14} />, label: 'My Apps' },
             { href: '/dashboard/analytics', icon: <BarChart2 size={14} />, label: 'Analytics' },
             ...(profile.role === 'admin' ? [{ href: '/admin/queue', icon: <Shield size={14} />, label: 'Admin Queue' }] : []),
           ].map(item => (

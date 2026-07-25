@@ -46,8 +46,8 @@ export default async function DashboardProjectsPage({
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
           <div>
             <div className="accent-line" style={{ width: '2rem', marginBottom: '0.5rem' }} />
-            <h1 style={{ fontSize: '1.75rem', fontWeight: 900, color: '#FFFFFF', letterSpacing: '-0.03em' }}>My Projects</h1>
-            <p style={{ color: '#AAAAAA', fontSize: '0.875rem', marginTop: '0.25rem' }}>Track and manage your submitted projects.</p>
+            <h1 style={{ fontSize: '1.75rem', fontWeight: 900, color: '#FFFFFF', letterSpacing: '-0.03em' }}>My Apps</h1>
+            <p style={{ color: '#AAAAAA', fontSize: '0.875rem', marginTop: '0.25rem' }}>Track and manage your submitted apps.</p>
           </div>
           <Link href="/submit" id="dash-submit-btn" style={{
             display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
@@ -68,7 +68,7 @@ export default async function DashboardProjectsPage({
             display: 'flex', alignItems: 'center', gap: '0.6rem',
           }}>
             <CheckCircle size={16} />
-            Project submitted! It&apos;s now in the admin review queue.
+            App submitted! It&apos;s now in the admin review queue.
           </div>
         )}
         {justUpdated && (
@@ -79,7 +79,7 @@ export default async function DashboardProjectsPage({
             display: 'flex', alignItems: 'center', gap: '0.6rem',
           }}>
             <CheckCircle size={16} />
-            Project updated successfully! Changes are live.
+            App updated successfully! Changes are live.
           </div>
         )}
         {justMediaUpdated && (
@@ -90,7 +90,7 @@ export default async function DashboardProjectsPage({
             display: 'flex', alignItems: 'center', gap: '0.6rem',
           }}>
             <Clock size={16} />
-            Media/URL changes submitted! Your project is pending admin re-approval.
+            Media/URL changes submitted! Your app is pending admin re-approval.
           </div>
         )}
 
@@ -101,14 +101,14 @@ export default async function DashboardProjectsPage({
             borderRadius: '0.75rem', padding: '3rem 2rem', textAlign: 'center',
           }}>
             <p style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>🚀</p>
-            <h3 style={{ color: '#FFFFFF', fontSize: '1.1rem', fontWeight: 700, marginBottom: '0.5rem' }}>No projects yet</h3>
-            <p style={{ color: '#AAAAAA', fontSize: '0.875rem', marginBottom: '1.5rem' }}>Submit your first project and get it in front of the community.</p>
+            <h3 style={{ color: '#FFFFFF', fontSize: '1.1rem', fontWeight: 700, marginBottom: '0.5rem' }}>No apps submitted yet</h3>
+            <p style={{ color: '#AAAAAA', fontSize: '0.875rem', marginBottom: '1.5rem' }}>Submit your first app and get it in front of the community.</p>
             <Link href="/submit" style={{
               display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
               padding: '0.65rem 1.5rem', background: '#E50914',
               color: '#FFFFFF', fontWeight: 600, borderRadius: '0.5rem', textDecoration: 'none',
             }}>
-              Submit a Project
+              Submit an App
             </Link>
           </div>
         )}

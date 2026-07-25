@@ -117,12 +117,12 @@ export default async function HomePage() {
 
           {/* Netflix email form styled get-started bar */}
           <p style={{
-            fontSize: '0.95rem',
+            fontSize: '0.875rem',
             color: '#DDDDDD',
             marginBottom: '0.85rem',
             fontWeight: 500,
           }}>
-            Ready to explore? Browse student apps or list your project.
+            Ready to explore? Browse student apps or list your app.
           </p>
 
           <div style={{
@@ -148,7 +148,7 @@ export default async function HomePage() {
                 alignItems: 'center',
               }}
             >
-              Discover student projects…
+              Discover student apps…
             </Link>
             <HeroGetStartedButton />
           </div>
@@ -168,7 +168,7 @@ export default async function HomePage() {
               marginTop: '3rem', flexWrap: 'wrap',
             }}>
               {[
-                { value: stats.projects.toString(), label: 'Projects listed' },
+                { value: stats.projects.toString(), label: 'Apps listed' },
                 { value: stats.categories.toString(), label: 'Categories' },
                 { value: 'Free', label: 'Always free' },
               ].map(stat => (
@@ -198,7 +198,7 @@ export default async function HomePage() {
             <div>
               <div className="accent-line" style={{ width: '2rem', marginBottom: '0.5rem' }} />
               <h2 style={{ fontSize: '1.4rem', fontWeight: 800, color: '#FFFFFF', letterSpacing: '-0.02em' }}>
-                Top Projects
+                Top Apps
               </h2>
             </div>
             <Link href="/browse" style={{ color: '#E50914', fontSize: '0.875rem', fontWeight: 600, textDecoration: 'none' }}>

@@ -8,24 +8,24 @@ const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
 export const metadata: Metadata = {
   title: {
-    default: "AppFlix — Student Project Showcase",
+    default: "AppFlix — Student App Showcase",
     template: "%s | AppFlix",
   },
   description:
-    "Discover and showcase student-built apps, tools, and digital projects. The Product Hunt for university innovation.",
-  keywords: ["student projects", "university apps", "project showcase", "student developers"],
+    "Discover and showcase student-built apps, tools, and digital projects. The app store for university innovation.",
+  keywords: ["student apps", "university apps", "app showcase", "student developers"],
   authors: [{ name: "AppFlix" }],
   openGraph: {
     type: "website",
     locale: "en_US",
-    title: "AppFlix — Student Project Showcase",
+    title: "AppFlix — Student App Showcase",
     description:
       "Discover and showcase student-built apps, tools, and digital projects.",
     siteName: "AppFlix",
   },
   twitter: {
     card: "summary_large_image",
-    title: "AppFlix — Student Project Showcase",
+    title: "AppFlix — Student App Showcase",
     description:
       "Discover and showcase student-built apps, tools, and digital projects.",
   },

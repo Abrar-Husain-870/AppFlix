@@ -79,7 +79,7 @@ export default function Navbar() {
   const navLinks = [
     { href: '/browse', label: 'Browse' },
     { href: '/bookmarks', label: 'Bookmarks' },
-    { href: '/submit', label: 'Submit Project' },
+    { href: '/submit', label: 'Submit App' },
   ]
 
   const displayName = profile?.display_name || profile?.username || user?.email?.split('@')[0] || 'Account'
@@ -215,9 +215,9 @@ export default function Navbar() {
                       {[
                         { href: '/bookmarks',             icon: <Bookmark size={14} />,      label: 'My Bookmarks' },
                         { href: '/account',               icon: <Settings size={14} />,      label: 'My Account' },
-                        { href: '/dashboard/projects',    icon: <FolderKanban size={14} />,  label: 'My Projects' },
+                        { href: '/dashboard/projects',    icon: <FolderKanban size={14} />,  label: 'My Apps' },
                         { href: '/dashboard/analytics',   icon: <BarChart2 size={14} />,     label: 'Analytics' },
-                        { href: '/submit',                icon: <PlusCircle size={14} />,    label: 'Submit Project' },
+                        { href: '/submit',                icon: <PlusCircle size={14} />,    label: 'Submit App' },
                         ...(isAdmin ? [{ href: '/admin/queue', icon: <Shield size={14} />, label: 'Admin Queue' }] : []),
                       ].map(item => (
                         <Link
@@ -342,10 +342,11 @@ export default function Navbar() {
 
           {[
             { href: '/browse',                label: 'Browse' },
+            { href: '/bookmarks',             label: 'Bookmarks' },
             ...(user ? [
               { href: '/account',             label: '⚙️ My Account' },
-              { href: '/submit',              label: '+ Submit Project' },
-              { href: '/dashboard/projects',  label: 'My Projects' },
+              { href: '/submit',              label: '+ Submit App' },
+              { href: '/dashboard/projects',  label: 'My Apps' },
               { href: '/dashboard/analytics', label: 'Analytics' },
             ] : [
               { href: '/login',   label: 'Sign In' },
