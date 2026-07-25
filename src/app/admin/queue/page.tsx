@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useTransition } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { approveProject, rejectProject } from '@/app/actions/admin'
+import { approveProject, rejectProject, getPendingProjects } from '@/app/actions/admin'
 import { CheckCircle, XCircle, Globe, GitBranch, Clock, Loader2, ExternalLink } from 'lucide-react'
 
 interface PendingProject {
@@ -208,17 +208,7 @@ export default function AdminQueuePage() {
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null)
 
   async function fetchQueue() {
-    const supabase = createClient()
-    const { data } = await supabase
-      .from('projects')
-      .select(`
-        id, name, slug, tagline, description, icon_url,
-        website_url, github_url, stage, platforms, created_at,
-        categories(name), profiles(username)
-      `)
-      .eq('status', 'pending')
-      .is('deleted_at', null)
-      .order('created_at', { ascending: true })
+    const data = await getPendingProjects()
     setProjects((data as unknown as PendingProject[]) ?? [])
     setLoading(false)
   }

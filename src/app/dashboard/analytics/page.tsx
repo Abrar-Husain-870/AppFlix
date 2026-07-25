@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { BarChart3, Eye, TrendingUp, MousePointer, ArrowUpRight } from 'lucide-react'
 
-interface Project { id: string; name: string }
+interface Project { id: string; name: string; upvote_count: number }
 interface EventRow { event_type: string; created_at: string }
 
 const PERIODS = [
@@ -60,11 +60,11 @@ export default function AnalyticsPage() {
       if (!data.user) { window.location.href = '/login'; return }
       const { data: projs } = await supabase
         .from('projects')
-        .select('id, name')
+        .select('id, name, upvote_count')
         .eq('user_id', data.user.id)
         .is('deleted_at', null)
         .order('created_at', { ascending: false })
-      setProjects(projs ?? [])
+      setProjects((projs as Project[]) ?? [])
     })
   }, [])
 
@@ -91,10 +91,15 @@ export default function AnalyticsPage() {
     })
   }, [projects, selectedProject, period])
 
+  const eventUpvotes = events.filter(e => e.event_type === 'upvote').length
+  const totalDbUpvotes = selectedProject === 'all'
+    ? projects.reduce((acc, p) => acc + (p.upvote_count || 0), 0)
+    : (projects.find(p => p.id === selectedProject)?.upvote_count || 0)
+
   const counts = {
     views:   events.filter(e => e.event_type === 'view').length,
     clicks:  events.filter(e => e.event_type === 'click_external').length,
-    upvotes: events.filter(e => e.event_type === 'upvote').length,
+    upvotes: Math.max(eventUpvotes, totalDbUpvotes),
   }
   const ctr = counts.views > 0 ? ((counts.clicks / counts.views) * 100).toFixed(1) : '0.0'
 

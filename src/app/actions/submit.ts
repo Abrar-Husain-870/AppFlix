@@ -32,7 +32,7 @@ export async function submitProject(state: SubmitState, formData: FormData): Pro
   const errors: Record<string, string> = {}
   if (!name || name.length < 3)          errors.name = 'Name must be at least 3 characters.'
   if (!tagline || tagline.length < 10)   errors.tagline = 'Tagline must be at least 10 characters.'
-  if (!description || description.length < 30) errors.description = 'Description must be at least 30 characters.'
+  if (!description || description.length < 50) errors.description = 'Description must be at least 50 characters.'
   if (!categoryId)                        errors.category_id = 'Please select a category.'
   if (!stage)                             errors.stage = 'Please select a project stage.'
   if (platformsRaw.length === 0)          errors.platforms = 'Select at least one platform.'
@@ -68,8 +68,8 @@ export async function submitProject(state: SubmitState, formData: FormData): Pro
     .single()
 
   if (insertError) {
-    console.error(insertError)
-    return { error: 'Failed to submit project. Please try again.' }
+    console.error('[submitProject]', insertError)
+    return { error: `Submission failed: ${insertError.message}` }
   }
 
   // Insert screenshots

@@ -6,12 +6,16 @@ import { revalidatePath } from 'next/cache'
 async function assertAdmin() {
   const supabase = await createServerClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Unauthenticated')
-  const { data: profile } = await supabase
+  if (!user) {
+    console.error('[assertAdmin] No user found in session')
+    throw new Error('Unauthenticated')
+  }
+  const { data: profile, error } = await supabase
     .from('profiles')
     .select('role')
     .eq('id', user.id)
     .single()
+  console.log('[assertAdmin] User:', user.email, 'Role:', profile?.role, 'Error:', error)
   if (profile?.role !== 'admin') throw new Error('Unauthorized')
   return user
 }
@@ -70,4 +74,26 @@ export async function rejectProject(projectId: string, reason: string) {
   }
 
   revalidatePath('/admin/queue')
+}
+
+export async function getPendingProjects() {
+  await assertAdmin()
+  const supabase = await createServiceRoleClient()
+
+  const { data, error } = await supabase
+    .from('projects')
+    .select(`
+      id, name, slug, tagline, description, icon_url,
+      website_url, github_url, stage, platforms, created_at,
+      categories(name), profiles!user_id(username)
+    `)
+    .eq('status', 'pending')
+    .is('deleted_at', null)
+    .order('created_at', { ascending: true })
+
+  if (error) {
+    console.error('[getPendingProjects error]:', error)
+    return []
+  }
+  return (data as any[]) ?? []
 }

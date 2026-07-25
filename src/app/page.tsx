@@ -50,12 +50,28 @@ export default async function HomePage() {
         padding: 'clamp(4rem, 10vw, 7rem) 1.5rem clamp(3rem, 8vw, 5rem)',
         textAlign: 'center',
       }}>
-        {/* Background grid lines */}
+        {/* 3D Poster Wall Background from bg-standalone.html */}
+        <iframe
+          src="/bg-standalone.html"
+          title="AppFlix 3D Wall Background"
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            border: 'none',
+            zIndex: 0,
+            pointerEvents: 'none',
+          }}
+        />
+
+        {/* Multi-layer dark overlay */}
         <div style={{
-          position: 'absolute', inset: 0, opacity: 0.03,
-          backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)',
-          backgroundSize: '50px 50px',
+          position: 'absolute', inset: 0,
+          background: 'linear-gradient(to bottom, rgba(20,20,20,0.15) 0%, rgba(20,20,20,0.35) 50%, rgba(20,20,20,0.92) 100%)',
           pointerEvents: 'none',
+          zIndex: 0,
         }} />
 
         <div style={{ position: 'relative', zIndex: 1, maxWidth: '760px', margin: '0 auto' }}>
@@ -94,38 +110,73 @@ export default async function HomePage() {
             AppFlix is where your university&apos;s builders, hackers, and innovators share their work — and get discovered.
           </p>
 
-          {/* CTAs */}
-          <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+          {/* Netflix email form styled get-started bar */}
+          <p style={{
+            fontSize: '0.95rem',
+            color: '#DDDDDD',
+            marginBottom: '0.85rem',
+            fontWeight: 500,
+          }}>
+            Ready to explore? Browse student apps or list your project.
+          </p>
+
+          <div style={{
+            display: 'flex',
+            maxWidth: '560px',
+            margin: '0 auto 1rem',
+            boxShadow: '0 12px 40px rgba(0, 0, 0, 0.7)',
+          }}>
+            <Link
+              href="/browse"
+              style={{
+                flex: 1,
+                padding: '1rem 1.2rem',
+                background: 'rgba(15, 15, 15, 0.75)',
+                backdropFilter: 'blur(8px)',
+                border: '1px solid rgba(255, 255, 255, 0.3)',
+                borderRight: 'none',
+                borderRadius: '4px 0 0 4px',
+                color: '#AAAAAA',
+                fontSize: '1rem',
+                textDecoration: 'none',
+                display: 'flex',
+                alignItems: 'center',
+              }}
+            >
+              Discover student projects…
+            </Link>
             <Link
               href="/browse"
               id="hero-browse-btn"
               style={{
-                display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
-                padding: '0.85rem 2rem', background: '#E50914',
-                color: '#FFFFFF', fontWeight: 700, fontSize: '1rem',
-                borderRadius: '0.6rem', textDecoration: 'none',
-                transition: 'background 0.2s, transform 0.15s',
-                boxShadow: '0 4px 20px rgba(229,9,20,0.35)',
+                padding: '1rem 1.75rem',
+                background: '#E50914',
+                border: 'none',
+                borderRadius: '0 4px 4px 0',
+                color: '#FFFFFF',
+                fontWeight: 700,
+                fontSize: '1.15rem',
+                textDecoration: 'none',
+                whiteSpace: 'nowrap',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                transition: 'background 0.2s',
               }}
+              onMouseEnter={e => e.currentTarget.style.background = '#F40612'}
+              onMouseLeave={e => e.currentTarget.style.background = '#E50914'}
             >
-              Browse Projects <ArrowRight size={18} />
-            </Link>
-            <Link
-              href="/submit"
-              id="hero-submit-btn"
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
-                padding: '0.85rem 2rem',
-                background: 'rgba(255,255,255,0.06)', backdropFilter: 'blur(8px)',
-                border: '1px solid rgba(255,255,255,0.15)',
-                color: '#FFFFFF', fontWeight: 600, fontSize: '1rem',
-                borderRadius: '0.6rem', textDecoration: 'none',
-                transition: 'background 0.2s, border-color 0.2s',
-              }}
-            >
-              Submit Yours
+              Get Started ›
             </Link>
           </div>
+
+          <p style={{
+            color: '#888888',
+            fontSize: '0.8rem',
+            marginBottom: '2rem',
+          }}>
+            Free for all university student innovators.
+          </p>
 
           {/* Stats */}
           {(stats.projects > 0 || stats.categories > 0) && (

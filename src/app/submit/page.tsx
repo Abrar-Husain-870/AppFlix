@@ -6,7 +6,7 @@ import { submitProject } from '@/app/actions/submit'
 import { Upload, X, Loader2, CheckCircle, Globe, GitBranch, Image as ImageIcon } from 'lucide-react'
 import Link from 'next/link'
 
-const PLATFORMS = ['web', 'ios', 'android', 'desktop', 'chrome']
+const PLATFORMS = ['web', 'ios', 'android', 'windows', 'macos', 'linux', 'browser_extension']
 const STAGES    = [
   { value: 'beta',       label: 'Beta',       desc: 'Functional but still being tested' },
   { value: 'production', label: 'Production',  desc: 'Stable and actively maintained' },
@@ -223,6 +223,7 @@ export default function SubmitPage() {
               <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                 {PLATFORMS.map(p => {
                   const active = selectedPlatforms.includes(p)
+                  const label = p.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
                   return (
                     <button
                       key={p}
@@ -235,10 +236,9 @@ export default function SubmitPage() {
                         border: `1px solid ${active ? 'rgba(229,9,20,0.5)' : '#2B2B2B'}`,
                         color: active ? '#FFFFFF' : '#AAAAAA',
                         borderRadius: '9999px', cursor: 'pointer', transition: 'all 0.15s',
-                        textTransform: 'capitalize',
                       }}
                     >
-                      {p}
+                      {label}
                     </button>
                   )
                 })}

@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AppFlix 3D Wall Background</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body,
+    html {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #000000;
+    }
+
+    .netflix-bg-stage {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      background-color: #000000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .perspective-viewport {
+      position: absolute;
+      width: 200vw;
+      height: 200vh;
+      top: -50vh;
+      left: -50vw;
+      perspective: 1200px;
+      perspective-origin: 50% 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .wall-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      transform-style: preserve-3d;
+      /* replace the "transform" property here with the code you just copied from the cutomizable background page, this will reflect the changes to the final output.*/
+      transform: rotateX(22deg) rotateY(-10deg) rotateZ(8deg) scale(1.15);
+      will-change: transform;
+      width: max-content;
+    }
+
+    .poster-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+      transform-style: preserve-3d;
+      width: max-content;
+    }
+
+    .poster-row:nth-child(even) {
+      margin-left: -60px;
+    }
+
+    .poster-card {
+      position: relative;
+      height: 160px;
+      flex-shrink: 0;
+      border-radius: 4px;
+      overflow: hidden;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.8);
+      background-color: #111;
+    }
+
+    .poster-card.landscape {
+      width: 248px;
+    }
+
+    .poster-card.portrait {
+      width: 113px;
+    }
+
+    .poster-card img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      border-radius: 4px;
+    }
+
+    /* Overlays */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 999;
+    }
+
+    .vignette-overlay {
+      background: radial-gradient(circle, rgba(0, 0, 0, 0) 20%, rgba(0, 0, 0, 0.75) 65%, rgba(0, 0, 0, 0.98) 100%);
+    }
+
+    .top-gradient {
+      bottom: auto;
+      height: 180px;
+      background: linear-gradient(180deg, rgba(0, 0, 0, 0.95) 0%, rgba(0, 0, 0, 0) 100%);
+    }
+
+    .bottom-gradient {
+      top: auto;
+      height: 180px;
+      background: linear-gradient(0deg, rgba(0, 0, 0, 0.95) 0%, rgba(0, 0, 0, 0) 100%);
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="netflix-bg-stage">
+    <div class="perspective-viewport">
+      <div class="wall-grid" id="standalone-grid"></div>
+    </div>
+  </div>
+
+  <div class="overlay vignette-overlay"></div>
+  <div class="overlay top-gradient"></div>
+  <div class="overlay bottom-gradient"></div>
+
+  <script>
+    const posterRowsData = [
+      [
+        { file: "Amazon potrait.png", type: "portrait" },
+        { file: "swiggy potrait.png", type: "portrait" },
+        { file: "Postman Landscape.png", type: "landscape" },
+        { file: "linkedin potrait (2).png", type: "portrait" },
+        { file: "among us potrait.png", type: "portrait" },
+        { file: "olx landscape.png", type: "landscape" },
+        { file: "Flipkart Landscape.png", type: "landscape" },
+        { file: "spotify landscape.png", type: "landscape" }
+      ],
+      [
+        { file: "paypal landscape.png", type: "landscape" },
+        { file: "blinkit potrait.png", type: "portrait" },
+        { file: "Reddit Landscape.png", type: "landscape" },
+        { file: "notion potrait.png", type: "portrait" },
+        { file: "netflix potrait.png", type: "portrait" },
+        { file: "Tinder Potrait.png", type: "portrait" },
+        { file: "canva potrait.png", type: "portrait" },
+        { file: "Pinterest Landscape.png", type: "landscape" }
+      ],
+      [
+        { file: "glassdoor potrait.png", type: "portrait" },
+        { file: "Snapchat Landscape.png", type: "landscape" },
+        { file: "rapido potrait.png", type: "portrait" },
+        { file: "Quora potrait.png", type: "portrait" },
+        { file: "telegram potrait.png", type: "portrait" },
+        { file: "Whatsapp Landscape.png", type: "landscape" },
+        { file: "myntra potrait.png", type: "portrait" },
+        { file: "amzon landscape.png", type: "landscape" }
+      ],
+      [
+        { file: "spotify potrait.png", type: "portrait" },
+        { file: "olx potrait.png", type: "portrait" },
+        { file: "tinder landscape.png", type: "landscape" },
+        { file: "Instagram Landscape.png", type: "landscape" },
+        { file: "youtube potrait.png", type: "portrait" },
+        { file: "paypal potrait.png", type: "portrait" },
+        { file: "amongus landscape.png", type: "landscape" },
+        { file: "linkedin potrait.png", type: "portrait" }
+      ],
+      [
+        { file: "pinterest potrait.png", type: "portrait" },
+        { file: "Myntra Landscape.png", type: "landscape" },
+        { file: "zomato potrait.png", type: "portrait" },
+        { file: "X Potrait.png", type: "portrait" },
+        { file: "notion  landscape.png", type: "landscape" },
+        { file: "blinkit landscape.png", type: "landscape" },
+        { file: "swiggy landscape.png", type: "landscape" }
+      ],
+      [
+        { file: "canva landscape.png", type: "landscape" },
+        { file: "linkedin landscape.png", type: "landscape" },
+        { file: "mogodb landscape.png", type: "landscape" },
+        { file: "porter potrait.png", type: "portrait" },
+        { file: "razorpay landscape.png", type: "landscape" },
+        { file: "glassdoor landscape.png", type: "landscape" },
+        { file: "rapido landscape.png", type: "landscape" }
+      ]
+    ];
+
+    const grid = document.getElementById("standalone-grid");
+
+    posterRowsData.forEach((rowPosters) => {
+      const rowEl = document.createElement("div");
+      rowEl.className = "poster-row";
+
+      [...rowPosters, ...rowPosters].forEach((poster) => {
+        const card = document.createElement("div");
+        card.className = `poster-card ${poster.type}`;
+        const img = document.createElement("img");
+        img.src = `posters/${poster.file}`;
+        img.alt = "";
+        img.loading = "eager";
+        card.appendChild(img);
+        rowEl.appendChild(card);
+      });
+
+      grid.appendChild(rowEl);
+    });
+  </script>
+
+</body>
+
+</html>

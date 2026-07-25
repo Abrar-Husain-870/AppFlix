@@ -45,6 +45,7 @@ export default function RootLayout({
       <body
         className="min-h-full flex flex-col"
         style={{ backgroundColor: "#141414", color: "#FFFFFF" }}
+        suppressHydrationWarning
       >
         <Navbar />
         {children}

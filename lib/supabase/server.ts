@@ -1,4 +1,5 @@
 import { createServerClient as createSSRServerClient } from "@supabase/ssr";
+import { createClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 
 /**
@@ -52,6 +53,7 @@ export async function createServerClient() {
   );
 }
 
+
 /**
  * createServiceRoleClient
  *
@@ -60,30 +62,13 @@ export async function createServerClient() {
  * NEVER import this into a client component or expose to the browser.
  */
 export async function createServiceRoleClient() {
-  const cookieStore = await cookies();
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(/^["']|["']$/g, '').trim()!;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY?.replace(/^["']|["']$/g, '').trim()!;
 
-  return createSSRServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll();
-        },
-        setAll(cookiesToSet) {
-          try {
-            cookiesToSet.forEach(({ name, value, options }) => {
-              cookieStore.set(name, value, options);
-            });
-          } catch {
-            // no-op in read-only context
-          }
-        },
-      },
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-      },
-    }
-  );
+  return createClient(url, key, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  });
 }

@@ -1,7 +1,8 @@
 import { createServerClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { CheckCircle, Clock, XCircle, FileText, Edit3, Trash2, Eye } from 'lucide-react'
+import { CheckCircle, Clock, XCircle, FileText, Edit3, Eye } from 'lucide-react'
+import DeleteProjectButton from '@/components/projects/DeleteProjectButton'
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; icon: React.ReactNode }> = {
   draft:    { label: 'Draft',    color: '#AAAAAA', bg: 'rgba(170,170,170,0.1)', icon: <FileText size={12} /> },
@@ -13,14 +14,16 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; 
 export default async function DashboardProjectsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ submitted?: string }>
+  searchParams: Promise<{ submitted?: string; updated?: string; media_updated?: string }>
 }) {
   const supabase = await createServerClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
   const params = await searchParams
-  const justSubmitted = params.submitted === 'true'
+  const justSubmitted    = params.submitted     === 'true'
+  const justUpdated      = params.updated       === 'true'
+  const justMediaUpdated = params.media_updated === 'true'
 
   const { data: projects } = await supabase
     .from('projects')
@@ -56,7 +59,7 @@ export default async function DashboardProjectsPage({
           </Link>
         </div>
 
-        {/* Success banner */}
+        {/* Banners */}
         {justSubmitted && (
           <div style={{
             background: 'rgba(46,204,113,0.1)', border: '1px solid rgba(46,204,113,0.3)',
@@ -66,6 +69,28 @@ export default async function DashboardProjectsPage({
           }}>
             <CheckCircle size={16} />
             Project submitted! It&apos;s now in the admin review queue.
+          </div>
+        )}
+        {justUpdated && (
+          <div style={{
+            background: 'rgba(46,204,113,0.1)', border: '1px solid rgba(46,204,113,0.3)',
+            borderRadius: '0.6rem', padding: '0.85rem 1.1rem',
+            color: '#2ECC71', fontSize: '0.875rem', marginBottom: '1.5rem',
+            display: 'flex', alignItems: 'center', gap: '0.6rem',
+          }}>
+            <CheckCircle size={16} />
+            Project updated successfully! Changes are live.
+          </div>
+        )}
+        {justMediaUpdated && (
+          <div style={{
+            background: 'rgba(243,156,18,0.1)', border: '1px solid rgba(243,156,18,0.3)',
+            borderRadius: '0.6rem', padding: '0.85rem 1.1rem',
+            color: '#F39C12', fontSize: '0.875rem', marginBottom: '1.5rem',
+            display: 'flex', alignItems: 'center', gap: '0.6rem',
+          }}>
+            <Clock size={16} />
+            Media/URL changes submitted! Your project is pending admin re-approval.
           </div>
         )}
 
@@ -160,13 +185,40 @@ export default async function DashboardProjectsPage({
                       ))}
                     </div>
 
-                    {/* Actions */}
-                    {project.status === 'approved' && (
-                      <Link href={`/browse/${project.slug}`} id={`view-project-${project.id}`} title="View live"
-                        style={{ color: '#AAAAAA', display: 'flex', alignItems: 'center' }}>
-                        <Eye size={16} />
+                    {/* Action Buttons */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flexShrink: 0 }}>
+                      {/* View live (approved only) */}
+                      {project.status === 'approved' && (
+                        <Link href={`/browse/${project.slug}`} id={`view-project-${project.id}`} title="View live"
+                          style={{
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            width: '32px', height: '32px', borderRadius: '0.4rem',
+                            color: '#AAAAAA', transition: 'all 0.15s',
+                            border: '1px solid transparent', textDecoration: 'none',
+                          }}
+                        >
+                          <Eye size={15} />
+                        </Link>
+                      )}
+
+                      {/* Edit button */}
+                      <Link
+                        href={`/dashboard/projects/edit/${project.id}`}
+                        id={`edit-project-${project.id}`}
+                        title="Edit project"
+                        style={{
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          width: '32px', height: '32px', borderRadius: '0.4rem',
+                          color: '#AAAAAA', transition: 'all 0.15s',
+                          border: '1px solid transparent', textDecoration: 'none',
+                        }}
+                      >
+                        <Edit3 size={15} />
                       </Link>
-                    )}
+
+                      {/* Delete button with confirmation modal */}
+                      <DeleteProjectButton projectId={project.id} projectName={project.name} />
+                    </div>
                   </div>
                 ))}
               </div>

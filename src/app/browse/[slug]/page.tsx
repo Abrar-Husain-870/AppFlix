@@ -1,4 +1,4 @@
-import { createServerClient } from '@/lib/supabase/server'
+import { createServerClient, createServiceRoleClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import UpvoteButton from '@/components/projects/UpvoteButton'
@@ -20,7 +20,7 @@ const PLATFORM_ICONS: Record<string, React.ReactNode> = {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
-  const supabase = await createServerClient()
+  const supabase = await createServiceRoleClient()
   const { data } = await supabase
     .from('projects')
     .select('name, tagline')
@@ -35,45 +35,56 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function ProjectDetailPage({ params }: Props) {
   const { slug } = await params
-  const supabase = await createServerClient()
+  const supabaseServer = await createServerClient()
+  const supabaseService = await createServiceRoleClient()
 
-  // Fetch project with related data
-  const { data: project } = await supabase
+  // Fetch project with service role client so RLS doesn't hide pending projects from owner/admin preview
+  const { data: project } = await supabaseService
     .from('projects')
     .select(`
-      id, name, slug, tagline, description, icon_url,
-      website_url, github_url, app_store_url, play_store_url,
+      id, user_id, name, slug, tagline, description, icon_url,
+      website_url, github_url, appstore_url, playstore_url,
       upvote_count, view_count, bookmark_count,
       stage, platforms, status, created_at,
       categories(name, slug),
-      profiles(username),
+      profiles!user_id(username),
       project_images(id, image_url, image_type, display_order),
       project_tags(tags(name, slug))
     `)
     .eq('slug', slug)
-    .eq('status', 'approved')
     .is('deleted_at', null)
     .single()
 
   if (!project) notFound()
 
-  // Get current user for upvote/bookmark state
-  const { data: { user } } = await supabase.auth.getUser()
+  // Get current user for auth & status permission check
+  const { data: { user } } = await supabaseServer.auth.getUser()
+
+  let isAdmin = false
+  if (user) {
+    const { data: profile } = await supabaseServer.from('profiles').select('role').eq('id', user.id).single()
+    isAdmin = profile?.role === 'admin'
+  }
+
+  // If project is not approved, only the project owner or admin can view it
+  if (project.status !== 'approved' && project.user_id !== user?.id && !isAdmin) {
+    notFound()
+  }
 
   let isUpvoted = false
   let isBookmarked = false
 
   if (user) {
     const [{ data: upvote }, { data: bookmark }] = await Promise.all([
-      supabase.from('upvotes').select('id').eq('project_id', project.id).eq('user_id', user.id).single(),
-      supabase.from('bookmarks').select('id').eq('project_id', project.id).eq('user_id', user.id).single(),
+      supabaseServer.from('upvotes').select('id').eq('project_id', project.id).eq('user_id', user.id).single(),
+      supabaseServer.from('bookmarks').select('id').eq('project_id', project.id).eq('user_id', user.id).single(),
     ])
     isUpvoted = !!upvote
     isBookmarked = !!bookmark
   }
 
   // Log view event (fire-and-forget — don't await)
-  supabase.from('analytics_events').insert({
+  supabaseService.from('analytics_events').insert({
     project_id: project.id,
     event_type: 'view',
     user_id: user?.id ?? null,
@@ -271,7 +282,7 @@ export default async function ProjectDetailPage({ params }: Props) {
           </div>
 
           {/* Links card */}
-          {(project.github_url || project.app_store_url || project.play_store_url) && (
+          {(project.github_url || project.appstore_url || project.playstore_url) && (
             <div style={{
               background: '#1F1F1F', border: '1px solid #2B2B2B',
               borderRadius: '0.75rem', padding: '1.25rem', marginBottom: '1rem',
@@ -288,8 +299,8 @@ export default async function ProjectDetailPage({ params }: Props) {
                     <GitBranch size={14} /> GitHub Repo
                   </a>
                 )}
-                {project.app_store_url && (
-                  <a href={project.app_store_url} target="_blank" rel="noopener noreferrer" id="project-appstore-link" style={{
+                {project.appstore_url && (
+                  <a href={project.appstore_url} target="_blank" rel="noopener noreferrer" id="project-appstore-link" style={{
                     display: 'flex', alignItems: 'center', gap: '0.5rem',
                     fontSize: '0.85rem', color: '#AAAAAA', textDecoration: 'none',
                     padding: '0.45rem 0.6rem', borderRadius: '0.4rem',
@@ -298,8 +309,8 @@ export default async function ProjectDetailPage({ params }: Props) {
                     <Smartphone size={14} /> App Store
                   </a>
                 )}
-                {project.play_store_url && (
-                  <a href={project.play_store_url} target="_blank" rel="noopener noreferrer" id="project-playstore-link" style={{
+                {project.playstore_url && (
+                  <a href={project.playstore_url} target="_blank" rel="noopener noreferrer" id="project-playstore-link" style={{
                     display: 'flex', alignItems: 'center', gap: '0.5rem',
                     fontSize: '0.85rem', color: '#AAAAAA', textDecoration: 'none',
                     padding: '0.45rem 0.6rem', borderRadius: '0.4rem',

@@ -2,27 +2,63 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { signOut } from '@/app/actions/auth'
-import { Flame, Search, PlusCircle, LayoutDashboard, LogOut, User, Menu, X } from 'lucide-react'
+import {
+  Flame, Search, PlusCircle, LogOut, User, Menu, X, Shield,
+  FolderKanban, BarChart2, Settings, ChevronDown,
+} from 'lucide-react'
 import type { User as SupabaseUser } from '@supabase/supabase-js'
+
+interface Profile {
+  display_name: string | null
+  username: string
+  avatar_url: string | null
+  role: string
+}
 
 export default function Navbar() {
   const [user, setUser] = useState<SupabaseUser | null>(null)
+  const [profile, setProfile] = useState<Profile | null>(null)
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [dropdownOpen, setDropdownOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const pathname = usePathname()
   const router = useRouter()
+  const dropdownRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const supabase = createClient()
-    supabase.auth.getUser().then(({ data }) => setUser(data.user))
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null)
-    })
+    const loadProfile = async (u: SupabaseUser | null) => {
+      setUser(u)
+      if (u) {
+        const { data } = await supabase
+          .from('profiles')
+          .select('display_name, username, avatar_url, role')
+          .eq('id', u.id)
+          .single()
+        setProfile(data)
+      } else {
+        setProfile(null)
+      }
+    }
+
+    supabase.auth.getUser().then(({ data }) => loadProfile(data.user))
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, s) => loadProfile(s?.user ?? null))
     return () => subscription.unsubscribe()
+  }, [])
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setDropdownOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
   useEffect(() => {
@@ -31,12 +67,21 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
+  // Close mobile menu on route change
+  useEffect(() => { setMobileOpen(false); setDropdownOpen(false) }, [pathname])
+
+  const isAdmin = profile?.role === 'admin'
+  const isActive = (href: string) => pathname.startsWith(href)
+
+  // Hide Navbar completely on auth pages (login & signup)
+  if (pathname === '/login' || pathname === '/signup') return null
+
   const navLinks = [
     { href: '/browse', label: 'Browse' },
-    { href: '/submit', label: 'Submit Project' },
+    ...(user ? [{ href: '/submit', label: 'Submit Project' }] : []),
   ]
 
-  const isActive = (href: string) => pathname.startsWith(href)
+  const displayName = profile?.display_name || profile?.username || user?.email?.split('@')[0] || 'Account'
 
   return (
     <nav style={{
@@ -52,119 +97,198 @@ export default function Navbar() {
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       }}>
         {/* Logo */}
-        <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <Flame size={22} style={{ color: '#E50914' }} />
-          <span style={{
-            fontSize: '1.25rem', fontWeight: 900, letterSpacing: '-0.04em',
-            background: 'linear-gradient(135deg, #E50914, #FF6B6B)',
-            WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-          }}>AppFlix</span>
+        <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center' }}>
+          <img
+            src="/assets/app-logos/AppFlix_Name_logo_dark_-without_background.png"
+            alt="AppFlix"
+            style={{
+              height: '95px',
+              width: 'auto',
+              objectFit: 'contain',
+              display: 'block',
+              margin: '-20px 0 -20px -25px',
+              transform: 'scale(1.15)',
+              transformOrigin: 'left center',
+            }}
+          />
         </Link>
 
         {/* Desktop nav links */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }} className="hidden md:flex">
           {navLinks.map(link => (
-            <Link
-              key={link.href}
-              href={link.href}
-              style={{
-                padding: '0.4rem 0.9rem',
-                color: isActive(link.href) ? '#FFFFFF' : '#AAAAAA',
-                fontWeight: isActive(link.href) ? 600 : 400,
-                textDecoration: 'none', fontSize: '0.9rem',
-                borderRadius: '0.4rem',
-                background: isActive(link.href) ? 'rgba(229,9,20,0.12)' : 'transparent',
-                transition: 'color 0.2s, background 0.2s',
-              }}
-            >
+            <Link key={link.href} href={link.href} style={{
+              padding: '0.4rem 0.9rem',
+              color: isActive(link.href) ? '#FFFFFF' : '#AAAAAA',
+              fontWeight: isActive(link.href) ? 600 : 400,
+              textDecoration: 'none', fontSize: '0.9rem',
+              borderRadius: '0.4rem',
+              background: isActive(link.href) ? 'rgba(229,9,20,0.12)' : 'transparent',
+              transition: 'color 0.2s, background 0.2s',
+            }}>
               {link.label}
             </Link>
           ))}
         </div>
 
-        {/* Right: auth actions */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          {/* Search icon */}
+        {/* Right: actions */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+          {/* Search */}
           <button
             id="nav-search-btn"
             onClick={() => router.push('/browse')}
             style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#AAAAAA', display: 'flex', alignItems: 'center', padding: '0.4rem' }}
-            aria-label="Search projects"
+            aria-label="Search"
           >
             <Search size={18} />
           </button>
 
           {user ? (
             <>
-              <Link
-                href="/submit"
-                id="nav-submit-btn"
-                style={{
-                  display: 'none', // hidden on mobile, visible md+
-                  alignItems: 'center', gap: '0.4rem',
-                  padding: '0.45rem 1rem', background: '#E50914',
-                  color: '#FFFFFF', fontWeight: 600, fontSize: '0.85rem',
-                  borderRadius: '0.5rem', textDecoration: 'none',
-                  transition: 'background 0.2s',
-                }}
-                className="hidden md:flex"
-              >
-                <PlusCircle size={15} />
-                Submit
-              </Link>
-              <Link
-                href="/dashboard/projects"
-                id="nav-dashboard-btn"
-                style={{
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  width: '34px', height: '34px',
-                  background: '#262626', border: '1px solid #2B2B2B',
-                  borderRadius: '50%', color: '#AAAAAA',
-                  transition: 'border-color 0.2s, color 0.2s',
-                }}
-                title="Dashboard"
-                aria-label="Dashboard"
-              >
-                <User size={16} />
-              </Link>
-              <form action={signOut}>
-                <button
-                  id="nav-signout-btn"
-                  type="submit"
+              {/* Admin badge */}
+              {isAdmin && (
+                <Link href="/admin/queue" id="nav-admin-btn" title="Admin Queue"
                   style={{
-                    display: 'flex', alignItems: 'center', gap: '0.35rem',
-                    background: 'none', border: 'none', cursor: 'pointer',
-                    color: '#AAAAAA', fontSize: '0.85rem', padding: '0.4rem',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    width: '32px', height: '32px',
+                    background: 'rgba(229,9,20,0.15)', border: '1px solid rgba(229,9,20,0.4)',
+                    borderRadius: '50%', color: '#E50914', transition: 'all 0.2s',
                   }}
-                  title="Sign out"
                 >
-                  <LogOut size={16} />
+                  <Shield size={15} />
+                </Link>
+              )}
+
+              {/* Avatar dropdown */}
+              <div ref={dropdownRef} style={{ position: 'relative' }}>
+                <button
+                  id="nav-avatar-btn"
+                  type="button"
+                  onClick={() => setDropdownOpen(!dropdownOpen)}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '0.4rem',
+                    background: dropdownOpen ? '#262626' : 'transparent',
+                    border: `1px solid ${dropdownOpen ? '#3B3B3B' : 'transparent'}`,
+                    borderRadius: '9999px', padding: '3px 10px 3px 3px',
+                    cursor: 'pointer', transition: 'all 0.2s',
+                  }}
+                >
+                  {/* Avatar circle */}
+                  <div style={{
+                    width: '30px', height: '30px', borderRadius: '50%',
+                    background: '#262626', border: '1px solid #3B3B3B',
+                    overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    flexShrink: 0,
+                  }}>
+                    {profile?.avatar_url
+                      ? <img src={profile.avatar_url} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      : <User size={16} style={{ color: '#AAAAAA' }} />}
+                  </div>
+                  <span style={{ fontSize: '0.82rem', fontWeight: 500, color: '#FFFFFF', maxWidth: '90px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} className="hidden md:block">
+                    {displayName}
+                  </span>
+                  <ChevronDown size={13} style={{ color: '#AAAAAA', transform: dropdownOpen ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 0.2s' }} className="hidden md:block" />
                 </button>
-              </form>
+
+                {/* Dropdown panel */}
+                {dropdownOpen && (
+                  <div style={{
+                    position: 'absolute', top: 'calc(100% + 8px)', right: 0,
+                    width: '220px',
+                    background: '#1F1F1F', border: '1px solid #2B2B2B',
+                    borderRadius: '0.75rem', boxShadow: '0 16px 40px rgba(0,0,0,0.6)',
+                    overflow: 'hidden', zIndex: 100,
+                    animation: 'dropdownIn 0.15s ease',
+                  }}>
+                    {/* User info header */}
+                    <div style={{ padding: '0.85rem 1rem', borderBottom: '1px solid #2B2B2B' }}>
+                      <p style={{ fontSize: '0.875rem', fontWeight: 700, color: '#FFFFFF', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {displayName}
+                      </p>
+                      <p style={{ fontSize: '0.75rem', color: '#666', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {user.email}
+                      </p>
+                    </div>
+
+                    {/* Menu items */}
+                    <div style={{ padding: '0.35rem' }}>
+                      {[
+                        { href: '/account',               icon: <Settings size={14} />,      label: 'My Account' },
+                        { href: '/dashboard/projects',    icon: <FolderKanban size={14} />,  label: 'My Projects' },
+                        { href: '/dashboard/analytics',   icon: <BarChart2 size={14} />,     label: 'Analytics' },
+                        { href: '/submit',                icon: <PlusCircle size={14} />,    label: 'Submit Project' },
+                        ...(isAdmin ? [{ href: '/admin/queue', icon: <Shield size={14} />, label: 'Admin Queue' }] : []),
+                      ].map(item => (
+                        <Link
+                          key={item.href}
+                          href={item.href}
+                          onClick={() => setDropdownOpen(false)}
+                          style={{
+                            display: 'flex', alignItems: 'center', gap: '0.6rem',
+                            padding: '0.55rem 0.75rem', borderRadius: '0.4rem',
+                            color: isActive(item.href) ? '#FFFFFF' : '#AAAAAA',
+                            background: isActive(item.href) ? 'rgba(229,9,20,0.1)' : 'transparent',
+                            fontWeight: isActive(item.href) ? 600 : 400,
+                            fontSize: '0.875rem', textDecoration: 'none',
+                            transition: 'background 0.15s, color 0.15s',
+                          }}
+                          onMouseEnter={e => {
+                            if (!isActive(item.href)) {
+                              e.currentTarget.style.background = '#262626'
+                              e.currentTarget.style.color = '#FFFFFF'
+                            }
+                          }}
+                          onMouseLeave={e => {
+                            if (!isActive(item.href)) {
+                              e.currentTarget.style.background = 'transparent'
+                              e.currentTarget.style.color = '#AAAAAA'
+                            }
+                          }}
+                        >
+                          <span style={{ color: 'inherit', display: 'flex' }}>{item.icon}</span>
+                          {item.label}
+                        </Link>
+                      ))}
+                    </div>
+
+                    {/* Sign out */}
+                    <div style={{ borderTop: '1px solid #2B2B2B', padding: '0.35rem' }}>
+                      <form action={signOut}>
+                        <button
+                          id="dropdown-signout-btn"
+                          type="submit"
+                          style={{
+                            width: '100%', display: 'flex', alignItems: 'center', gap: '0.6rem',
+                            padding: '0.55rem 0.75rem', borderRadius: '0.4rem',
+                            background: 'transparent', border: 'none',
+                            color: '#E50914', fontSize: '0.875rem', fontWeight: 500,
+                            cursor: 'pointer', transition: 'background 0.15s',
+                          }}
+                          onMouseEnter={e => e.currentTarget.style.background = 'rgba(229,9,20,0.1)'}
+                          onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                        >
+                          <LogOut size={14} /> Sign Out
+                        </button>
+                      </form>
+                    </div>
+                  </div>
+                )}
+              </div>
             </>
           ) : (
             <>
-              <Link
-                href="/login"
-                id="nav-login-btn"
-                style={{
-                  color: '#AAAAAA', fontWeight: 500, fontSize: '0.9rem',
-                  textDecoration: 'none', padding: '0.45rem 0.75rem',
-                  transition: 'color 0.2s',
-                }}
-              >
+              <Link href="/login" id="nav-login-btn" style={{
+                color: '#AAAAAA', fontWeight: 500, fontSize: '0.9rem',
+                textDecoration: 'none', padding: '0.45rem 0.75rem',
+                transition: 'color 0.2s',
+              }}>
                 Sign in
               </Link>
-              <Link
-                href="/signup"
-                id="nav-signup-btn"
-                style={{
-                  padding: '0.45rem 1rem', background: '#E50914',
-                  color: '#FFFFFF', fontWeight: 600, fontSize: '0.875rem',
-                  borderRadius: '0.5rem', textDecoration: 'none',
-                  transition: 'background 0.2s',
-                }}
-              >
+              <Link href="/signup" id="nav-signup-btn" style={{
+                padding: '0.45rem 1rem', background: '#E50914',
+                color: '#FFFFFF', fontWeight: 600, fontSize: '0.875rem',
+                borderRadius: '0.5rem', textDecoration: 'none',
+                transition: 'background 0.2s',
+              }}>
                 Get started
               </Link>
             </>
@@ -174,7 +298,7 @@ export default function Navbar() {
           <button
             id="nav-mobile-menu-btn"
             onClick={() => setMobileOpen(!mobileOpen)}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#AAAAAA', display: 'flex' }}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#AAAAAA', display: 'flex', padding: '0.3rem' }}
             className="md:hidden"
             aria-label="Toggle menu"
           >
@@ -187,16 +311,53 @@ export default function Navbar() {
       {mobileOpen && (
         <div style={{
           borderTop: '1px solid #2B2B2B',
-          background: '#1F1F1F', padding: '1rem 1.5rem',
-          display: 'flex', flexDirection: 'column', gap: '0.25rem',
+          background: '#1A1A1A', padding: '0.75rem 1rem',
+          display: 'flex', flexDirection: 'column', gap: '0.15rem',
         }}>
-          {navLinks.map(link => (
+          {/* User info row on mobile */}
+          {user && profile && (
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: '0.75rem',
+              padding: '0.65rem 0.75rem', marginBottom: '0.35rem',
+              borderBottom: '1px solid #2B2B2B', paddingBottom: '0.85rem',
+            }}>
+              <div style={{
+                width: '36px', height: '36px', borderRadius: '50%',
+                background: '#262626', border: '1px solid #2B2B2B',
+                overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                flexShrink: 0,
+              }}>
+                {profile.avatar_url
+                  ? <img src={profile.avatar_url} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  : <User size={16} style={{ color: '#AAAAAA' }} />}
+              </div>
+              <div>
+                <p style={{ fontSize: '0.875rem', fontWeight: 600, color: '#FFFFFF' }}>{displayName}</p>
+                <p style={{ fontSize: '0.75rem', color: '#666' }}>{user.email}</p>
+              </div>
+            </div>
+          )}
+
+          {[
+            { href: '/browse',                label: 'Browse' },
+            ...(user ? [
+              { href: '/account',             label: '⚙️ My Account' },
+              { href: '/submit',              label: '+ Submit Project' },
+              { href: '/dashboard/projects',  label: 'My Projects' },
+              { href: '/dashboard/analytics', label: 'Analytics' },
+            ] : [
+              { href: '/login',   label: 'Sign In' },
+              { href: '/signup',  label: 'Get Started' },
+            ]),
+            ...(isAdmin ? [{ href: '/admin/queue', label: '🛡 Admin Queue' }] : []),
+          ].map(link => (
             <Link
               key={link.href}
               href={link.href}
               onClick={() => setMobileOpen(false)}
               style={{
-                padding: '0.65rem 0.75rem', color: isActive(link.href) ? '#FFFFFF' : '#AAAAAA',
+                padding: '0.65rem 0.75rem',
+                color: isActive(link.href) ? '#FFFFFF' : '#AAAAAA',
                 fontWeight: isActive(link.href) ? 600 : 400,
                 textDecoration: 'none', fontSize: '0.95rem',
                 borderRadius: '0.4rem',
@@ -206,8 +367,29 @@ export default function Navbar() {
               {link.label}
             </Link>
           ))}
+
+          {user && (
+            <form action={signOut} style={{ marginTop: '0.35rem', borderTop: '1px solid #2B2B2B', paddingTop: '0.5rem' }}>
+              <button type="submit" style={{
+                width: '100%', padding: '0.65rem 0.75rem', textAlign: 'left',
+                background: 'transparent', border: 'none', cursor: 'pointer',
+                color: '#E50914', fontSize: '0.95rem', fontWeight: 500,
+                display: 'flex', alignItems: 'center', gap: '0.5rem',
+                borderRadius: '0.4rem',
+              }}>
+                <LogOut size={15} /> Sign Out
+              </button>
+            </form>
+          )}
         </div>
       )}
+
+      <style>{`
+        @keyframes dropdownIn {
+          from { opacity: 0; transform: translateY(-6px) scale(0.97); }
+          to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
+      `}</style>
     </nav>
   )
 }

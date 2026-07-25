@@ -22,6 +22,12 @@ export async function upvoteProject(projectId: string) {
   } else {
     // Add upvote
     await supabase.from('upvotes').insert({ project_id: projectId, user_id: user.id })
+    // Log analytics event for trend tracking
+    await supabase.from('analytics_events').insert({
+      project_id: projectId,
+      event_type: 'upvote',
+      user_id: user.id,
+    })
   }
 
   revalidatePath('/browse')
