@@ -57,10 +57,12 @@ export default function NetflixTrendingRow({ projects, title = 'Trending Now' }:
       width: '100%',
       boxSizing: 'border-box',
     }}>
+      {/* Container aligned with the rest of the page */}
       <div style={{
         maxWidth: '1360px',
         margin: '0 auto',
         padding: '0 2rem',
+        boxSizing: 'border-box',
       }}>
         {/* Title */}
         <h2 style={{
@@ -85,7 +87,7 @@ export default function NetflixTrendingRow({ projects, title = 'Trending Now' }:
               aria-label="Scroll left"
               style={{
                 position: 'absolute',
-                left: '-2.2rem',
+                left: '-1rem',
                 top: '50%',
                 transform: 'translateY(-50%)',
                 zIndex: 30,
@@ -117,7 +119,7 @@ export default function NetflixTrendingRow({ projects, title = 'Trending Now' }:
               aria-label="Scroll right"
               style={{
                 position: 'absolute',
-                right: '-2.2rem',
+                right: '-1rem',
                 top: '50%',
                 transform: 'translateY(-50%)',
                 zIndex: 30,
@@ -153,8 +155,12 @@ export default function NetflixTrendingRow({ projects, title = 'Trending Now' }:
               overflowY: 'hidden',
               scrollbarWidth: 'none',
               msOverflowStyle: 'none',
-              padding: '1.25rem 2.5rem 2.5rem',
+              /* 2.5rem (40px) left padding provides 32px breathing room for the rank numbers floating at -8px */
+              padding: '1.25rem 2.5rem 2.5rem 2.5rem',
+              scrollPaddingLeft: '2.5rem',
+              scrollPaddingRight: '2.5rem',
               scrollSnapType: 'x mandatory',
+              boxSizing: 'border-box',
             }}
             className="no-scrollbar"
           >
