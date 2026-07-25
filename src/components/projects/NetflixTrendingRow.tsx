@@ -228,16 +228,15 @@ export default function NetflixTrendingRow({ projects, title = 'Trending Now' }:
                         }}
                       />
                     ) : iconSrc ? (
-                      /* Option B: Cinematic 3D Glassmorphic Ambient Canvas for Square App Logos */
+                      /* Option B: App Logo Badge on "poster backgronds for apps.jpg" Background */
                       <div style={{
                         position: 'absolute',
                         inset: 0,
                         overflow: 'hidden',
-                        background: 'linear-gradient(135deg, #181926 0%, #0F172A 50%, #080C14 100%)',
                       }}>
-                        {/* Ambient Blurred Logo Background Glow */}
+                        {/* Poster Background Image Asset */}
                         <img
-                          src={iconSrc}
+                          src="/assets/poster backgronds for apps.jpg"
                           alt=""
                           style={{
                             position: 'absolute',
@@ -245,30 +244,27 @@ export default function NetflixTrendingRow({ projects, title = 'Trending Now' }:
                             width: '100%',
                             height: '100%',
                             objectFit: 'cover',
-                            filter: 'blur(20px) brightness(0.4) saturate(1.5)',
-                            transform: 'scale(1.5)',
-                            opacity: 0.85,
                           }}
                         />
                         <div style={{
                           position: 'absolute',
                           inset: 0,
-                          background: 'radial-gradient(circle at 50% 35%, transparent 10%, rgba(10,10,15,0.7) 80%)',
+                          background: 'linear-gradient(to bottom, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.65) 100%)',
                         }} />
 
                         {/* Floating Centerpiece Glassmorphic Squircle Badge */}
                         <div style={{
                           position: 'absolute',
-                          top: '36%',
+                          top: '42%',
                           left: '50%',
                           transform: 'translate(-50%, -50%)',
-                          width: '105px',
-                          height: '105px',
-                          borderRadius: '24px',
+                          width: '125px',
+                          height: '125px',
+                          borderRadius: '26px',
                           overflow: 'hidden',
-                          border: '1px solid rgba(255, 255, 255, 0.25)',
-                          boxShadow: '0 12px 28px rgba(0, 0, 0, 0.75)',
-                          background: 'rgba(255, 255, 255, 0.1)',
+                          border: '1px solid rgba(255, 255, 255, 0.3)',
+                          boxShadow: '0 12px 28px rgba(0, 0, 0, 0.85)',
+                          background: 'rgba(255, 255, 255, 0.15)',
                           backdropFilter: 'blur(10px)',
                           zIndex: 2,
                           display: 'flex',
@@ -284,66 +280,77 @@ export default function NetflixTrendingRow({ projects, title = 'Trending Now' }:
                               width: '100%',
                               height: '100%',
                               objectFit: 'contain',
-                              borderRadius: '10px',
+                              borderRadius: '12px',
                             }}
                           />
                         </div>
                       </div>
                     ) : (
-                      /* Option C: Fallback Brand Gradient Canvas */
+                      /* Option C: Fallback with "poster backgronds for apps.jpg" Background */
                       <div style={{
-                        width: '100%',
-                        height: '100%',
-                        background: 'linear-gradient(135deg, #2A080C 0%, #120A14 50%, #0A0A0F 100%)',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        padding: '1rem',
-                        textAlign: 'center',
-                        boxSizing: 'border-box',
+                        position: 'absolute',
+                        inset: 0,
+                        overflow: 'hidden',
                       }}>
+                        <img
+                          src="/assets/poster backgronds for apps.jpg"
+                          alt=""
+                          style={{
+                            position: 'absolute',
+                            inset: 0,
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover',
+                          }}
+                        />
                         <div style={{
-                          width: '68px',
-                          height: '68px',
-                          borderRadius: '16px',
-                          background: 'rgba(229, 9, 20, 0.25)',
-                          border: '1px solid rgba(229, 9, 20, 0.5)',
+                          position: 'absolute',
+                          inset: 0,
+                          background: 'linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.7) 100%)',
                           display: 'flex',
-                          alignItems: 'center',
+                          flexDirection: 'column',
                           justifyContent: 'center',
-                          marginBottom: '0.75rem',
-                          color: '#E50914',
-                          fontWeight: 900,
-                          fontSize: '1.8rem',
-                          boxShadow: '0 8px 20px rgba(229, 9, 20, 0.2)',
+                          alignItems: 'center',
+                          padding: '1rem',
+                          boxSizing: 'border-box',
                         }}>
-                          {project.name.charAt(0)}
+                          <div style={{
+                            width: '88px',
+                            height: '88px',
+                            borderRadius: '20px',
+                            background: 'rgba(229, 9, 20, 0.35)',
+                            border: '1px solid rgba(229, 9, 20, 0.6)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            marginBottom: '0.75rem',
+                            color: '#FFFFFF',
+                            fontWeight: 900,
+                            fontSize: '2.2rem',
+                            boxShadow: '0 8px 20px rgba(0, 0, 0, 0.6)',
+                          }}>
+                            {project.name.charAt(0)}
+                          </div>
                         </div>
                       </div>
                     )}
 
-                    {/* AppFlix Netflix Red N Logo Stamp Top-Left */}
-                    <div style={{
-                      position: 'absolute',
-                      top: '8px',
-                      left: '8px',
-                      width: '20px',
-                      height: '24px',
-                      background: '#E50914',
-                      color: '#FFFFFF',
-                      fontSize: '0.8rem',
-                      fontWeight: 900,
-                      fontFamily: 'Impact, sans-serif',
-                      borderRadius: '2px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      boxShadow: '0 2px 8px rgba(0,0,0,0.8)',
-                      zIndex: 2,
-                    }}>
-                      A
-                    </div>
+                    {/* AppFlix Circular Light Icon Stamp (Top-Left Area) */}
+                    <img
+                      src="/assets/app-logos/AppFlix_circular_Icon__light_-removebg-preview.png"
+                      alt="AppFlix"
+                      style={{
+                        position: 'absolute',
+                        top: '16px',
+                        left: '12px',
+                        width: '32px',
+                        height: '32px',
+                        objectFit: 'contain',
+                        filter: 'drop-shadow(0 2px 6px rgba(0, 0, 0, 0.85))',
+                        zIndex: 5,
+                        pointerEvents: 'none',
+                      }}
+                    />
 
                     {/* Bottom Content Gradient Overlay (4rem left padding clears rank number completely) */}
                     <div style={{

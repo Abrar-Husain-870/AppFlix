@@ -3,6 +3,7 @@ import { createServerClient } from '@/lib/supabase/server'
 import { Flame, ArrowRight, Zap, Shield, BarChart3, Users } from 'lucide-react'
 import NetflixHorizonDivider from '@/components/ui/NetflixHorizonDivider'
 import NetflixTrendingRow from '@/components/projects/NetflixTrendingRow'
+import HeroGetStartedButton from '@/components/ui/HeroGetStartedButton'
 
 async function getFeaturedProjects() {
   try {
@@ -13,7 +14,7 @@ async function getFeaturedProjects() {
       .eq('status', 'approved')
       .is('deleted_at', null)
       .order('upvote_count', { ascending: false })
-      .limit(4)
+      .limit(10)
     return data ?? []
   } catch {
     return []
@@ -147,29 +148,7 @@ export default async function HomePage() {
             >
               Discover student projects…
             </Link>
-            <Link
-              href="/browse"
-              id="hero-browse-btn"
-              style={{
-                padding: '1rem 1.75rem',
-                background: '#E50914',
-                border: 'none',
-                borderRadius: '0 4px 4px 0',
-                color: '#FFFFFF',
-                fontWeight: 700,
-                fontSize: '1.15rem',
-                textDecoration: 'none',
-                whiteSpace: 'nowrap',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.4rem',
-                transition: 'background 0.2s',
-              }}
-              onMouseEnter={e => e.currentTarget.style.background = '#F40612'}
-              onMouseLeave={e => e.currentTarget.style.background = '#E50914'}
-            >
-              Get Started ›
-            </Link>
+            <HeroGetStartedButton />
           </div>
 
           <p style={{
