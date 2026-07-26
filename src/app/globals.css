@@ -347,27 +347,30 @@ body {
     font-size: 0.95rem !important;
   }
   .trending-scroll-row {
-    padding-left: 2.2rem !important;
-    padding-right: 1.5rem !important;
+    padding-left: 32px !important;
+    padding-right: 32px !important;
+    scroll-padding-left: 32px !important;
+    scroll-padding-right: 32px !important;
     gap: 1.25rem !important;
+    box-sizing: border-box !important;
   }
   .trending-card-item {
     width: clamp(145px, 44vw, 180px) !important;
     height: clamp(195px, 58vw, 240px) !important;
   }
   .trending-poster-card {
-    width: 78% !important;
+    width: 82% !important;
     right: 0 !important;
   }
   .trending-rank-num {
-    left: -18px !important;
+    left: 8px !important;
     bottom: -10px !important;
-    font-size: 5.8rem !important;
+    font-size: 5rem !important;
     line-height: 0.8 !important;
-    -webkit-text-stroke: 2.5px #FFFFFF !important;
+    -webkit-text-stroke: 1px #D4D4D4 !important;
     color: #000000 !important;
     z-index: 10 !important;
-    filter: drop-shadow(3px 5px 10px rgba(0, 0, 0, 0.95)) !important;
+    filter: drop-shadow(2px 4px 8px rgba(0, 0, 0, 0.95)) !important;
   }
 }
 

@@ -155,7 +155,9 @@ export default function NetflixTrendingRow({ projects, title = 'Trending Now' }:
               overflowY: 'hidden',
               scrollbarWidth: 'none',
               msOverflowStyle: 'none',
-              padding: '0.75rem 1.25rem 1.75rem 1.5rem',
+              padding: '0.75rem 32px 1.75rem 32px',
+              scrollPaddingLeft: '32px',
+              scrollPaddingRight: '32px',
               scrollSnapType: 'x mandatory',
               boxSizing: 'border-box',
             }}
