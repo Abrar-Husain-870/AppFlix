@@ -7,6 +7,7 @@ import { TrendingUp, Clock, Flame, ChevronLeft, ChevronRight, Bookmark } from 'l
 import type { User } from '@supabase/supabase-js'
 import NetflixHorizonDivider from '@/components/ui/NetflixHorizonDivider'
 import NetflixTrendingRow from '@/components/projects/NetflixTrendingRow'
+import NetflixFooterCTA from '@/components/ui/NetflixFooterCTA'
 
 interface Category {
   id: number
@@ -218,13 +219,6 @@ export default function BrowsePage() {
           maxWidth: '720px',
           width: '100%',
         }}>
-          <p style={{
-            fontSize: '0.82rem', fontWeight: 700, letterSpacing: '0.18em',
-            color: '#E50914', textTransform: 'uppercase', marginBottom: '1.25rem',
-          }}>
-            🔥 The Product Hunt for Your University
-          </p>
-
           <h1 style={{
             fontSize: 'clamp(2.4rem, 7vw, 5rem)',
             fontWeight: 900,
@@ -540,6 +534,9 @@ export default function BrowsePage() {
           </div>
         </div>
       </div>
+
+      {/* ── Footer ───────────────────────────────────────────────────────────── */}
+      <NetflixFooterCTA isAuthenticated={!!user} />
     </div>
   )
 }

@@ -44,8 +44,17 @@ const FEATURES = [
   { icon: <Shield size={22} style={{ color: '#E50914' }} />, title: 'Admin Reviewed', desc: 'Every submission is reviewed to keep the showcase high quality.' },
 ]
 
-export default async function HomePage() {
-  const [featured, stats] = await Promise.all([getFeaturedProjects(), getStats()])
+export default function HomePage() {
+  return <HomeContent />
+}
+
+async function HomeContent() {
+  const supabase = await createServerClient()
+  const [{ data: { user } }, featured, stats] = await Promise.all([
+    supabase.auth.getUser(),
+    getFeaturedProjects(),
+    getStats(),
+  ])
 
   return (
     <main style={{ minHeight: '100vh', background: '#141414' }}>
@@ -88,18 +97,6 @@ export default async function HomePage() {
         }} />
 
         <div style={{ position: 'relative', zIndex: 2, maxWidth: '760px', margin: '0 auto' }}>
-          {/* Badge */}
-          <div style={{
-            display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
-            background: 'rgba(229,9,20,0.12)', border: '1px solid rgba(229,9,20,0.3)',
-            borderRadius: '9999px', padding: '0.35rem 1rem',
-            color: '#E50914', fontSize: '0.8rem', fontWeight: 700,
-            letterSpacing: '0.04em', marginBottom: '1.5rem',
-          }}>
-            <Flame size={13} />
-            The Product Hunt for Your University
-          </div>
-
           {/* Headline */}
           <h1 style={{
             fontSize: 'clamp(2.5rem, 6vw, 4.5rem)', fontWeight: 900,
@@ -218,13 +215,13 @@ export default async function HomePage() {
             {(featured as any[]).map((project) => (
               <Link key={project.id} href={`/browse/${project.slug}`} style={{ textDecoration: 'none', display: 'block' }}>
                 <div className="card-hover" style={{
-                  background: '#1F1F1F', border: '1px solid #2B2B2B', borderRadius: '0.75rem',
+                  background: 'linear-gradient(145deg, #0F0F0F 0%, #080808 100%)', border: '1px solid rgba(255, 255, 255, 0.07)', borderRadius: '0.75rem',
                   padding: '1.1rem 1.4rem', minHeight: '88px', display: 'flex', gap: '1.1rem', alignItems: 'center',
                   boxSizing: 'border-box',
                 }}>
                   <div style={{
                     width: '52px', height: '52px', borderRadius: '0.75rem',
-                    background: '#262626', border: '1px solid #2B2B2B',
+                    background: '#161616', border: '1px solid rgba(255, 255, 255, 0.1)',
                     flexShrink: 0, overflow: 'hidden',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                   }}>
@@ -270,7 +267,7 @@ export default async function HomePage() {
       </div>
 
       {/* ── Netflix Get Started CTA Form & Black Footer Area ────────────────── */}
-      <NetflixFooterCTA />
+      <NetflixFooterCTA isAuthenticated={!!user} />
     </main>
   )
 }

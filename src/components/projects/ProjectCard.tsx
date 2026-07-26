@@ -38,11 +38,11 @@ export default function ProjectCard({ project, isUpvoted = false, isAuthenticate
   return (
     <div
       style={{
-        background: 'linear-gradient(145deg, #1A1A1A 0%, #111111 100%)',
+        background: 'linear-gradient(145deg, #0F0F0F 0%, #080808 100%)',
         borderRadius: '0.85rem',
         overflow: 'hidden',
         position: 'relative',
-        border: hovered ? '1px solid #E50914' : '1px solid rgba(255, 255, 255, 0.08)',
+        border: hovered ? '1px solid #E50914' : '1px solid rgba(255, 255, 255, 0.07)',
         transform: hovered ? 'translateY(-5px) scale(1.015)' : 'translateY(0) scale(1)',
         boxShadow: hovered
           ? '0 16px 36px rgba(229, 9, 20, 0.35), 0 6px 16px rgba(0, 0, 0, 0.9)'
@@ -78,7 +78,7 @@ export default function ProjectCard({ project, isUpvoted = false, isAuthenticate
             width: '54px',
             height: '54px',
             borderRadius: '14px',
-            background: '#222222',
+            background: '#161616',
             border: '1px solid rgba(255, 255, 255, 0.12)',
             overflow: 'hidden',
             flexShrink: 0,
@@ -216,7 +216,7 @@ export default function ProjectCard({ project, isUpvoted = false, isAuthenticate
               style={{
                 fontSize: '0.7rem',
                 color: '#888888',
-                background: '#222222',
+                background: '#161616',
                 border: '1px solid rgba(255, 255, 255, 0.08)',
                 padding: '0.2rem 0.55rem',
                 borderRadius: '0.35rem',

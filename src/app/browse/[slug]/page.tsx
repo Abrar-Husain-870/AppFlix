@@ -5,6 +5,8 @@ import UpvoteButton from '@/components/projects/UpvoteButton'
 import BookmarkButton from '@/components/projects/BookmarkButton'
 import { Globe, GitBranch, ExternalLink, Calendar, Tag, Monitor, Smartphone, Pencil } from 'lucide-react'
 import ProductGallery from '@/components/projects/ProductGallery'
+import AdminDeleteButton from '@/components/admin/AdminDeleteButton'
+import ReportModal from '@/components/projects/ReportModal'
 import type { Metadata } from 'next'
 
 interface Props {
@@ -63,7 +65,7 @@ export default async function ProjectDetailPage({ params }: Props) {
 
   let isAdmin = false
   if (user) {
-    const { data: profile } = await supabaseServer.from('profiles').select('role').eq('id', user.id).single()
+    const { data: profile } = await supabaseService.from('profiles').select('role').eq('id', user.id).single()
     isAdmin = profile?.role === 'admin'
   }
 
@@ -108,7 +110,61 @@ export default async function ProjectDetailPage({ params }: Props) {
         borderBottom: '1px solid #2B2B2B',
         padding: '2.5rem 1.5rem',
       }}>
-        <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'flex', gap: '1.5rem', alignItems: 'flex-start', flexWrap: 'wrap' }}>
+        <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
+          {project.status !== 'approved' && (
+            <div style={{
+              background: project.status === 'rejected' ? 'rgba(239, 68, 68, 0.15)' : 'rgba(243, 156, 18, 0.15)',
+              border: project.status === 'rejected' ? '1px solid rgba(239, 68, 68, 0.35)' : '1px solid rgba(243, 156, 18, 0.35)',
+              borderRadius: '0.75rem',
+              padding: '1rem 1.25rem',
+              marginBottom: '1.75rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: '1rem',
+            }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <span style={{
+                    fontSize: '0.9rem',
+                    fontWeight: 800,
+                    color: project.status === 'rejected' ? '#EF4444' : '#F39C12',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.04em',
+                  }}>
+                    {project.status === 'rejected' ? '❌ App Rejected' : '⏳ Pending Review'}
+                  </span>
+                  {isAdmin && (
+                    <span style={{ fontSize: '0.7rem', background: '#E50914', color: '#FFF', fontWeight: 700, padding: '0.1rem 0.4rem', borderRadius: '4px' }}>
+                      ADMIN PREVIEW
+                    </span>
+                  )}
+                </div>
+                <p style={{ fontSize: '0.85rem', color: '#DDDDDD', margin: '0.25rem 0 0 0' }}>
+                  This app is currently status <strong style={{ color: '#FFF' }}>&quot;{project.status}&quot;</strong> and is not yet publicly visible on the browse directory.
+                </p>
+              </div>
+
+              <Link
+                href="/admin/queue"
+                style={{
+                  fontSize: '0.8rem',
+                  fontWeight: 700,
+                  color: '#FFFFFF',
+                  background: '#262626',
+                  border: '1px solid #333333',
+                  padding: '0.45rem 0.9rem',
+                  borderRadius: '0.4rem',
+                  textDecoration: 'none',
+                }}
+              >
+                Go to Admin Queue →
+              </Link>
+            </div>
+          )}
+
+          <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'flex-start', flexWrap: 'wrap' }}>
           {/* Icon */}
           <div style={{
             width: '80px', height: '80px', borderRadius: '1.1rem',
@@ -183,7 +239,13 @@ export default async function ProjectDetailPage({ params }: Props) {
               initialBookmarked={isBookmarked}
               requireAuth={!user}
             />
-            {user && (project.user_id === user.id || isAdmin) && (
+
+            <ReportModal
+              projectId={project.id}
+              appName={project.name}
+              requireAuth={!user}
+            />
+            {user && project.user_id === user.id && (
               <Link
                 href={`/dashboard/projects/edit/${project.id}`}
                 id="edit-app-btn"
@@ -199,6 +261,10 @@ export default async function ProjectDetailPage({ params }: Props) {
               >
                 <Pencil size={14} style={{ color: '#E50914' }} /> Edit App
               </Link>
+            )}
+
+            {isAdmin && (
+              <AdminDeleteButton projectId={project.id} appName={project.name} />
             )}
             {project.website_url && (
               <a
@@ -220,6 +286,7 @@ export default async function ProjectDetailPage({ params }: Props) {
           </div>
         </div>
       </div>
+    </div>
 
       {/* Main body */}
       <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '2rem 1.5rem', display: 'flex', gap: '2rem', alignItems: 'flex-start', flexWrap: 'wrap' }}>
@@ -266,16 +333,17 @@ export default async function ProjectDetailPage({ params }: Props) {
         <aside style={{ width: '220px', flexShrink: 0 }}>
           {/* Stats card */}
           <div style={{
-            background: '#1F1F1F', border: '1px solid #2B2B2B',
+            background: 'linear-gradient(145deg, #0F0F0F 0%, #080808 100%)',
+            border: '1px solid rgba(255, 255, 255, 0.07)',
             borderRadius: '0.75rem', padding: '1.25rem', marginBottom: '1rem',
           }}>
-            <h3 style={{ fontSize: '0.7rem', fontWeight: 700, color: '#555', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '0.75rem' }}>Stats</h3>
+            <h3 style={{ fontSize: '0.7rem', fontWeight: 800, color: '#777777', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '0.75rem' }}>Stats</h3>
             {[
               { label: 'Upvotes',   value: project.upvote_count },
               { label: 'Views',     value: project.view_count },
               { label: 'Bookmarks', value: project.bookmark_count },
             ].map(s => (
-              <div key={s.label} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0', borderBottom: '1px solid #2B2B2B' }}>
+              <div key={s.label} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0', borderBottom: '1px solid rgba(255, 255, 255, 0.06)' }}>
                 <span style={{ fontSize: '0.82rem', color: '#AAAAAA' }}>{s.label}</span>
                 <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#FFFFFF' }}>{s.value ?? 0}</span>
               </div>
@@ -285,10 +353,11 @@ export default async function ProjectDetailPage({ params }: Props) {
           {/* Links card */}
           {(project.github_url || project.appstore_url || project.playstore_url) && (
             <div style={{
-              background: '#1F1F1F', border: '1px solid #2B2B2B',
+              background: 'linear-gradient(145deg, #0F0F0F 0%, #080808 100%)',
+              border: '1px solid rgba(255, 255, 255, 0.07)',
               borderRadius: '0.75rem', padding: '1.25rem', marginBottom: '1rem',
             }}>
-              <h3 style={{ fontSize: '0.7rem', fontWeight: 700, color: '#555', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '0.75rem' }}>Links</h3>
+              <h3 style={{ fontSize: '0.7rem', fontWeight: 800, color: '#777777', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '0.75rem' }}>Links</h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                 {project.github_url && (
                   <a href={project.github_url} target="_blank" rel="noopener noreferrer" id="project-github-link" style={{
@@ -324,24 +393,40 @@ export default async function ProjectDetailPage({ params }: Props) {
             </div>
           )}
 
-          {/* Maker */}
+          {/* Owner / Developer */}
           {(project.profiles as any)?.username && (
             <div style={{
-              background: '#1F1F1F', border: '1px solid #2B2B2B',
-              borderRadius: '0.75rem', padding: '1.25rem',
+              background: 'linear-gradient(145deg, #0F0F0F 0%, #080808 100%)',
+              border: '1px solid rgba(255, 255, 255, 0.07)',
+              borderRadius: '0.75rem', padding: '1.1rem 1.25rem',
             }}>
-              <h3 style={{ fontSize: '0.7rem', fontWeight: 700, color: '#555', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '0.75rem' }}>Maker</h3>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+              <h3 style={{ fontSize: '0.7rem', fontWeight: 800, color: '#777777', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '0.75rem' }}>
+                Owner / Developer
+              </h3>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', minWidth: 0 }}>
                 <div style={{
-                  width: '32px', height: '32px', borderRadius: '50%',
-                  background: '#E50914', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: '0.85rem', fontWeight: 700, color: '#FFFFFF', flexShrink: 0,
+                  width: '36px', height: '36px', borderRadius: '50%',
+                  background: 'linear-gradient(135deg, #E50914 0%, #B20710 100%)',
+                  border: '1px solid rgba(255, 255, 255, 0.15)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: '0.9rem', fontWeight: 800, color: '#FFFFFF', flexShrink: 0,
+                  boxShadow: '0 2px 8px rgba(229, 9, 20, 0.3)',
                 }}>
                   {(project.profiles as any).username[0].toUpperCase()}
                 </div>
-                <span style={{ fontSize: '0.875rem', color: '#FFFFFF', fontWeight: 500 }}>
-                  @{(project.profiles as any).username}
-                </span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <span style={{
+                    fontSize: '0.85rem',
+                    color: '#FFFFFF',
+                    fontWeight: 600,
+                    display: 'block',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }} title={`@${(project.profiles as any).username}`}>
+                    @{(project.profiles as any).username}
+                  </span>
+                </div>
               </div>
             </div>
           )}

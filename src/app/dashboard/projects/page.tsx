@@ -1,14 +1,17 @@
-import { createServerClient } from '@/lib/supabase/server'
+import { createServerClient, createServiceRoleClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { CheckCircle, Clock, XCircle, FileText, Edit3, Eye } from 'lucide-react'
+import { CheckCircle, Clock, XCircle, FileText, Edit3, Eye, Trash2 } from 'lucide-react'
 import DeleteProjectButton from '@/components/projects/DeleteProjectButton'
+import { getDeveloperProjectReports } from '@/app/actions/reports'
+import DeveloperReportManager from '@/components/dashboard/DeveloperReportManager'
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; icon: React.ReactNode }> = {
-  draft:    { label: 'Draft',    color: '#AAAAAA', bg: 'rgba(170,170,170,0.1)', icon: <FileText size={12} /> },
-  pending:  { label: 'Pending',  color: '#F39C12', bg: 'rgba(243,156,18,0.1)', icon: <Clock size={12} /> },
-  approved: { label: 'Approved', color: '#2ECC71', bg: 'rgba(46,204,113,0.1)', icon: <CheckCircle size={12} /> },
-  rejected: { label: 'Rejected', color: '#E50914', bg: 'rgba(229,9,20,0.1)',   icon: <XCircle size={12} /> },
+  draft:    { label: 'Draft',            color: '#AAAAAA', bg: 'rgba(170,170,170,0.1)', icon: <FileText size={12} /> },
+  pending:  { label: 'Pending',          color: '#F39C12', bg: 'rgba(243,156,18,0.1)', icon: <Clock size={12} /> },
+  approved: { label: 'Approved',         color: '#2ECC71', bg: 'rgba(46,204,113,0.1)', icon: <CheckCircle size={12} /> },
+  rejected: { label: 'Rejected',         color: '#E50914', bg: 'rgba(229,9,20,0.1)',   icon: <XCircle size={12} /> },
+  deleted:  { label: 'Removed by Admin', color: '#EF4444', bg: 'rgba(239,68,68,0.12)', icon: <Trash2 size={12} /> },
 }
 
 export default async function DashboardProjectsPage({
@@ -17,6 +20,7 @@ export default async function DashboardProjectsPage({
   searchParams: Promise<{ submitted?: string; updated?: string; media_updated?: string }>
 }) {
   const supabase = await createServerClient()
+  const supabaseService = await createServiceRoleClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
@@ -25,18 +29,23 @@ export default async function DashboardProjectsPage({
   const justUpdated      = params.updated       === 'true'
   const justMediaUpdated = params.media_updated === 'true'
 
-  const { data: projects } = await supabase
-    .from('projects')
-    .select('id, name, slug, tagline, icon_url, status, upvote_count, view_count, stage, created_at, rejection_reason')
-    .eq('user_id', user.id)
-    .is('deleted_at', null)
-    .order('created_at', { ascending: false })
+  const [projectsRes, reports] = await Promise.all([
+    supabaseService
+      .from('projects')
+      .select('id, name, slug, tagline, icon_url, status, deleted_at, upvote_count, view_count, stage, created_at, rejection_reason')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false }),
+    getDeveloperProjectReports(),
+  ])
+
+  const projects = projectsRes.data
 
   const grouped = {
-    approved: projects?.filter(p => p.status === 'approved') ?? [],
-    pending:  projects?.filter(p => p.status === 'pending')  ?? [],
-    rejected: projects?.filter(p => p.status === 'rejected') ?? [],
-    draft:    projects?.filter(p => p.status === 'draft')    ?? [],
+    approved: projects?.filter(p => p.status === 'approved' && !p.deleted_at) ?? [],
+    pending:  projects?.filter(p => p.status === 'pending' && !p.deleted_at)  ?? [],
+    rejected: projects?.filter(p => p.status === 'rejected' && !p.deleted_at) ?? [],
+    draft:    projects?.filter(p => p.status === 'draft' && !p.deleted_at)    ?? [],
+    deleted:  projects?.filter(p => p.status === 'deleted' || p.deleted_at !== null) ?? [],
   }
 
   return (
@@ -58,6 +67,9 @@ export default async function DashboardProjectsPage({
             + Submit New
           </Link>
         </div>
+
+        {/* Developer Active Reports Manager */}
+        <DeveloperReportManager reports={reports} />
 
         {/* Banners */}
         {justSubmitted && (
@@ -165,9 +177,9 @@ export default async function DashboardProjectsPage({
                       }}>
                         {project.tagline}
                       </p>
-                      {project.status === 'rejected' && project.rejection_reason && (
-                        <p style={{ fontSize: '0.78rem', color: '#FF6B6B', marginTop: '0.3rem' }}>
-                          Reason: {project.rejection_reason}
+                      {(project.status === 'rejected' || project.status === 'deleted' || project.deleted_at !== null) && project.rejection_reason && (
+                        <p style={{ fontSize: '0.78rem', color: '#EF4444', marginTop: '0.3rem', fontWeight: 500 }}>
+                          Removal Reason: {project.rejection_reason}
                         </p>
                       )}
                     </div>

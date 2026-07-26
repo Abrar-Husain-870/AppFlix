@@ -2,11 +2,13 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { ChevronDown, Globe } from 'lucide-react'
+import { Globe } from 'lucide-react'
 
-export default function NetflixFooterCTA() {
+export default function NetflixFooterCTA({ isAuthenticated = false, hideCta = false }: { isAuthenticated?: boolean; hideCta?: boolean }) {
   const [email, setEmail] = useState('')
   const router = useRouter()
+
+  const shouldHideCta = isAuthenticated || hideCta
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -17,18 +19,11 @@ export default function NetflixFooterCTA() {
     }
   }
 
-  const UNCLICKABLE_LINKS = [
-    ['FAQ', 'Campus Guidelines', 'Privacy', 'Student Showcase'],
-    ['Help Center', 'Submit App', 'Cookie Preferences', 'Tech Stack Tags'],
-    ['Account', 'Browse Apps', 'Community Guidelines', 'Featured Developers'],
-    ['University Portal', 'Terms of Use', 'Contact Admin', 'App Statistics'],
-  ]
-
   return (
     <footer style={{
       background: '#000000',
       color: '#B3B3B3',
-      padding: '4rem 1.5rem 3rem',
+      padding: shouldHideCta ? '3rem 1.5rem 2.5rem' : '4rem 1.5rem 3rem',
       borderTop: '1px solid rgba(255, 255, 255, 0.1)',
       position: 'relative',
       zIndex: 10,
@@ -37,101 +32,103 @@ export default function NetflixFooterCTA() {
         maxWidth: '1000px',
         margin: '0 auto',
       }}>
-        {/* ── Top Email Get-Started CTA Block ────────────────────────────────── */}
-        <div style={{
-          textAlign: 'center',
-          maxWidth: '820px',
-          margin: '0 auto 4rem',
-        }}>
-          <h3 style={{
-            fontSize: 'clamp(1.2rem, 3vw, 1.4rem)',
-            fontWeight: 500,
-            color: '#FFFFFF',
-            marginBottom: '1.25rem',
-            lineHeight: 1.35,
-          }}>
-            Ready to showcase your app? Enter your email to get started.
-          </h3>
-
-          {/* Form */}
-          <form onSubmit={handleSubmit} style={{
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            gap: '0.5rem',
-            maxWidth: '660px',
-            margin: '0 auto 1.5rem',
-            flexWrap: 'wrap',
-          }}>
-            <div style={{ flex: '1 1 320px', minWidth: '280px' }}>
-              <input
-                id="footer-email-input"
-                type="email"
-                placeholder="Email address"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                style={{
-                  width: '100%',
-                  height: '56px',
-                  padding: '0 1.25rem',
-                  background: 'rgba(229, 229, 229, 0.1)',
-                  border: '1px solid rgba(255, 255, 255, 0.3)',
-                  borderRadius: '4px',
-                  color: '#FFFFFF',
-                  fontSize: '1rem',
-                  outline: 'none',
-                  boxSizing: 'border-box',
-                  transition: 'border-color 0.2s',
-                }}
-                onFocus={e => e.currentTarget.style.borderColor = '#FFFFFF'}
-                onBlur={e => e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.3)'}
-              />
-            </div>
-
-            <button
-              id="footer-get-started-btn"
-              type="submit"
-              style={{
-                height: '56px',
-                padding: '0 1.75rem',
-                background: '#E50914',
-                color: '#FFFFFF',
-                fontSize: '1.4rem',
-                fontWeight: 700,
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                whiteSpace: 'nowrap',
-                transition: 'background 0.2s',
-                boxShadow: '0 4px 16px rgba(229, 9, 20, 0.35)',
-              }}
-              onMouseEnter={e => e.currentTarget.style.background = '#F40612'}
-              onMouseLeave={e => e.currentTarget.style.background = '#E50914'}
-            >
-              Get Started ›
-            </button>
-          </form>
-
-          {/* Legal / Disclaimer Notice matching Netflix fine print */}
-          <p style={{
-            fontSize: '0.8rem',
-            color: '#737373',
-            lineHeight: 1.6,
-            maxWidth: '780px',
-            margin: '0 auto',
+        {/* ── Top Email Get-Started CTA Block (Only for unauthenticated users) ── */}
+        {!shouldHideCta && (
+          <div style={{
             textAlign: 'center',
+            maxWidth: '820px',
+            margin: '0 auto 4rem',
           }}>
-            AppFlix is completely free for all university students. No paid subscription required. All submitted projects undergo campus administrative review to ensure safety, quality, and relevance across our university ecosystem.
-          </p>
-        </div>
+            <h3 style={{
+              fontSize: 'clamp(1.2rem, 3vw, 1.4rem)',
+              fontWeight: 500,
+              color: '#FFFFFF',
+              marginBottom: '1.25rem',
+              lineHeight: 1.35,
+            }}>
+              Ready to showcase your app? Enter your email to get started.
+            </h3>
+
+            {/* Form */}
+            <form onSubmit={handleSubmit} style={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              gap: '0.5rem',
+              maxWidth: '660px',
+              margin: '0 auto 1.5rem',
+              flexWrap: 'wrap',
+            }}>
+              <div style={{ flex: '1 1 320px', minWidth: '280px' }}>
+                <input
+                  id="footer-email-input"
+                  type="email"
+                  placeholder="Email address"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  style={{
+                    width: '100%',
+                    height: '56px',
+                    padding: '0 1.25rem',
+                    background: 'rgba(229, 229, 229, 0.1)',
+                    border: '1px solid rgba(255, 255, 255, 0.3)',
+                    borderRadius: '4px',
+                    color: '#FFFFFF',
+                    fontSize: '1rem',
+                    outline: 'none',
+                    boxSizing: 'border-box',
+                    transition: 'border-color 0.2s',
+                  }}
+                  onFocus={e => e.currentTarget.style.borderColor = '#FFFFFF'}
+                  onBlur={e => e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.3)'}
+                />
+              </div>
+
+              <button
+                id="footer-get-started-btn"
+                type="submit"
+                style={{
+                  height: '56px',
+                  padding: '0 1.75rem',
+                  background: '#E50914',
+                  color: '#FFFFFF',
+                  fontSize: '1.4rem',
+                  fontWeight: 700,
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  whiteSpace: 'nowrap',
+                  transition: 'background 0.2s',
+                  boxShadow: '0 4px 16px rgba(229, 9, 20, 0.35)',
+                }}
+                onMouseEnter={e => e.currentTarget.style.background = '#F40612'}
+                onMouseLeave={e => e.currentTarget.style.background = '#E50914'}
+              >
+                Get Started ›
+              </button>
+            </form>
+
+            {/* Legal / Disclaimer Notice matching Netflix fine print */}
+            <p style={{
+              fontSize: '0.8rem',
+              color: '#737373',
+              lineHeight: 1.6,
+              maxWidth: '780px',
+              margin: '0 auto',
+              textAlign: 'center',
+            }}>
+              AppFlix is completely free for all university students. No paid subscription required. All submitted projects undergo campus administrative review to ensure safety, quality, and relevance across our university ecosystem.
+            </p>
+          </div>
+        )}
 
         {/* ── Unclickable Black Area Links (Exact image replication) ───────── */}
         <div style={{
-          paddingTop: '2.5rem',
-          borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+          paddingTop: shouldHideCta ? '0' : '2.5rem',
+          borderTop: shouldHideCta ? 'none' : '1px solid rgba(255, 255, 255, 0.08)',
         }}>
           {/* Top Sentence */}
           <p style={{

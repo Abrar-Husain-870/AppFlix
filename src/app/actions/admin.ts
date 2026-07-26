@@ -3,7 +3,7 @@
 import { createServiceRoleClient, createServerClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 
-async function assertAdmin() {
+export async function assertAdmin() {
   const supabase = await createServerClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) {
@@ -84,7 +84,7 @@ export async function getPendingProjects() {
     .from('projects')
     .select(`
       id, name, slug, tagline, description, icon_url,
-      website_url, github_url, stage, platforms, created_at,
+      website_url, github_url, stage, platforms, created_at, approved_at, updated_at,
       categories(name), profiles!user_id(username)
     `)
     .eq('status', 'pending')
@@ -96,4 +96,40 @@ export async function getPendingProjects() {
     return []
   }
   return (data as any[]) ?? []
+}
+
+export async function adminDeleteProject(projectId: string, reason?: string) {
+  await assertAdmin()
+  const supabase = await createServiceRoleClient()
+
+  const { error } = await supabase
+    .from('projects')
+    .update({
+      deleted_at: new Date().toISOString(),
+      status: 'deleted',
+      rejection_reason: reason || 'Removed by admin',
+    })
+    .eq('id', projectId)
+
+  if (error) throw new Error(error.message)
+
+  // Notify developer
+  const { data: project } = await supabase
+    .from('projects')
+    .select('user_id, name')
+    .eq('id', projectId)
+    .single()
+
+  if (project) {
+    await supabase.from('notifications').insert({
+      user_id: project.user_id,
+      type: 'project_rejected',
+      project_id: projectId,
+      message: `Your app "${project.name}" was removed by an admin. Reason: ${reason || 'Violation of platform guidelines'}`,
+    })
+  }
+
+  revalidatePath('/browse')
+  revalidatePath('/dashboard/projects')
+  revalidatePath('/admin/queue')
 }
