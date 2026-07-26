@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import UpvoteButton from '@/components/projects/UpvoteButton'
 import BookmarkButton from '@/components/projects/BookmarkButton'
-import { Globe, GitBranch, ExternalLink, Calendar, Tag, Monitor, Smartphone } from 'lucide-react'
+import { Globe, GitBranch, ExternalLink, Calendar, Tag, Monitor, Smartphone, Pencil } from 'lucide-react'
 import ProductGallery from '@/components/projects/ProductGallery'
 import type { Metadata } from 'next'
 
@@ -183,6 +183,23 @@ export default async function ProjectDetailPage({ params }: Props) {
               initialBookmarked={isBookmarked}
               requireAuth={!user}
             />
+            {user && (project.user_id === user.id || isAdmin) && (
+              <Link
+                href={`/dashboard/projects/edit/${project.id}`}
+                id="edit-app-btn"
+                style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem',
+                  padding: '0.6rem 1rem', background: '#262626',
+                  border: '1px solid rgba(229, 9, 20, 0.5)',
+                  color: '#FFFFFF', fontWeight: 600, fontSize: '0.85rem',
+                  borderRadius: '0.5rem', textDecoration: 'none',
+                  transition: 'all 0.2s', whiteSpace: 'nowrap',
+                  boxShadow: '0 4px 12px rgba(229, 9, 20, 0.15)',
+                }}
+              >
+                <Pencil size={14} style={{ color: '#E50914' }} /> Edit App
+              </Link>
+            )}
             {project.website_url && (
               <a
                 href={project.website_url}

@@ -2,12 +2,13 @@
 
 import Link from 'next/link'
 import UpvoteButton from './UpvoteButton'
-import { Globe, ArrowUpRight, Flame } from 'lucide-react'
+import { Globe, ArrowUpRight, Flame, Pencil } from 'lucide-react'
 import { useState } from 'react'
 
 interface ProjectCardProps {
   project: {
     id: string
+    user_id?: string | null
     name: string
     slug: string
     tagline: string
@@ -22,6 +23,7 @@ interface ProjectCardProps {
   isUpvoted?: boolean
   isBookmarked?: boolean
   isAuthenticated?: boolean
+  currentUserId?: string
 }
 
 const STAGE_COLORS: Record<string, { bg: string; color: string; border: string }> = {
@@ -29,7 +31,7 @@ const STAGE_COLORS: Record<string, { bg: string; color: string; border: string }
   production: { bg: 'rgba(46, 204, 113, 0.15)',  color: '#2ECC71', border: 'rgba(46, 204, 113, 0.3)' },
 }
 
-export default function ProjectCard({ project, isUpvoted = false, isAuthenticated = false }: ProjectCardProps) {
+export default function ProjectCard({ project, isUpvoted = false, isAuthenticated = false, currentUserId }: ProjectCardProps) {
   const [hovered, setHovered] = useState(false)
   const stage = STAGE_COLORS[project.stage] ?? { bg: 'rgba(229, 9, 20, 0.15)', color: '#E50914', border: 'rgba(229, 9, 20, 0.3)' }
 
@@ -224,6 +226,34 @@ export default function ProjectCard({ project, isUpvoted = false, isAuthenticate
               {p}
             </span>
           ))}
+
+          {currentUserId && project.user_id === currentUserId && (
+            <span
+              id={`edit-card-${project.id}`}
+              onClick={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                window.location.href = `/dashboard/projects/edit/${project.id}`
+              }}
+              style={{
+                fontSize: '0.72rem',
+                fontWeight: 700,
+                color: '#FFFFFF',
+                background: 'rgba(229, 9, 20, 0.25)',
+                border: '1px solid #E50914',
+                padding: '0.2rem 0.6rem',
+                borderRadius: '0.35rem',
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.3rem',
+                marginLeft: 'auto',
+                transition: 'all 0.2s',
+              }}
+            >
+              <Pencil size={11} style={{ color: '#E50914' }} /> Edit App
+            </span>
+          )}
         </div>
       </Link>
     </div>

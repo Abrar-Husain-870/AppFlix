@@ -531,6 +531,7 @@ export default function BrowsePage() {
                       project={project}
                       isUpvoted={upvotedIds.has(project.id)}
                       isAuthenticated={!!user}
+                      currentUserId={user?.id}
                     />
                   ))}
                 </div>

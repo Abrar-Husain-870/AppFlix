@@ -6,6 +6,7 @@ import NetflixTrendingRow from '@/components/projects/NetflixTrendingRow'
 import HeroGetStartedButton from '@/components/ui/HeroGetStartedButton'
 import NetflixReasonCards from '@/components/ui/NetflixReasonCards'
 import NetflixFAQSection from '@/components/ui/NetflixFAQSection'
+import NetflixFooterCTA from '@/components/ui/NetflixFooterCTA'
 
 async function getFeaturedProjects() {
   try {
@@ -213,29 +214,33 @@ export default async function HomePage() {
             </Link>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(480px, 1fr))', gap: '1.25rem' }}>
             {(featured as any[]).map((project) => (
-              <Link key={project.id} href={`/browse/${project.slug}`} style={{ textDecoration: 'none' }}>
+              <Link key={project.id} href={`/browse/${project.slug}`} style={{ textDecoration: 'none', display: 'block' }}>
                 <div className="card-hover" style={{
-                  background: '#1F1F1F', borderRadius: '0.75rem',
-                  padding: '1.25rem', display: 'flex', gap: '1rem', alignItems: 'flex-start',
+                  background: '#1F1F1F', border: '1px solid #2B2B2B', borderRadius: '0.75rem',
+                  padding: '1.1rem 1.4rem', minHeight: '88px', display: 'flex', gap: '1.1rem', alignItems: 'center',
+                  boxSizing: 'border-box',
                 }}>
                   <div style={{
-                    width: '52px', height: '52px', borderRadius: '0.65rem',
+                    width: '52px', height: '52px', borderRadius: '0.75rem',
                     background: '#262626', border: '1px solid #2B2B2B',
                     flexShrink: 0, overflow: 'hidden',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                   }}>
                     {project.icon_url
                       ? <img src={project.icon_url} alt={project.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                      : <Flame size={20} style={{ color: '#444' }} />}
+                      : <Flame size={22} style={{ color: '#444' }} />}
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#FFFFFF', marginBottom: '0.2rem' }}>
+                    <h3 style={{
+                      fontSize: '1rem', fontWeight: 700, color: '#FFFFFF', marginBottom: '0.25rem',
+                      whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                    }}>
                       {project.name}
                     </h3>
                     <p style={{
-                      fontSize: '0.8rem', color: '#AAAAAA', lineHeight: 1.4,
+                      fontSize: '0.85rem', color: '#AAAAAA', margin: 0, lineHeight: 1.4,
                       display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
                     }}>
                       {project.tagline}
@@ -243,10 +248,10 @@ export default async function HomePage() {
                   </div>
                   <div style={{
                     flexShrink: 0, display: 'flex', flexDirection: 'column',
-                    alignItems: 'center', gap: '0.1rem',
+                    alignItems: 'center', gap: '0.1rem', paddingLeft: '0.5rem',
                   }}>
-                    <span style={{ color: '#E50914', fontSize: '0.7rem' }}>▲</span>
-                    <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#FFFFFF' }}>{project.upvote_count}</span>
+                    <span style={{ color: '#E50914', fontSize: '0.75rem' }}>▲</span>
+                    <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#FFFFFF' }}>{project.upvote_count}</span>
                   </div>
                 </div>
               </Link>
@@ -261,43 +266,11 @@ export default async function HomePage() {
       {/* ── Frequently Asked Questions (Netflix Accordion style) ───────────── */}
       <NetflixFAQSection />
 
-      {/* ── CTA Banner ────────────────────────────────────────────────── */}
-      <section style={{
-        padding: '3rem 1.5rem',
-        background: 'linear-gradient(135deg, rgba(229,9,20,0.08) 0%, rgba(229,9,20,0.03) 100%)',
-        borderTop: '1px solid rgba(229,9,20,0.15)',
-        textAlign: 'center',
-      }}>
-        <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#FFFFFF', marginBottom: '0.75rem', letterSpacing: '-0.02em' }}>
-          Ready to share your project?
-        </h2>
-        <p style={{ color: '#AAAAAA', fontSize: '0.95rem', marginBottom: '1.5rem' }}>
-          Join your university&apos;s growing community of builders.
-        </p>
-        <Link
-          href="/signup"
-          id="cta-signup-btn"
-          style={{
-            display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
-            padding: '0.85rem 2rem', background: '#E50914',
-            color: '#FFFFFF', fontWeight: 700, fontSize: '1rem',
-            borderRadius: '0.6rem', textDecoration: 'none',
-            boxShadow: '0 4px 20px rgba(229,9,20,0.35)',
-          }}
-        >
-          Get started — it&apos;s free <ArrowRight size={18} />
-        </Link>
-      </section>
       </div>
       </div>
 
-      {/* Footer */}
-      <footer style={{
-        borderTop: '1px solid #2B2B2B', padding: '1.5rem',
-        textAlign: 'center', color: '#555', fontSize: '0.8rem',
-      }}>
-        © {new Date().getFullYear()} AppFlix · Built for student innovators
-      </footer>
+      {/* ── Netflix Get Started CTA Form & Black Footer Area ────────────────── */}
+      <NetflixFooterCTA />
     </main>
   )
 }

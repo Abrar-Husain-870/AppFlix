@@ -156,53 +156,6 @@ export default function NetflixFAQSection() {
             )
           })}
         </div>
-
-        {/* Bottom CTA bar matching Netflix footer style */}
-        <div style={{
-          textAlign: 'center',
-          maxWidth: '720px',
-          margin: '0 auto',
-        }}>
-          <p style={{
-            fontSize: '1.1rem',
-            color: '#FFFFFF',
-            marginBottom: '1.25rem',
-            fontWeight: 400,
-          }}>
-            Ready to explore? Submit your project or discover student innovations.
-          </p>
-
-          <div style={{
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            gap: '0.75rem',
-            flexWrap: 'wrap',
-          }}>
-            <Link
-              href="/submit"
-              id="faq-submit-btn"
-              style={{
-                padding: '0.9rem 2.2rem',
-                background: '#E50914',
-                color: '#FFFFFF',
-                fontWeight: 700,
-                fontSize: '1.25rem',
-                borderRadius: '4px',
-                textDecoration: 'none',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                boxShadow: '0 4px 16px rgba(229, 9, 20, 0.4)',
-                transition: 'background 0.2s',
-              }}
-              onMouseEnter={e => e.currentTarget.style.background = '#F40612'}
-              onMouseLeave={e => e.currentTarget.style.background = '#E50914'}
-            >
-              Get Started <ArrowRight size={22} />
-            </Link>
-          </div>
-        </div>
       </div>
     </section>
   )

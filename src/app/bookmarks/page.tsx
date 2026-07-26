@@ -176,6 +176,7 @@ export default function BookmarksPage() {
                 project={project}
                 isUpvoted={upvotedIds.has(project.id)}
                 isAuthenticated={!!user}
+                currentUserId={user?.id}
               />
             ))}
           </div>
