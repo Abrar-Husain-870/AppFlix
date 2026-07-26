@@ -23,11 +23,21 @@ export const metadata: Metadata = {
     "Discover and showcase student-built apps, tools, and digital projects. The app store for university innovation.",
   keywords: ["student apps", "university apps", "app showcase", "student developers"],
   authors: [{ name: "AppFlix" }],
-  manifest: "/manifest.webmanifest",
+  manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
     title: "AppFlix",
+  },
+  icons: {
+    icon: [
+      { url: '/favicon.ico' },
+      { url: '/icon.png', sizes: '48x48', type: 'image/png' },
+      { url: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
+    ],
+    apple: [
+      { url: '/apple-icon.png', sizes: '180x180', type: 'image/png' },
+    ],
   },
   openGraph: {
     type: "website",
