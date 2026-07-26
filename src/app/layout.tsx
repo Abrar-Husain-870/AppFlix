@@ -3,6 +3,7 @@ import { Geist } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import Navbar from "@/components/layout/Navbar";
+import PwaRegister from "@/components/pwa/PwaRegister";
 
 const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
@@ -10,6 +11,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
+  themeColor: "#E50914",
 };
 
 export const metadata: Metadata = {
@@ -21,6 +23,12 @@ export const metadata: Metadata = {
     "Discover and showcase student-built apps, tools, and digital projects. The app store for university innovation.",
   keywords: ["student apps", "university apps", "app showcase", "student developers"],
   authors: [{ name: "AppFlix" }],
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "AppFlix",
+  },
   openGraph: {
     type: "website",
     locale: "en_US",
@@ -53,6 +61,7 @@ export default function RootLayout({
         style={{ backgroundColor: "#141414", color: "#FFFFFF" }}
         suppressHydrationWarning
       >
+        <PwaRegister />
         <Navbar />
         {children}
       </body>

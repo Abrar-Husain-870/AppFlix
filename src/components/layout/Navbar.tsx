@@ -11,6 +11,8 @@ import {
 } from 'lucide-react'
 import type { User as SupabaseUser } from '@supabase/supabase-js'
 
+import InstallPwaButton from '@/components/pwa/InstallPwaButton'
+
 interface Profile {
   display_name: string | null
   username: string
@@ -132,6 +134,8 @@ export default function Navbar() {
 
         {/* Right: actions */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <InstallPwaButton />
+
           {/* Search */}
           <button
             id="nav-search-btn"
