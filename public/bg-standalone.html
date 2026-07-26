@@ -206,7 +206,8 @@
         const card = document.createElement("div");
         card.className = `poster-card ${poster.type}`;
         const img = document.createElement("img");
-        img.src = `posters/${poster.file}`;
+        const webpFilename = poster.file.replace(/\.(png|jpg|jpeg)$/i, '.webp');
+        img.src = `posters/${webpFilename}`;
         img.alt = "";
         img.loading = "eager";
         card.appendChild(img);
