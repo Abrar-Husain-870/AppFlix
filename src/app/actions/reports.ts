@@ -74,6 +74,21 @@ export async function submitReport(projectId: string, reasonInput: string, custo
 
   const supabaseService = await createServiceRoleClient()
 
+  // Check if user already has an active (unresolved/non-dismissed) report for this project
+  const { data: existingReports } = await supabaseService
+    .from('reports')
+    .select('id, status')
+    .eq('project_id', projectId)
+    .eq('reporter_id', user.id)
+
+  const hasActiveReport = (existingReports || []).some(
+    r => r.status !== 'resolved' && r.status !== 'actioned' && r.status !== 'reviewed' && r.status !== 'dismissed'
+  )
+
+  if (hasActiveReport) {
+    throw new Error('You have already submitted a report for this app. Please wait until your previous report is reviewed by an admin.')
+  }
+
   // Attempt insert into reports table
   const { data, error } = await supabaseService
     .from('reports')

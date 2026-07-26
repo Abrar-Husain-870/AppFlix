@@ -240,11 +240,13 @@ export default async function ProjectDetailPage({ params }: Props) {
               requireAuth={!user}
             />
 
-            <ReportModal
-              projectId={project.id}
-              appName={project.name}
-              requireAuth={!user}
-            />
+            {(!user || user.id !== project.user_id) && (
+              <ReportModal
+                projectId={project.id}
+                appName={project.name}
+                requireAuth={!user}
+              />
+            )}
             {user && project.user_id === user.id && (
               <Link
                 href={`/dashboard/projects/edit/${project.id}`}
