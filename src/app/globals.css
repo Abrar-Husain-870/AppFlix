@@ -370,6 +370,15 @@ body {
     z-index: 10 !important;
     filter: drop-shadow(2px 4px 8px rgba(0, 0, 0, 0.95)) !important;
   }
+  .nav-logo-img {
+    height: 24px !important;
+    max-height: 26px !important;
+    max-width: 105px !important;
+  }
+  .reason-card-item {
+    min-height: 160px !important;
+    padding: 1.35rem 1.25rem 1rem !important;
+  }
 }
 
 @media (min-width: 769px) {

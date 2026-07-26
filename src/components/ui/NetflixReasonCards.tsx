@@ -235,6 +235,7 @@ export default function NetflixReasonCards() {
                 key={card.id}
                 onMouseEnter={() => setHoveredId(card.id)}
                 onMouseLeave={() => setHoveredId(null)}
+                className="reason-card-item"
                 style={{
                   background: 'linear-gradient(145deg, #191B2E 0%, #0E101D 100%)',
                   border: isHovered ? '1px solid rgba(236, 72, 153, 0.45)' : '1px solid rgba(255, 255, 255, 0.08)',

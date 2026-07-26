@@ -102,11 +102,12 @@ export default function Navbar() {
         {/* Logo */}
         <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', flexShrink: 0 }}>
           <img
-            src="/assets/app-logos/AppFlix_Name_logo_dark_-without_background.png"
+            src="/assets/app-logos/AppFlix_logo_trimmed.png"
             alt="AppFlix"
+            className="nav-logo-img"
             style={{
-              height: 'auto',
-              maxHeight: '42px',
+              height: '32px',
+              maxHeight: '34px',
               width: 'auto',
               maxWidth: '140px',
               objectFit: 'contain',
