@@ -61,12 +61,12 @@ export default function NetflixTrendingRow({ projects, title = 'Trending Now' }:
       <div style={{
         maxWidth: '1360px',
         margin: '0 auto',
-        padding: '0 2rem',
+        padding: '0 1rem',
         boxSizing: 'border-box',
       }}>
         {/* Title */}
         <h2 style={{
-          fontSize: 'clamp(1.25rem, 3vw, 1.6rem)',
+          fontSize: 'clamp(1.15rem, 3vw, 1.6rem)',
           fontWeight: 800,
           color: '#FFFFFF',
           letterSpacing: '-0.02em',
@@ -80,25 +80,25 @@ export default function NetflixTrendingRow({ projects, title = 'Trending Now' }:
 
         {/* Carousel Container */}
         <div style={{ position: 'relative' }}>
-          {/* Left Arrow Button */}
+          {/* Left Arrow Button (Desktop only) */}
           {showLeftArrow && (
             <button
               onClick={() => scroll('left')}
               aria-label="Scroll left"
+              className="desktop-only"
               style={{
                 position: 'absolute',
-                left: '-1rem',
+                left: '0.25rem',
                 top: '50%',
                 transform: 'translateY(-50%)',
                 zIndex: 30,
-                width: '28px',
-                height: '75px',
-                background: 'rgba(20, 20, 20, 0.75)',
+                width: '32px',
+                height: '65px',
+                background: 'rgba(20, 20, 20, 0.85)',
                 backdropFilter: 'blur(8px)',
-                border: '1px solid rgba(255, 255, 255, 0.2)',
+                border: '1px solid rgba(255, 255, 255, 0.25)',
                 borderRadius: '4px',
                 color: '#FFFFFF',
-                display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 cursor: 'pointer',
@@ -106,31 +106,31 @@ export default function NetflixTrendingRow({ projects, title = 'Trending Now' }:
                 boxShadow: '0 8px 24px rgba(0, 0, 0, 0.8)',
               }}
               onMouseEnter={e => e.currentTarget.style.background = 'rgba(229, 9, 20, 0.85)'}
-              onMouseLeave={e => e.currentTarget.style.background = 'rgba(20, 20, 20, 0.75)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'rgba(20, 20, 20, 0.85)'}
             >
               <ChevronLeft size={22} />
             </button>
           )}
 
-          {/* Right Arrow Button */}
+          {/* Right Arrow Button (Desktop only) */}
           {showRightArrow && (
             <button
               onClick={() => scroll('right')}
               aria-label="Scroll right"
+              className="desktop-only"
               style={{
                 position: 'absolute',
-                right: '-1rem',
+                right: '0.25rem',
                 top: '50%',
                 transform: 'translateY(-50%)',
                 zIndex: 30,
-                width: '28px',
-                height: '75px',
-                background: 'rgba(20, 20, 20, 0.75)',
+                width: '32px',
+                height: '65px',
+                background: 'rgba(20, 20, 20, 0.85)',
                 backdropFilter: 'blur(8px)',
-                border: '1px solid rgba(255, 255, 255, 0.2)',
+                border: '1px solid rgba(255, 255, 255, 0.25)',
                 borderRadius: '4px',
                 color: '#FFFFFF',
-                display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 cursor: 'pointer',
@@ -138,7 +138,7 @@ export default function NetflixTrendingRow({ projects, title = 'Trending Now' }:
                 boxShadow: '0 8px 24px rgba(0, 0, 0, 0.8)',
               }}
               onMouseEnter={e => e.currentTarget.style.background = 'rgba(229, 9, 20, 0.85)'}
-              onMouseLeave={e => e.currentTarget.style.background = 'rgba(20, 20, 20, 0.75)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'rgba(20, 20, 20, 0.85)'}
             >
               <ChevronRight size={22} />
             </button>
@@ -150,15 +150,12 @@ export default function NetflixTrendingRow({ projects, title = 'Trending Now' }:
             onScroll={checkScroll}
             style={{
               display: 'flex',
-              gap: '1.75rem',
+              gap: 'clamp(0.85rem, 3vw, 1.75rem)',
               overflowX: 'auto',
               overflowY: 'hidden',
               scrollbarWidth: 'none',
               msOverflowStyle: 'none',
-              /* 2.5rem (40px) left padding provides 32px breathing room for the rank numbers floating at -8px */
-              padding: '1.25rem 2.5rem 2.5rem 2.5rem',
-              scrollPaddingLeft: '2.5rem',
-              scrollPaddingRight: '2.5rem',
+              padding: '0.75rem 1.25rem 1.75rem 1.5rem',
               scrollSnapType: 'x mandatory',
               boxSizing: 'border-box',
             }}
@@ -180,14 +177,14 @@ export default function NetflixTrendingRow({ projects, title = 'Trending Now' }:
                     display: 'flex',
                     position: 'relative',
                     flexShrink: 0,
-                    width: '200px',
-                    height: '270px',
+                    width: 'clamp(135px, 40vw, 195px)',
+                    height: 'clamp(185px, 52vw, 260px)',
                     scrollSnapAlign: 'start',
                     alignItems: 'flex-end',
                     transition: 'transform 0.25s cubic-bezier(0.2, 0, 0, 1)',
                   }}
                   onMouseEnter={e => {
-                    e.currentTarget.style.transform = 'scale(1.06) translateY(-6px)'
+                    e.currentTarget.style.transform = 'scale(1.04) translateY(-4px)'
                     const card = e.currentTarget.querySelector('.trending-poster-card') as HTMLElement
                     if (card) {
                       card.style.borderColor = '#E50914'
@@ -211,7 +208,7 @@ export default function NetflixTrendingRow({ projects, title = 'Trending Now' }:
                       right: 0,
                       top: 0,
                       bottom: 0,
-                      width: '165px',
+                      width: '82%',
                       borderRadius: '8px',
                       overflow: 'hidden',
                       background: 'linear-gradient(145deg, #0F0F0F 0%, #080808 100%)',
@@ -234,13 +231,12 @@ export default function NetflixTrendingRow({ projects, title = 'Trending Now' }:
                         }}
                       />
                     ) : iconSrc ? (
-                      /* Option B: App Logo Badge on "poster backgronds for apps.jpg" Background */
+                      /* Option B: App Logo Badge on Background */
                       <div style={{
                         position: 'absolute',
                         inset: 0,
                         overflow: 'hidden',
                       }}>
-                        {/* Poster Background Image Asset */}
                         <img
                           src="/assets/poster backgronds for apps.jpg"
                           alt=""
@@ -258,25 +254,26 @@ export default function NetflixTrendingRow({ projects, title = 'Trending Now' }:
                           background: 'linear-gradient(to bottom, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.65) 100%)',
                         }} />
 
-                        {/* Floating Centerpiece Glassmorphic Squircle Badge */}
+                        {/* Floating Centerpiece Badge */}
                         <div style={{
                           position: 'absolute',
                           top: '42%',
                           left: '50%',
                           transform: 'translate(-50%, -50%)',
-                          width: '125px',
-                          height: '125px',
-                          borderRadius: '26px',
+                          width: '62%',
+                          height: 'auto',
+                          aspectRatio: '1/1',
+                          borderRadius: '18px',
                           overflow: 'hidden',
                           border: '1px solid rgba(255, 255, 255, 0.3)',
-                          boxShadow: '0 12px 28px rgba(0, 0, 0, 0.85)',
+                          boxShadow: '0 8px 24px rgba(0, 0, 0, 0.85)',
                           background: 'rgba(255, 255, 255, 0.15)',
                           backdropFilter: 'blur(10px)',
                           zIndex: 2,
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          padding: '8px',
+                          padding: '6px',
                           boxSizing: 'border-box',
                         }}>
                           <img
@@ -286,13 +283,13 @@ export default function NetflixTrendingRow({ projects, title = 'Trending Now' }:
                               width: '100%',
                               height: '100%',
                               objectFit: 'contain',
-                              borderRadius: '12px',
+                              borderRadius: '10px',
                             }}
                           />
                         </div>
                       </div>
                     ) : (
-                      /* Option C: Fallback with "poster backgronds for apps.jpg" Background */
+                      /* Option C: Fallback */
                       <div style={{
                         position: 'absolute',
                         inset: 0,
@@ -312,27 +309,27 @@ export default function NetflixTrendingRow({ projects, title = 'Trending Now' }:
                         <div style={{
                           position: 'absolute',
                           inset: 0,
-                          background: 'linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.7) 100%)',
+                          background: 'linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.85) 100%)',
                           display: 'flex',
                           flexDirection: 'column',
-                          justifyContent: 'center',
                           alignItems: 'center',
-                          padding: '1rem',
+                          justifyContent: 'center',
+                          padding: '0.75rem',
                           boxSizing: 'border-box',
                         }}>
                           <div style={{
-                            width: '88px',
-                            height: '88px',
-                            borderRadius: '20px',
+                            width: '56px',
+                            height: '56px',
+                            borderRadius: '14px',
                             background: 'rgba(229, 9, 20, 0.35)',
                             border: '1px solid rgba(229, 9, 20, 0.6)',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            marginBottom: '0.75rem',
+                            marginBottom: '0.5rem',
                             color: '#FFFFFF',
                             fontWeight: 900,
-                            fontSize: '2.2rem',
+                            fontSize: '1.6rem',
                             boxShadow: '0 8px 20px rgba(0, 0, 0, 0.6)',
                           }}>
                             {project.name.charAt(0)}
@@ -341,16 +338,16 @@ export default function NetflixTrendingRow({ projects, title = 'Trending Now' }:
                       </div>
                     )}
 
-                    {/* AppFlix Circular Light Icon Stamp (Top-Left Area) */}
+                    {/* AppFlix Icon Stamp */}
                     <img
                       src="/assets/app-logos/AppFlix_circular_Icon__light_-removebg-preview.png"
                       alt="AppFlix"
                       style={{
                         position: 'absolute',
-                        top: '16px',
-                        left: '12px',
-                        width: '32px',
-                        height: '32px',
+                        top: '10px',
+                        left: '10px',
+                        width: '24px',
+                        height: '24px',
                         objectFit: 'contain',
                         filter: 'drop-shadow(0 2px 6px rgba(0, 0, 0, 0.85))',
                         zIndex: 5,
@@ -358,7 +355,7 @@ export default function NetflixTrendingRow({ projects, title = 'Trending Now' }:
                       }}
                     />
 
-                    {/* Bottom Content Gradient Overlay (4rem left padding clears rank number completely) */}
+                    {/* Bottom Content Gradient Overlay */}
                     <div style={{
                       position: 'absolute',
                       inset: 0,
@@ -366,13 +363,13 @@ export default function NetflixTrendingRow({ projects, title = 'Trending Now' }:
                       display: 'flex',
                       flexDirection: 'column',
                       justifyContent: 'flex-end',
-                      padding: '0.85rem 0.65rem 0.85rem 2.2rem',
+                      padding: '0.65rem 0.5rem 0.65rem 1.6rem',
                       boxSizing: 'border-box',
                       zIndex: 3,
                     }}>
                       <h3 style={{
                         color: '#FFFFFF',
-                        fontSize: '0.85rem',
+                        fontSize: '0.8rem',
                         fontWeight: 700,
                         margin: 0,
                         lineHeight: 1.2,
@@ -387,35 +384,35 @@ export default function NetflixTrendingRow({ projects, title = 'Trending Now' }:
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'space-between',
-                        marginTop: '0.35rem',
+                        marginTop: '0.25rem',
                       }}>
                         <span style={{
                           color: '#E50914',
-                          fontSize: '0.72rem',
+                          fontSize: '0.7rem',
                           fontWeight: 700,
                           display: 'flex',
                           alignItems: 'center',
                           gap: '0.2rem',
                         }}>
-                          <Flame size={11} /> {project.upvote_count}
+                          <Flame size={10} /> {project.upvote_count}
                         </span>
-                        <ArrowUpRight size={13} style={{ color: 'rgba(255,255,255,0.7)' }} />
+                        <ArrowUpRight size={12} style={{ color: 'rgba(255,255,255,0.7)' }} />
                       </div>
                     </div>
                   </div>
 
-                  {/* Giant Netflix Outline Rank Number (Ultra-sleek 1px outline stroke) */}
+                  {/* Netflix Rank Outline Number (Scaled responsively) */}
                   <span style={{
                     position: 'absolute',
-                    left: index >= 9 ? '-18px' : '-8px',
-                    bottom: '-16px',
-                    fontSize: '8.5rem',
+                    left: index >= 9 ? '-12px' : '-5px',
+                    bottom: '-10px',
+                    fontSize: 'clamp(4.5rem, 16vw, 7.5rem)',
                     fontWeight: 900,
                     fontFamily: 'Impact, -apple-system, sans-serif',
                     lineHeight: 0.8,
                     color: '#000000',
                     WebkitTextStroke: '1px #D4D4D4',
-                    filter: 'drop-shadow(3px 5px 10px rgba(0,0,0,0.95))',
+                    filter: 'drop-shadow(2px 4px 8px rgba(0,0,0,0.95))',
                     zIndex: 10,
                     userSelect: 'none',
                     pointerEvents: 'none',

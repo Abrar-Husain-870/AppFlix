@@ -98,24 +98,23 @@ export default function Navbar() {
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       }}>
         {/* Logo */}
-        <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center' }}>
+        <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', flexShrink: 0 }}>
           <img
             src="/assets/app-logos/AppFlix_Name_logo_dark_-without_background.png"
             alt="AppFlix"
             style={{
-              height: '95px',
+              height: 'auto',
+              maxHeight: '42px',
               width: 'auto',
+              maxWidth: '140px',
               objectFit: 'contain',
               display: 'block',
-              margin: '-20px 0 -20px -25px',
-              transform: 'scale(1.15)',
-              transformOrigin: 'left center',
             }}
           />
         </Link>
 
         {/* Desktop nav links */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }} className="hidden md:flex">
+        <div className="desktop-only" style={{ alignItems: 'center', gap: '0.25rem' }}>
           {navLinks.map(link => (
             <Link key={link.href} href={link.href} style={{
               padding: '0.4rem 0.9rem',
@@ -132,7 +131,7 @@ export default function Navbar() {
         </div>
 
         {/* Right: actions */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           {/* Search */}
           <button
             id="nav-search-btn"
@@ -149,18 +148,19 @@ export default function Navbar() {
               {isAdmin && (
                 <Link href="/admin/queue" id="nav-admin-btn" title="Admin Queue"
                   style={{
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    alignItems: 'center', justifyContent: 'center',
                     width: '32px', height: '32px',
                     background: 'rgba(229,9,20,0.15)', border: '1px solid rgba(229,9,20,0.4)',
                     borderRadius: '50%', color: '#E50914', transition: 'all 0.2s',
                   }}
+                  className="desktop-only"
                 >
                   <Shield size={15} />
                 </Link>
               )}
 
-              {/* Avatar dropdown */}
-              <div ref={dropdownRef} style={{ position: 'relative' }}>
+              {/* Avatar dropdown (Desktop) */}
+              <div ref={dropdownRef} style={{ position: 'relative' }} className="desktop-only">
                 <button
                   id="nav-avatar-btn"
                   type="button"
@@ -184,10 +184,10 @@ export default function Navbar() {
                       ? <img src={profile.avatar_url} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       : <User size={16} style={{ color: '#AAAAAA' }} />}
                   </div>
-                  <span style={{ fontSize: '0.82rem', fontWeight: 500, color: '#FFFFFF', maxWidth: '90px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} className="hidden md:block">
+                  <span style={{ fontSize: '0.82rem', fontWeight: 500, color: '#FFFFFF', maxWidth: '90px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {displayName}
                   </span>
-                  <ChevronDown size={13} style={{ color: '#AAAAAA', transform: dropdownOpen ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 0.2s' }} className="hidden md:block" />
+                  <ChevronDown size={13} style={{ color: '#AAAAAA', transform: dropdownOpen ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 0.2s' }} />
                 </button>
 
                 {/* Dropdown panel */}
@@ -277,7 +277,7 @@ export default function Navbar() {
               </div>
             </>
           ) : (
-            <>
+            <div className="desktop-only" style={{ alignItems: 'center', gap: '0.5rem' }}>
               <Link href="/login" id="nav-login-btn" style={{
                 color: '#AAAAAA', fontWeight: 500, fontSize: '0.9rem',
                 textDecoration: 'none', padding: '0.45rem 0.75rem',
@@ -293,18 +293,18 @@ export default function Navbar() {
               }}>
                 Get started
               </Link>
-            </>
+            </div>
           )}
 
           {/* Mobile hamburger */}
           <button
             id="nav-mobile-menu-btn"
             onClick={() => setMobileOpen(!mobileOpen)}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#AAAAAA', display: 'flex', padding: '0.3rem' }}
-            className="md:hidden"
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#AAAAAA', padding: '0.3rem' }}
+            className="mobile-only"
             aria-label="Toggle menu"
           >
-            {mobileOpen ? <X size={20} /> : <Menu size={20} />}
+            {mobileOpen ? <X size={22} /> : <Menu size={22} />}
           </button>
         </div>
       </div>
@@ -313,74 +313,77 @@ export default function Navbar() {
       {mobileOpen && (
         <div style={{
           borderTop: '1px solid #2B2B2B',
-          background: '#1A1A1A', padding: '0.75rem 1rem',
-          display: 'flex', flexDirection: 'column', gap: '0.15rem',
+          background: '#161616', padding: '0.85rem 1rem',
+          display: 'flex', flexDirection: 'column', gap: '0.25rem',
+          boxShadow: '0 12px 30px rgba(0,0,0,0.8)',
         }}>
-          {/* User info row on mobile */}
-          {user && profile && (
+          {/* User info header on mobile */}
+          {user && (
             <div style={{
               display: 'flex', alignItems: 'center', gap: '0.75rem',
               padding: '0.65rem 0.75rem', marginBottom: '0.35rem',
-              borderBottom: '1px solid #2B2B2B', paddingBottom: '0.85rem',
+              borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '0.85rem',
             }}>
               <div style={{
-                width: '36px', height: '36px', borderRadius: '50%',
-                background: '#262626', border: '1px solid #2B2B2B',
+                width: '38px', height: '38px', borderRadius: '50%',
+                background: '#262626', border: '1px solid #3B3B3B',
                 overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center',
                 flexShrink: 0,
               }}>
-                {profile.avatar_url
+                {profile?.avatar_url
                   ? <img src={profile.avatar_url} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  : <User size={16} style={{ color: '#AAAAAA' }} />}
+                  : <User size={18} style={{ color: '#AAAAAA' }} />}
               </div>
-              <div>
-                <p style={{ fontSize: '0.875rem', fontWeight: 600, color: '#FFFFFF' }}>{displayName}</p>
-                <p style={{ fontSize: '0.75rem', color: '#666' }}>{user.email}</p>
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <p style={{ fontSize: '0.9rem', fontWeight: 700, color: '#FFFFFF', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{displayName}</p>
+                <p style={{ fontSize: '0.75rem', color: '#888888', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.email}</p>
               </div>
             </div>
           )}
 
           {[
-            { href: '/browse',                label: 'Browse' },
-            { href: '/bookmarks',             label: 'Bookmarks' },
+            { href: '/browse',                label: '🍿 Browse Apps' },
+            { href: '/bookmarks',             label: '🔖 My Bookmarks' },
             ...(user ? [
+              { href: '/submit',              label: '➕ Submit App' },
+              { href: '/dashboard/projects',  label: '📁 My Apps' },
+              { href: '/dashboard/analytics', label: '📊 Analytics' },
               { href: '/account',             label: '⚙️ My Account' },
-              { href: '/submit',              label: '+ Submit App' },
-              { href: '/dashboard/projects',  label: 'My Apps' },
-              { href: '/dashboard/analytics', label: 'Analytics' },
             ] : [
-              { href: '/login',   label: 'Sign In' },
-              { href: '/signup',  label: 'Get Started' },
+              { href: '/login',   label: '🔑 Sign In' },
+              { href: '/signup',  label: '🚀 Get Started' },
             ]),
-            ...(isAdmin ? [{ href: '/admin/queue', label: '🛡 Admin Queue' }] : []),
+            ...(isAdmin ? [{ href: '/admin/queue', label: '🛡️ Admin Queue' }] : []),
           ].map(link => (
             <Link
               key={link.href}
               href={link.href}
               onClick={() => setMobileOpen(false)}
               style={{
-                padding: '0.65rem 0.75rem',
-                color: isActive(link.href) ? '#FFFFFF' : '#AAAAAA',
-                fontWeight: isActive(link.href) ? 600 : 400,
-                textDecoration: 'none', fontSize: '0.95rem',
-                borderRadius: '0.4rem',
-                background: isActive(link.href) ? 'rgba(229,9,20,0.12)' : 'transparent',
+                padding: '0.7rem 0.85rem',
+                color: isActive(link.href) ? '#FFFFFF' : '#CCCCCC',
+                fontWeight: isActive(link.href) ? 700 : 500,
+                textDecoration: 'none', fontSize: '0.92rem',
+                borderRadius: '0.5rem',
+                background: isActive(link.href) ? 'rgba(229,9,20,0.18)' : 'rgba(255,255,255,0.03)',
+                border: isActive(link.href) ? '1px solid rgba(229,9,20,0.4)' : '1px solid transparent',
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
               }}
             >
-              {link.label}
+              <span>{link.label}</span>
             </Link>
           ))}
 
           {user && (
-            <form action={signOut} style={{ marginTop: '0.35rem', borderTop: '1px solid #2B2B2B', paddingTop: '0.5rem' }}>
+            <form action={signOut} style={{ marginTop: '0.5rem', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '0.65rem' }}>
               <button type="submit" style={{
-                width: '100%', padding: '0.65rem 0.75rem', textAlign: 'left',
-                background: 'transparent', border: 'none', cursor: 'pointer',
-                color: '#E50914', fontSize: '0.95rem', fontWeight: 500,
+                width: '100%', padding: '0.7rem 0.85rem', textAlign: 'left',
+                background: 'rgba(229,9,20,0.1)', border: '1px solid rgba(229,9,20,0.3)', cursor: 'pointer',
+                color: '#EF4444', fontSize: '0.92rem', fontWeight: 700,
                 display: 'flex', alignItems: 'center', gap: '0.5rem',
-                borderRadius: '0.4rem',
+                borderRadius: '0.5rem',
               }}>
-                <LogOut size={15} /> Sign Out
+                <LogOut size={16} /> Sign Out
               </button>
             </form>
           )}

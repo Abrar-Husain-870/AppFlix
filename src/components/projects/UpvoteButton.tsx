@@ -3,7 +3,7 @@
 import { useActionState } from 'react'
 import Link from 'next/link'
 import { upvoteProject } from '@/app/actions/projects'
-import { ChevronUp } from 'lucide-react'
+import { ArrowUp } from 'lucide-react'
 import { useState } from 'react'
 
 interface UpvoteButtonProps {
@@ -47,13 +47,13 @@ export default function UpvoteButton({ projectId, initialCount, initialUpvoted, 
       onClick={handleUpvote}
       aria-label={`${optimisticUpvoted ? 'Remove upvote from' : 'Upvote'} project`}
       style={{
-        display: 'flex', flexDirection: 'column', alignItems: 'center',
-        gap: '0.1rem', padding: '0.5rem 0.75rem',
+        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+        gap: '0.4rem', padding: '0.45rem 0.85rem',
         background: optimisticUpvoted ? 'rgba(229,9,20,0.15)' : 'rgba(255,255,255,0.05)',
         border: `1px solid ${optimisticUpvoted ? 'rgba(229,9,20,0.5)' : '#2B2B2B'}`,
         borderRadius: '0.5rem', cursor: 'pointer',
-        transition: 'all 0.2s', minWidth: '52px',
-        transform: animating ? 'scale(1.1)' : 'scale(1)',
+        transition: 'all 0.2s',
+        transform: animating ? 'scale(1.08)' : 'scale(1)',
       }}
       className={animating ? 'upvote-animate' : ''}
       onMouseEnter={e => {
@@ -69,17 +69,18 @@ export default function UpvoteButton({ projectId, initialCount, initialUpvoted, 
         }
       }}
     >
-      <ChevronUp
-        size={18}
-        style={{ color: optimisticUpvoted ? '#E50914' : '#AAAAAA', transition: 'color 0.2s' }}
-      />
       <span style={{
-        fontSize: '0.75rem', fontWeight: 700, lineHeight: 1,
-        color: optimisticUpvoted ? '#E50914' : '#AAAAAA',
+        fontSize: '0.85rem', fontWeight: 800, lineHeight: 1,
+        color: optimisticUpvoted ? '#E50914' : '#FFFFFF',
         transition: 'color 0.2s',
       }}>
         {optimisticCount}
       </span>
+      <ArrowUp
+        size={16}
+        strokeWidth={2.75}
+        style={{ color: optimisticUpvoted ? '#E50914' : '#AAAAAA', transition: 'color 0.2s' }}
+      />
     </button>
   )
 }

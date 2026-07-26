@@ -106,7 +106,7 @@ export default function AccountPage() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#141414', padding: '2rem 1.5rem' }}>
+    <div style={{ minHeight: '100vh', background: '#141414', padding: '2rem 1rem', boxSizing: 'border-box' }}>
       <div style={{ maxWidth: '760px', margin: '0 auto' }}>
 
         {/* Header */}

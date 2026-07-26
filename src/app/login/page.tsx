@@ -47,13 +47,13 @@ export default function LoginPage() {
     }}>
       {/* ── Netflix-style Top Header with distinct bottom border & margin ─ */}
       <header style={{
-        padding: '2rem 3.5rem 1.5rem',
+        padding: '1.25rem 1rem',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'flex-start',
         width: '100%',
         maxWidth: '1360px',
-        margin: '0 auto 3rem',
+        margin: '0 auto 1.5rem',
         borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
         boxSizing: 'border-box',
       }}>

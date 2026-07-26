@@ -1,7 +1,7 @@
 import { createServerClient, createServiceRoleClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { CheckCircle, Clock, XCircle, FileText, Edit3, Eye, Trash2 } from 'lucide-react'
+import { CheckCircle, Clock, XCircle, FileText, Edit3, Eye, Trash2, ArrowUp } from 'lucide-react'
 import DeleteProjectButton from '@/components/projects/DeleteProjectButton'
 import { getDeveloperProjectReports } from '@/app/actions/reports'
 import DeveloperReportManager from '@/components/dashboard/DeveloperReportManager'
@@ -142,13 +142,13 @@ export default async function DashboardProjectsPage({
                 {items.map(project => (
                   <div key={project.id} style={{
                     background: '#1F1F1F', border: '1px solid #2B2B2B',
-                    borderRadius: '0.75rem', padding: '1rem 1.25rem',
-                    display: 'flex', gap: '1rem', alignItems: 'center',
-                    transition: 'border-color 0.2s',
+                    borderRadius: '0.75rem', padding: '0.85rem 1rem',
+                    display: 'flex', gap: '0.85rem', alignItems: 'center', flexWrap: 'wrap',
+                    transition: 'border-color 0.2s', boxSizing: 'border-box', width: '100%',
                   }}>
                     {/* Icon */}
                     <div style={{
-                      width: '48px', height: '48px', borderRadius: '0.6rem',
+                      width: '44px', height: '44px', borderRadius: '0.6rem',
                       background: '#262626', border: '1px solid #2B2B2B',
                       overflow: 'hidden', flexShrink: 0,
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -159,7 +159,7 @@ export default async function DashboardProjectsPage({
                     </div>
 
                     {/* Info */}
-                    <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ flex: '1 1 200px', minWidth: 0 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
                         <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#FFFFFF' }}>{project.name}</h3>
                         <span style={{
@@ -187,12 +187,12 @@ export default async function DashboardProjectsPage({
                     {/* Stats */}
                     <div style={{ display: 'flex', gap: '1.25rem', flexShrink: 0 }}>
                       {[
-                        { label: '▲', value: project.upvote_count },
-                        { label: <Eye size={12} />, value: project.view_count },
+                        { value: project.upvote_count ?? 0, icon: <ArrowUp size={13} strokeWidth={2.75} style={{ color: '#2ECC71' }} /> },
+                        { value: project.view_count ?? 0, icon: <Eye size={13} style={{ color: '#AAAAAA' }} /> },
                       ].map((s, i) => (
-                        <div key={i} style={{ textAlign: 'center' }}>
-                          <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#FFFFFF' }}>{s.value ?? 0}</div>
-                          <div style={{ fontSize: '0.7rem', color: '#555' }}>{s.label}</div>
+                        <div key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+                          <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#FFFFFF' }}>{s.value}</span>
+                          {s.icon}
                         </div>
                       ))}
                     </div>

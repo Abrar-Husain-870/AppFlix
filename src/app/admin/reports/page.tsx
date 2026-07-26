@@ -94,7 +94,7 @@ function ReportRow({ report, onAction }: { report: ReportItem; onAction: () => v
           </Link>
         )}
 
-        <div style={{ flex: 1, minWidth: '260px' }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
           {/* Project Title */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
             <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#FFFFFF', margin: 0 }}>

@@ -204,29 +204,29 @@ export default function NetflixReasonCards() {
       <div style={{
         maxWidth: '1360px',
         margin: '0 auto',
-        padding: '0 2rem',
+        padding: '0 1rem',
         boxSizing: 'border-box',
       }}>
         {/* Section Heading */}
         <h2 style={{
-          fontSize: 'clamp(1.4rem, 3.5vw, 1.85rem)',
+          fontSize: 'clamp(1.2rem, 3.5vw, 1.85rem)',
           fontWeight: 800,
           color: '#FFFFFF',
           letterSpacing: '-0.02em',
-          marginBottom: '1.75rem',
+          marginBottom: '1.5rem',
           display: 'flex',
           alignItems: 'center',
           gap: '0.65rem',
         }}>
-          <div style={{ width: '4px', height: '26px', background: '#E50914', borderRadius: '2px' }} />
+          <div style={{ width: '4px', height: '24px', background: '#E50914', borderRadius: '2px' }} />
           More reasons to join
         </h2>
 
         {/* 4 Cards Responsive Grid */}
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
-          gap: '1.25rem',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+          gap: '1rem',
         }}>
           {CARDS_DATA.map(card => {
             const isHovered = hoveredId === card.id

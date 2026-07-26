@@ -85,11 +85,11 @@ function ProjectRow({ project, onAction }: { project: PendingProject; onAction: 
       </div>
 
       {/* Top row */}
-      <div style={{ padding: '1.25rem', display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
+      <div style={{ padding: '1rem', display: 'flex', gap: '0.85rem', alignItems: 'flex-start', flexWrap: 'wrap' }}>
         {/* Icon */}
         <Link href={`/browse/${project.slug}`} target="_blank" style={{ textDecoration: 'none' }}>
           <div style={{
-            width: '56px', height: '56px', borderRadius: '0.65rem',
+            width: '48px', height: '48px', borderRadius: '0.65rem',
             background: '#161616', border: '1px solid rgba(255, 255, 255, 0.1)',
             overflow: 'hidden', flexShrink: 0,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -102,12 +102,12 @@ function ProjectRow({ project, onAction }: { project: PendingProject; onAction: 
         </Link>
 
         {/* Info */}
-        <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ flex: '1 1 220px', minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.25rem' }}>
             <Link href={`/browse/${project.slug}`} target="_blank" style={{ textDecoration: 'none', color: '#FFFFFF' }}>
-              <h3 style={{ fontSize: '1.05rem', fontWeight: 700, margin: 0, display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+              <h3 style={{ fontSize: '1rem', fontWeight: 700, margin: 0, display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
                 {project.name}
-                <ExternalLink size={14} style={{ color: '#E50914' }} />
+                <ExternalLink size={13} style={{ color: '#E50914' }} />
               </h3>
             </Link>
 
@@ -128,23 +128,23 @@ function ProjectRow({ project, onAction }: { project: PendingProject; onAction: 
               {project.stage}
             </span>
           </div>
-          <p style={{ fontSize: '0.85rem', color: '#AAAAAA', marginBottom: '0.5rem' }}>{project.tagline}</p>
+          <p style={{ fontSize: '0.82rem', color: '#AAAAAA', marginBottom: '0.5rem', lineHeight: 1.4 }}>{project.tagline}</p>
           <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center' }}>
             {project.profiles?.username && (
-              <span style={{ fontSize: '0.78rem', color: '#555' }}>@{project.profiles.username}</span>
+              <span style={{ fontSize: '0.75rem', color: '#666' }}>@{project.profiles.username}</span>
             )}
-            <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.78rem', color: '#555' }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.75rem', color: '#666' }}>
               <Clock size={11} /> {submittedDate}
             </span>
             {project.website_url && (
               <a href={project.website_url} target="_blank" rel="noopener noreferrer" id={`admin-website-${project.id}`}
-                style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.78rem', color: '#888', textDecoration: 'none' }}>
+                style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.75rem', color: '#888', textDecoration: 'none' }}>
                 <Globe size={11} /> Website
               </a>
             )}
             {project.github_url && (
               <a href={project.github_url} target="_blank" rel="noopener noreferrer" id={`admin-github-${project.id}`}
-                style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.78rem', color: '#888', textDecoration: 'none' }}>
+                style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.75rem', color: '#888', textDecoration: 'none' }}>
                 <GitBranch size={11} /> GitHub
               </a>
             )}
@@ -152,7 +152,7 @@ function ProjectRow({ project, onAction }: { project: PendingProject; onAction: 
         </div>
 
         {/* Action buttons column */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', alignItems: 'stretch', flexShrink: 0 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', flex: '1 1 200px', minWidth: '180px' }}>
           <div style={{ display: 'flex', gap: '0.5rem' }}>
             <button
               id={`approve-btn-${project.id}`}

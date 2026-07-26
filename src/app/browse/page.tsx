@@ -215,43 +215,46 @@ export default function BrowsePage() {
         <div style={{
           position: 'relative', zIndex: 2,
           textAlign: 'center',
-          padding: '0 1.5rem',
+          padding: '0 1rem',
           maxWidth: '720px',
           width: '100%',
+          boxSizing: 'border-box',
         }}>
           <h1 style={{
-            fontSize: 'clamp(2.4rem, 7vw, 5rem)',
+            fontSize: 'clamp(1.8rem, 6.5vw, 4.5rem)',
             fontWeight: 900,
             letterSpacing: '-0.04em',
-            lineHeight: 1.0,
+            lineHeight: 1.1,
             color: '#FFFFFF',
             marginBottom: '1.1rem',
             textShadow: '0 4px 32px rgba(0,0,0,0.8)',
+            wordBreak: 'break-word',
           }}>
             Discover Student<br />
             <span style={{
               background: 'linear-gradient(135deg, #E50914 0%, #FF6B6B 100%)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
+              display: 'inline-block',
             }}>
               Built Apps
             </span>
           </h1>
 
           <p style={{
-            fontSize: 'clamp(0.95rem, 2.5vw, 1.15rem)',
+            fontSize: 'clamp(0.88rem, 3.2vw, 1.15rem)',
             color: 'rgba(255,255,255,0.7)',
-            marginBottom: '2.25rem',
+            marginBottom: '2rem',
             lineHeight: 1.6,
             maxWidth: '480px',
-            margin: '0 auto 2.25rem',
+            margin: '0 auto 2rem',
           }}>
             Browse, upvote, and submit university apps — all in one place.
           </p>
 
           {/* Hero search bar — Netflix style */}
           <p style={{
-            fontSize: '0.875rem',
+            fontSize: '0.85rem',
             color: '#DDDDDD',
             marginBottom: '0.85rem',
             fontWeight: 500,
@@ -259,7 +262,7 @@ export default function BrowsePage() {
             Ready to explore? Search apps to discover student innovations.
           </p>
 
-          <form onSubmit={e => e.preventDefault()} style={{
+          <form onSubmit={e => e.preventDefault()} className="hero-search-form" style={{
             display: 'flex',
             maxWidth: '560px',
             margin: '0 auto',
@@ -310,7 +313,7 @@ export default function BrowsePage() {
 
           <p style={{
             color: '#888888',
-            fontSize: '0.8rem',
+            fontSize: '0.78rem',
             marginTop: '0.75rem',
           }}>
             Free for all university builders & creators.
@@ -496,7 +499,7 @@ export default function BrowsePage() {
 
               {/* Grid */}
               {loading ? (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.25rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 280px), 1fr))', gap: '1rem', width: '100%' }}>
                   {Array.from({ length: 6 }).map((_, i) => (
                     <div key={i} className="skeleton" style={{ height: '210px', borderRadius: '0.85rem', background: '#1F1F1F' }} />
                   ))}
@@ -518,7 +521,7 @@ export default function BrowsePage() {
                   </p>
                 </div>
               ) : (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.25rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 280px), 1fr))', gap: '1rem', width: '100%' }}>
                   {projects.map(project => (
                     <ProjectCard
                       key={project.id}

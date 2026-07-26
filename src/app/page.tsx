@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { createServerClient } from '@/lib/supabase/server'
-import { Flame, ArrowRight, Zap, Shield, BarChart3, Users } from 'lucide-react'
+import { Flame, ArrowRight, Zap, Shield, BarChart3, Users, ArrowUp } from 'lucide-react'
 import NetflixHorizonDivider from '@/components/ui/NetflixHorizonDivider'
 import NetflixTrendingRow from '@/components/projects/NetflixTrendingRow'
 import HeroGetStartedButton from '@/components/ui/HeroGetStartedButton'
@@ -99,14 +99,16 @@ async function HomeContent() {
         <div style={{ position: 'relative', zIndex: 2, maxWidth: '760px', margin: '0 auto' }}>
           {/* Headline */}
           <h1 style={{
-            fontSize: 'clamp(2.5rem, 6vw, 4.5rem)', fontWeight: 900,
-            letterSpacing: '-0.04em', lineHeight: 1.05,
+            fontSize: 'clamp(1.75rem, 6.5vw, 4.5rem)', fontWeight: 900,
+            letterSpacing: '-0.04em', lineHeight: 1.1,
             marginBottom: '1.25rem', color: '#FFFFFF',
+            wordBreak: 'break-word',
           }}>
             Discover & Showcase{' '}
             <span style={{
               background: 'linear-gradient(135deg, #E50914 0%, #FF6B6B 100%)',
               WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+              display: 'inline-block',
             }}>
               Student Projects
             </span>
@@ -114,15 +116,15 @@ async function HomeContent() {
 
           {/* Subheading */}
           <p style={{
-            fontSize: 'clamp(1rem, 2.5vw, 1.2rem)', color: '#AAAAAA',
-            maxWidth: '560px', margin: '0 auto 2.5rem', lineHeight: 1.65,
+            fontSize: 'clamp(0.88rem, 3.5vw, 1.2rem)', color: '#AAAAAA',
+            maxWidth: '560px', margin: '0 auto 2.5rem', lineHeight: 1.6,
           }}>
             AppFlix is where your university&apos;s builders, hackers, and innovators share their work — and get discovered.
           </p>
 
           {/* Netflix email form styled get-started bar */}
           <p style={{
-            fontSize: '0.875rem',
+            fontSize: '0.85rem',
             color: '#DDDDDD',
             marginBottom: '0.85rem',
             fontWeight: 500,
@@ -130,7 +132,7 @@ async function HomeContent() {
             Ready to explore? Browse student apps or list your app.
           </p>
 
-          <div style={{
+          <div className="hero-search-form" style={{
             display: 'flex',
             maxWidth: '560px',
             margin: '0 auto 1rem',
@@ -160,7 +162,7 @@ async function HomeContent() {
 
           <p style={{
             color: '#888888',
-            fontSize: '0.8rem',
+            fontSize: '0.78rem',
             marginBottom: '2rem',
           }}>
             Free for all university student innovators.
@@ -169,17 +171,18 @@ async function HomeContent() {
           {/* Stats */}
           {(stats.projects > 0 || stats.categories > 0) && (
             <div style={{
-              display: 'flex', gap: '2.5rem', justifyContent: 'center',
-              marginTop: '3rem', flexWrap: 'wrap',
+              display: 'flex', gap: '1.25rem', justifyContent: 'center',
+              marginTop: '2.5rem', flexWrap: 'wrap',
+              marginBottom: '1.5rem',
             }}>
               {[
                 { value: stats.projects.toString(), label: 'Apps listed' },
                 { value: stats.categories.toString(), label: 'Categories' },
                 { value: 'Free', label: 'Always free' },
               ].map(stat => (
-                <div key={stat.label} style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#FFFFFF', lineHeight: 1 }}>{stat.value}</div>
-                  <div style={{ fontSize: '0.8rem', color: '#666', marginTop: '0.3rem' }}>{stat.label}</div>
+                <div key={stat.label} style={{ textAlign: 'center', minWidth: '80px' }}>
+                  <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#FFFFFF', lineHeight: 1 }}>{stat.value}</div>
+                  <div style={{ fontSize: '0.75rem', color: '#888888', marginTop: '0.3rem' }}>{stat.label}</div>
                 </div>
               ))}
             </div>
@@ -198,57 +201,67 @@ async function HomeContent() {
 
       {/* ── Featured Projects ─────────────────────────────────────────── */}
       {featured.length > 0 && (
-        <section style={{ padding: '3rem 1.5rem', maxWidth: '1280px', margin: '0 auto' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+        <section style={{ padding: '2rem 0.85rem', maxWidth: '1280px', margin: '0 auto', boxSizing: 'border-box', width: '100%' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
             <div>
               <div className="accent-line" style={{ width: '2rem', marginBottom: '0.5rem' }} />
-              <h2 style={{ fontSize: '1.4rem', fontWeight: 800, color: '#FFFFFF', letterSpacing: '-0.02em' }}>
+              <h2 style={{ fontSize: '1.35rem', fontWeight: 800, color: '#FFFFFF', letterSpacing: '-0.02em' }}>
                 Top Apps
               </h2>
             </div>
-            <Link href="/browse" style={{ color: '#E50914', fontSize: '0.875rem', fontWeight: 600, textDecoration: 'none' }}>
+            <Link href="/browse" style={{ color: '#E50914', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none' }}>
               View all →
             </Link>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(480px, 1fr))', gap: '1.25rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))', gap: '0.75rem', width: '100%' }}>
             {(featured as any[]).map((project) => (
-              <Link key={project.id} href={`/browse/${project.slug}`} style={{ textDecoration: 'none', display: 'block' }}>
+              <Link key={project.id} href={`/browse/${project.slug}`} style={{ textDecoration: 'none', display: 'block', minWidth: 0, width: '100%' }}>
                 <div className="card-hover" style={{
-                  background: 'linear-gradient(145deg, #0F0F0F 0%, #080808 100%)', border: '1px solid rgba(255, 255, 255, 0.07)', borderRadius: '0.75rem',
-                  padding: '1.1rem 1.4rem', minHeight: '88px', display: 'flex', gap: '1.1rem', alignItems: 'center',
+                  background: 'linear-gradient(145deg, #0F0F0F 0%, #080808 100%)',
+                  border: '1px solid rgba(255, 255, 255, 0.07)',
+                  borderRadius: '0.75rem',
+                  padding: '0.75rem 0.85rem',
+                  minHeight: '78px',
+                  display: 'flex',
+                  gap: '0.65rem',
+                  alignItems: 'center',
                   boxSizing: 'border-box',
+                  overflow: 'hidden',
+                  width: '100%',
+                  maxWidth: '100%',
                 }}>
                   <div style={{
-                    width: '52px', height: '52px', borderRadius: '0.75rem',
+                    width: '44px', height: '44px', borderRadius: '0.65rem',
                     background: '#161616', border: '1px solid rgba(255, 255, 255, 0.1)',
                     flexShrink: 0, overflow: 'hidden',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                   }}>
                     {project.icon_url
                       ? <img src={project.icon_url} alt={project.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                      : <Flame size={22} style={{ color: '#444' }} />}
+                      : <Flame size={20} style={{ color: '#444' }} />}
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <h3 style={{
-                      fontSize: '1rem', fontWeight: 700, color: '#FFFFFF', marginBottom: '0.25rem',
+                      fontSize: '0.92rem', fontWeight: 700, color: '#FFFFFF', marginBottom: '0.15rem',
                       whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
                     }}>
                       {project.name}
                     </h3>
                     <p style={{
-                      fontSize: '0.85rem', color: '#AAAAAA', margin: 0, lineHeight: 1.4,
+                      fontSize: '0.78rem', color: '#AAAAAA', margin: 0, lineHeight: 1.3,
                       display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
                     }}>
                       {project.tagline}
                     </p>
                   </div>
                   <div style={{
-                    flexShrink: 0, display: 'flex', flexDirection: 'column',
-                    alignItems: 'center', gap: '0.1rem', paddingLeft: '0.5rem',
+                    flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: '0.35rem',
+                    background: 'rgba(229, 9, 20, 0.12)', border: '1px solid rgba(229, 9, 20, 0.3)',
+                    borderRadius: '0.45rem', padding: '0.35rem 0.6rem',
                   }}>
-                    <span style={{ color: '#E50914', fontSize: '0.75rem' }}>▲</span>
-                    <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#FFFFFF' }}>{project.upvote_count}</span>
+                    <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#FFFFFF' }}>{project.upvote_count}</span>
+                    <ArrowUp size={13} strokeWidth={2.75} style={{ color: '#E50914' }} />
                   </div>
                 </div>
               </Link>

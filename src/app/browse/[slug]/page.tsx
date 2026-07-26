@@ -164,7 +164,22 @@ export default async function ProjectDetailPage({ params }: Props) {
             </div>
           )}
 
-          <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'flex-start', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'flex-start', flexWrap: 'wrap', position: 'relative' }}>
+          {/* Mobile-only pinned Top-Right Actions (Upvote on top, Bookmark below) */}
+          <div className="mobile-only" style={{ position: 'absolute', top: 0, right: 0, zIndex: 10, flexDirection: 'column', gap: '0.5rem', alignItems: 'flex-end' }}>
+            <UpvoteButton
+              projectId={project.id}
+              initialCount={project.upvote_count}
+              initialUpvoted={isUpvoted}
+              requireAuth={!user}
+            />
+            <BookmarkButton
+              projectId={project.id}
+              initialBookmarked={isBookmarked}
+              requireAuth={!user}
+            />
+          </div>
+
           {/* Icon */}
           <div style={{
             width: '80px', height: '80px', borderRadius: '1.1rem',
@@ -227,18 +242,21 @@ export default async function ProjectDetailPage({ params }: Props) {
           </div>
 
           {/* Actions */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', minWidth: '120px' }}>
-            <UpvoteButton
-              projectId={project.id}
-              initialCount={project.upvote_count}
-              initialUpvoted={isUpvoted}
-              requireAuth={!user}
-            />
-            <BookmarkButton
-              projectId={project.id}
-              initialBookmarked={isBookmarked}
-              requireAuth={!user}
-            />
+          <div className="details-actions-container" style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', minWidth: '120px' }}>
+            {/* Desktop-only Upvote & Bookmark Buttons in sidebar */}
+            <div className="desktop-only" style={{ flexDirection: 'column', gap: '0.6rem' }}>
+              <UpvoteButton
+                projectId={project.id}
+                initialCount={project.upvote_count}
+                initialUpvoted={isUpvoted}
+                requireAuth={!user}
+              />
+              <BookmarkButton
+                projectId={project.id}
+                initialBookmarked={isBookmarked}
+                requireAuth={!user}
+              />
+            </div>
 
             {(!user || user.id !== project.user_id) && (
               <ReportModal

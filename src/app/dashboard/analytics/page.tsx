@@ -168,7 +168,7 @@ export default function AnalyticsPage() {
 
         {/* Charts */}
         {!loading && events.length > 0 && (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 260px), 1fr))', gap: '1rem' }}>
             {[
               { label: 'Views over time',   type: 'view',           color: '#5B8DEF' },
               { label: 'Clicks over time',  type: 'click_external', color: '#E50914' },
