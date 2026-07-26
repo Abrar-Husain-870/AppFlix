@@ -367,8 +367,6 @@ body {
     bottom: -10px !important;
     font-size: 5rem !important;
     line-height: 0.8 !important;
-    -webkit-text-stroke: 1px #D4D4D4 !important;
-    color: #000000 !important;
     z-index: 10 !important;
     filter: drop-shadow(2px 4px 8px rgba(0, 0, 0, 0.95)) !important;
   }

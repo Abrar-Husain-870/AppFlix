@@ -404,8 +404,8 @@ export default function NetflixTrendingRow({ projects, title = 'Trending Now' }:
                     </div>
                   </div>
 
-                  {/* Netflix Rank Outline Number (Scaled responsively) */}
-                  <span
+                  {/* Netflix Rank Outline Number (Dual-Layered for 100% Solid Black Fill + Crisp White Outline on all devices) */}
+                  <div
                     className="trending-rank-num"
                     style={{
                       position: 'absolute',
@@ -415,8 +415,6 @@ export default function NetflixTrendingRow({ projects, title = 'Trending Now' }:
                       fontWeight: 900,
                       fontFamily: 'Impact, -apple-system, sans-serif',
                       lineHeight: 0.8,
-                      color: '#000000',
-                      WebkitTextStroke: '2.5px #E5E5E5',
                       filter: 'drop-shadow(3px 5px 10px rgba(0,0,0,0.95))',
                       zIndex: 10,
                       userSelect: 'none',
@@ -424,8 +422,26 @@ export default function NetflixTrendingRow({ projects, title = 'Trending Now' }:
                       letterSpacing: '-0.06em',
                     }}
                   >
-                    {index + 1}
-                  </span>
+                    {/* Outline stroke layer behind */}
+                    <span style={{
+                      position: 'absolute', top: 0, left: 0,
+                      color: '#E5E5E5',
+                      WebkitTextFillColor: '#E5E5E5',
+                      WebkitTextStroke: '4px #E5E5E5',
+                      zIndex: 1,
+                    }}>
+                      {index + 1}
+                    </span>
+                    {/* Solid black fill layer in front */}
+                    <span style={{
+                      position: 'relative',
+                      color: '#000000',
+                      WebkitTextFillColor: '#000000',
+                      zIndex: 2,
+                    }}>
+                      {index + 1}
+                    </span>
+                  </div>
                 </Link>
               )
             })}
