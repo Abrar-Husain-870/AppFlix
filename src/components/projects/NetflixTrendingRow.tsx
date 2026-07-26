@@ -159,7 +159,7 @@ export default function NetflixTrendingRow({ projects, title = 'Trending Now' }:
               scrollSnapType: 'x mandatory',
               boxSizing: 'border-box',
             }}
-            className="no-scrollbar"
+            className="no-scrollbar trending-scroll-row"
           >
             {topProjects.map((project, index) => {
               const posterSrc =
@@ -172,6 +172,7 @@ export default function NetflixTrendingRow({ projects, title = 'Trending Now' }:
                 <Link
                   key={project.id}
                   href={`/browse/${project.slug}`}
+                  className="trending-card-item"
                   style={{
                     textDecoration: 'none',
                     display: 'flex',
@@ -402,22 +403,25 @@ export default function NetflixTrendingRow({ projects, title = 'Trending Now' }:
                   </div>
 
                   {/* Netflix Rank Outline Number (Scaled responsively) */}
-                  <span style={{
-                    position: 'absolute',
-                    left: index >= 9 ? '-12px' : '-5px',
-                    bottom: '-10px',
-                    fontSize: 'clamp(4.5rem, 16vw, 7.5rem)',
-                    fontWeight: 900,
-                    fontFamily: 'Impact, -apple-system, sans-serif',
-                    lineHeight: 0.8,
-                    color: '#000000',
-                    WebkitTextStroke: '1px #D4D4D4',
-                    filter: 'drop-shadow(2px 4px 8px rgba(0,0,0,0.95))',
-                    zIndex: 10,
-                    userSelect: 'none',
-                    pointerEvents: 'none',
-                    letterSpacing: '-0.06em',
-                  }}>
+                  <span
+                    className="trending-rank-num"
+                    style={{
+                      position: 'absolute',
+                      left: index >= 9 ? '-18px' : '-10px',
+                      bottom: '-12px',
+                      fontSize: 'clamp(5.5rem, 16vw, 7.5rem)',
+                      fontWeight: 900,
+                      fontFamily: 'Impact, -apple-system, sans-serif',
+                      lineHeight: 0.8,
+                      color: '#000000',
+                      WebkitTextStroke: '2.5px #E5E5E5',
+                      filter: 'drop-shadow(3px 5px 10px rgba(0,0,0,0.95))',
+                      zIndex: 10,
+                      userSelect: 'none',
+                      pointerEvents: 'none',
+                      letterSpacing: '-0.06em',
+                    }}
+                  >
                     {index + 1}
                   </span>
                 </Link>
