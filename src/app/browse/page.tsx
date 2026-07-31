@@ -328,8 +328,10 @@ export default function BrowsePage() {
         <NetflixHorizonDivider fillColor="#141414" />
 
         <div style={{ background: '#141414', minHeight: '60vh' }}>
-          {/* Netflix Trending Top 10 Row */}
-          <NetflixTrendingRow projects={projects} title="Trending Now" />
+          {/* Netflix Trending Top 10 Row (Hidden when searching or filtering) */}
+          {!debouncedSearch.trim() && selectedCategory === 'all' && (
+            <NetflixTrendingRow projects={projects} title="Trending Now" />
+          )}
 
           <div style={{ maxWidth: '1360px', margin: '0 auto', padding: '0 2rem 3rem', display: 'flex', gap: '2rem', alignItems: 'flex-start' }}>
             {/* Sidebar — category filter */}
