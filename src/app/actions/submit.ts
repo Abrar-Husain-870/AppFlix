@@ -21,8 +21,10 @@ export async function submitProject(state: SubmitState, formData: FormData): Pro
   const description = (formData.get('description') as string)?.trim()
   const categoryId  = formData.get('category_id') as string
   const stage       = formData.get('stage') as string
-  const websiteUrl  = (formData.get('website_url') as string)?.trim() || null
-  const githubUrl   = (formData.get('github_url') as string)?.trim() || null
+  const websiteUrl    = (formData.get('website_url') as string)?.trim() || null
+  const githubUrl     = (formData.get('github_url') as string)?.trim() || null
+  const appstoreUrl   = (formData.get('appstore_url') as string)?.trim() || null
+  const playstoreUrl  = (formData.get('playstore_url') as string)?.trim() || null
   const iconUrl     = (formData.get('icon_url') as string)?.trim() || null
   const platformsRaw = formData.getAll('platforms') as string[]
 
@@ -36,6 +38,8 @@ export async function submitProject(state: SubmitState, formData: FormData): Pro
   if (!categoryId)                        errors.category_id = 'Please select a category.'
   if (!stage)                             errors.stage = 'Please select a project stage.'
   if (platformsRaw.length === 0)          errors.platforms = 'Select at least one platform.'
+  if (!websiteUrl && !githubUrl && !appstoreUrl && !playstoreUrl)
+    errors.links = 'Please provide at least one link (Website, GitHub, App Store, or Play Store).'
 
   if (Object.keys(errors).length > 0) return { fieldErrors: errors }
 
@@ -59,8 +63,10 @@ export async function submitProject(state: SubmitState, formData: FormData): Pro
       category_id: parseInt(categoryId),
       stage,
       platforms: platformsRaw,
-      website_url: websiteUrl,
-      github_url: githubUrl,
+      website_url:   websiteUrl,
+      github_url:    githubUrl,
+      appstore_url:  appstoreUrl,
+      playstore_url: playstoreUrl,
       icon_url: iconUrl,
       status: 'pending',
     })

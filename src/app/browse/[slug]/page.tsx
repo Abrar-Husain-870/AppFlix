@@ -297,22 +297,26 @@ export default async function ProjectDetailPage({ params }: Props) {
             {isAdmin && (
               <AdminDeleteButton projectId={project.id} appName={project.name} />
             )}
-            {project.website_url && (
-              <ExternalLinkButton
-                href={project.website_url}
-                projectId={project.id}
-                id="project-website-link"
-                style={{
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem',
-                  padding: '0.6rem 1rem', background: '#E50914',
-                  color: '#FFFFFF', fontWeight: 600, fontSize: '0.85rem',
-                  borderRadius: '0.5rem', textDecoration: 'none',
-                  transition: 'background 0.2s', whiteSpace: 'nowrap',
-                }}
-              >
-                <ExternalLink size={14} /> Visit Site
-              </ExternalLinkButton>
-            )}
+            {(() => {
+              const primaryLink = project.website_url || project.playstore_url || project.appstore_url
+              const primaryLabel = project.website_url ? 'Visit Site' : project.playstore_url ? 'Play Store' : project.appstore_url ? 'App Store' : null
+              return primaryLink && primaryLabel ? (
+                <ExternalLinkButton
+                  href={primaryLink}
+                  projectId={project.id}
+                  id="project-primary-link"
+                  style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem',
+                    padding: '0.6rem 1rem', background: '#E50914',
+                    color: '#FFFFFF', fontWeight: 600, fontSize: '0.85rem',
+                    borderRadius: '0.5rem', textDecoration: 'none',
+                    transition: 'background 0.2s', whiteSpace: 'nowrap',
+                  }}
+                >
+                  <ExternalLink size={14} /> {primaryLabel}
+                </ExternalLinkButton>
+              ) : null
+            })()}
           </div>
         </div>
       </div>

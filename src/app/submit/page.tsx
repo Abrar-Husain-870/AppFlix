@@ -3,7 +3,7 @@
 import { useActionState, useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { submitProject } from '@/app/actions/submit'
-import { Upload, X, Loader2, CheckCircle, Globe, GitBranch, Image as ImageIcon } from 'lucide-react'
+import { Upload, X, Loader2, CheckCircle, Globe, GitBranch, Smartphone, Image as ImageIcon } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
@@ -271,8 +271,14 @@ export default function SubmitPage() {
 
           {/* ── Links ── */}
           <div style={{ background: '#1F1F1F', border: '1px solid #2B2B2B', borderRadius: '0.75rem', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <h2 style={{ fontSize: '0.9rem', fontWeight: 700, color: '#FFFFFF', margin: 0 }}>Links <span style={{ color: '#555', fontWeight: 400 }}>(optional)</span></h2>
+            <div>
+              <h2 style={{ fontSize: '0.9rem', fontWeight: 700, color: '#FFFFFF', margin: '0 0 0.15rem' }}>
+                Links <span style={{ color: '#E50914', fontWeight: 600, fontSize: '0.78rem' }}>*&nbsp;at least one required</span>
+              </h2>
+              <p style={{ fontSize: '0.75rem', color: '#555', margin: 0 }}>Add your app's website, GitHub repo, App Store, or Play Store link.</p>
+            </div>
 
+            {/* Website URL */}
             <div>
               <Label>Website URL</Label>
               <div style={{ position: 'relative' }}>
@@ -283,6 +289,7 @@ export default function SubmitPage() {
               </div>
             </div>
 
+            {/* GitHub URL */}
             <div>
               <Label>GitHub URL</Label>
               <div style={{ position: 'relative' }}>
@@ -292,6 +299,30 @@ export default function SubmitPage() {
                   onBlur={e => e.currentTarget.style.borderColor = '#2B2B2B'} />
               </div>
             </div>
+
+            {/* App Store URL */}
+            <div>
+              <Label>App Store URL</Label>
+              <div style={{ position: 'relative' }}>
+                <Smartphone size={14} style={{ position: 'absolute', left: '0.85rem', top: '50%', transform: 'translateY(-50%)', color: '#555' }} />
+                <input id="appstore-url" name="appstore_url" type="url" placeholder="https://apps.apple.com/app/…" style={{ ...inputStyle, paddingLeft: '2.4rem' }}
+                  onFocus={e => e.currentTarget.style.borderColor = '#E50914'}
+                  onBlur={e => e.currentTarget.style.borderColor = '#2B2B2B'} />
+              </div>
+            </div>
+
+            {/* Play Store URL */}
+            <div>
+              <Label>Play Store URL</Label>
+              <div style={{ position: 'relative' }}>
+                <Smartphone size={14} style={{ position: 'absolute', left: '0.85rem', top: '50%', transform: 'translateY(-50%)', color: '#555' }} />
+                <input id="playstore-url" name="playstore_url" type="url" placeholder="https://play.google.com/store/apps/details?id=…" style={{ ...inputStyle, paddingLeft: '2.4rem' }}
+                  onFocus={e => e.currentTarget.style.borderColor = '#E50914'}
+                  onBlur={e => e.currentTarget.style.borderColor = '#2B2B2B'} />
+              </div>
+            </div>
+
+            <FieldError msg={fe.links} />
           </div>
 
           {/* ── Screenshots ── */}
