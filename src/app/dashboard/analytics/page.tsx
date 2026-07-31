@@ -2,6 +2,10 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import dynamic from 'next/dynamic'
+const ViewsClicksAreaChart = dynamic(() => import('@/components/analytics/ViewsClicksAreaChart'), { ssr: false })
+const DeviceBarChart = dynamic(() => import('@/components/analytics/DeviceBarChart'), { ssr: false })
+const AnalyticsLineChart = dynamic(() => import('@/components/analytics/AnalyticsLineChart'), { ssr: false })
 import {
   BarChart3, Eye, TrendingUp, MousePointer, ArrowUpRight,
   Bookmark, Users, Lightbulb, Monitor, Smartphone, Tablet,
@@ -266,10 +270,14 @@ export default function AnalyticsPage() {
     ? projects.reduce((a, p) => a + (p.bookmark_count || 0), 0)
     : (projects.find(p => p.id === selectedProject)?.bookmark_count || 0)
 
+  // Upvotes: use DB counter (projects.upvote_count) as the authoritative all-time value.
+  // The DB trigger keeps this accurate for both upvote and un-upvote actions.
+  // We also count upvote events within the current period for the growth indicator.
   const totalDbUpvotes = selectedProject === 'all'
     ? projects.reduce((a, p) => a + (p.upvote_count || 0), 0)
     : (projects.find(p => p.id === selectedProject)?.upvote_count || 0)
-  const upvotes = Math.max(events.filter(e => e.event_type === 'upvote').length, totalDbUpvotes)
+  const upvotes = totalDbUpvotes  // authoritative; event count used only for growth below
+  const periodUpvoteEvents = events.filter(e => e.event_type === 'upvote').length
 
   // Unique visitors: distinct user_id OR visitor_id on view events
   const uniqueVisitors = new Set(
@@ -309,7 +317,23 @@ export default function AnalyticsPage() {
   tags.forEach(t => { tagCounts[t.name] = (tagCounts[t.name] || 0) + 1 })
   const popularTags = Object.entries(tagCounts).sort((a, b) => b[1] - a[1]).slice(0, 8)
 
-  // Daily bar data builder
+  // Combined daily data for the dual-area chart (views + clicks per day)
+  function combinedDailyData() {
+    const buckets: Record<string, { date: string; views: number; clicks: number }> = {}
+    for (let d = period - 1; d >= 0; d--) {
+      const key = new Date(Date.now() - d * 86400000).toISOString().slice(0, 10)
+      buckets[key] = { date: key, views: 0, clicks: 0 }
+    }
+    events.forEach(e => {
+      const key = e.created_at.slice(0, 10)
+      if (!(key in buckets)) return
+      if (e.event_type === 'view')           buckets[key].views++
+      if (e.event_type === 'click_external') buckets[key].clicks++
+    })
+    return Object.values(buckets)
+  }
+
+  // Daily bar data builder (for individual charts below)
   function dailyData(type: string) {
     const buckets: Record<string, number> = {}
     for (let d = 0; d < period; d++) {
@@ -379,7 +403,7 @@ export default function AnalyticsPage() {
           <StatCard icon={<MousePointer size={18} />} label="External Clicks"  value={loading ? '—' : clicks}   current={clicks}        previous={pClicks}  />
           <StatCard icon={<ArrowUpRight size={18} />} label="CTR"              value={loading ? '—' : `${ctr.toFixed(1)}%`} current={Math.round(ctr)} previous={Math.round(pCtr)} />
           <StatCard icon={<Bookmark size={18} />}     label="Total Bookmarks"  value={loading ? '—' : totalBookmarks} />
-          <StatCard icon={<TrendingUp size={18} />}   label="Upvotes"          value={loading ? '—' : upvotes}  current={upvotes}       previous={pUpvotes} />
+          <StatCard icon={<TrendingUp size={18} />}   label="Upvotes"          value={loading ? '—' : upvotes}  current={periodUpvoteEvents} previous={pUpvotes} />
           <StatCard icon={<Users size={18} />}        label="Unique Visitors"  value={loading ? '—' : uniqueVisitors} current={uniqueVisitors} previous={pUnique} />
         </div>
 
@@ -390,21 +414,53 @@ export default function AnalyticsPage() {
 
         {hasData && (
           <>
-            {/* ── Views + Clicks Charts ── */}
+            {/* ── Combined Views + Clicks Area Chart (hero) ── */}
+            <div style={{ background: '#1A1A1A', border: '1px solid #2B2B2B', borderRadius: '0.85rem', padding: '1.25rem', marginBottom: '1.5rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.85rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                <div>
+                  <h3 style={{ fontSize: '0.9rem', fontWeight: 700, color: '#FFFFFF', margin: '0 0 0.2rem' }}>Views &amp; Clicks Over Time</h3>
+                  <p style={{ fontSize: '0.72rem', color: '#555', margin: 0 }}>Daily trend for the last {period} days</p>
+                </div>
+                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.72rem', color: '#888', background: '#262626', borderRadius: '0.3rem', padding: '0.2rem 0.5rem' }}>
+                    {views} views · {clicks} clicks
+                  </span>
+                </div>
+              </div>
+              <ViewsClicksAreaChart data={combinedDailyData()} period={period} />
+            </div>
+
+            {/* ── Individual Charts: Views + Clicks ── */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
-              {[
-                { label: 'Views over time',  type: 'view',           Chart: ViewsChart,  color: '#5B8DEF' },
-                { label: 'Clicks over time', type: 'click_external', Chart: ClicksChart, color: '#E50914' },
-              ].map(chart => (
-                <div key={chart.type} style={{ background: '#1A1A1A', border: '1px solid #2B2B2B', borderRadius: '0.85rem', padding: '1.25rem' }}>
+              {/* Views Card */}
+              <div style={{ background: '#1A1A1A', border: '1px solid #2B2B2B', borderRadius: '0.85rem', padding: '1.25rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                <div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-                    <h3 style={{ fontSize: '0.82rem', fontWeight: 600, color: '#AAAAAA', margin: 0 }}>{chart.label}</h3>
+                    <div>
+                      <h3 style={{ fontSize: '0.82rem', fontWeight: 600, color: '#AAAAAA', margin: 0 }}>Views over time</h3>
+                      <p style={{ fontSize: '0.65rem', color: '#555', margin: '0.1rem 0 0 0' }}>Filter custom start/end range below</p>
+                    </div>
                     <BarChart3 size={14} style={{ color: '#555' }} />
                   </div>
-                  <chart.Chart data={dailyData(chart.type)} color={chart.color} />
-                  <p style={{ fontSize: '0.7rem', color: '#444', marginTop: '0.5rem', textAlign: 'right' }}>Last {period} days</p>
+                  <AnalyticsLineChart data={combinedDailyData()} period={period} dataKey="views" strokeColor="#5B8DEF" label="Views" />
                 </div>
-              ))}
+                <p style={{ fontSize: '0.7rem', color: '#444', marginTop: '0.5rem', textAlign: 'right' }}>Last {period} days</p>
+              </div>
+
+              {/* Clicks Card */}
+              <div style={{ background: '#1A1A1A', border: '1px solid #2B2B2B', borderRadius: '0.85rem', padding: '1.25rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                    <div>
+                      <h3 style={{ fontSize: '0.82rem', fontWeight: 600, color: '#AAAAAA', margin: 0 }}>Clicks over time</h3>
+                      <p style={{ fontSize: '0.65rem', color: '#555', margin: '0.1rem 0 0 0' }}>Filter custom start/end range below</p>
+                    </div>
+                    <BarChart3 size={14} style={{ color: '#555' }} />
+                  </div>
+                  <AnalyticsLineChart data={combinedDailyData()} period={period} dataKey="clicks" strokeColor="#E50914" label="Clicks" />
+                </div>
+                <p style={{ fontSize: '0.7rem', color: '#444', marginTop: '0.5rem', textAlign: 'right' }}>Last {period} days</p>
+              </div>
             </div>
 
             {/* ── Device Breakdown + Top Tags ── */}
@@ -414,10 +470,10 @@ export default function AnalyticsPage() {
                 <h3 style={{ fontSize: '0.82rem', fontWeight: 600, color: '#AAAAAA', marginBottom: '1rem' }}>
                   Device Breakdown <span style={{ color: '#444', fontWeight: 400 }}>(views)</span>
                 </h3>
-                {devTotal === 1 && devMobile === 0 && devDesktop === 0 && devTablet === 0 ? (
+                {devMobile + devTablet + devDesktop === 0 ? (
                   <p style={{ color: '#555', fontSize: '0.82rem' }}>No device data yet — new view events will populate this.</p>
                 ) : (
-                  <DeviceBreakdown mobile={devMobile} tablet={devTablet} desktop={devDesktop} />
+                  <DeviceBarChart mobile={devMobile} tablet={devTablet} desktop={devDesktop} />
                 )}
               </div>
 

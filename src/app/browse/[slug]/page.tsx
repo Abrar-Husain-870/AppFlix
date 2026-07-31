@@ -384,8 +384,8 @@ export default async function ProjectDetailPage({ params }: Props) {
             ))}
           </div>
 
-          {/* Links card */}
-          {(project.github_url || project.appstore_url || project.playstore_url) && (
+          {/* Links card — website, github, app store, play store */}
+          {(project.website_url || project.github_url || project.appstore_url || project.playstore_url) && (
             <div style={{
               background: 'linear-gradient(145deg, #0F0F0F 0%, #080808 100%)',
               border: '1px solid rgba(255, 255, 255, 0.07)',
@@ -393,6 +393,21 @@ export default async function ProjectDetailPage({ params }: Props) {
             }}>
               <h3 style={{ fontSize: '0.7rem', fontWeight: 800, color: '#777777', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '0.75rem' }}>Links</h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                {project.website_url && (
+                  <ExternalLinkButton
+                    href={project.website_url}
+                    projectId={project.id}
+                    id="project-sidebar-website-link"
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: '0.5rem',
+                      fontSize: '0.85rem', color: '#AAAAAA', textDecoration: 'none',
+                      padding: '0.45rem 0.6rem', borderRadius: '0.4rem',
+                      border: '1px solid #2B2B2B', transition: 'border-color 0.2s, color 0.2s',
+                    }}
+                  >
+                    <Globe size={14} /> Visit Site
+                  </ExternalLinkButton>
+                )}
                 {project.github_url && (
                   <ExternalLinkButton
                     href={project.github_url}
