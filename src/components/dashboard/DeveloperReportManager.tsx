@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useTransition, useEffect } from 'react'
 import { ReportItem, developerUpdateReport } from '@/app/actions/reports'
-import { AlertTriangle, CheckCircle, Clock, MessageSquare, ShieldAlert, Loader2, Check } from 'lucide-react'
+import { AlertTriangle, CheckCircle, Clock, MessageSquare, ShieldAlert, Loader2, Check, ChevronDown, ChevronUp } from 'lucide-react'
 
 interface Props {
   reports: ReportItem[]
@@ -12,8 +12,38 @@ export default function DeveloperReportManager({ reports }: Props) {
   const [responseTexts, setResponseTexts] = useState<Record<string, string>>({})
   const [activeReportId, setActiveReportId] = useState<string | null>(null)
   const [pendingReportId, setPendingReportId] = useState<string | null>(null)
+  const [isExpanded, setIsExpanded] = useState(true)
   const [isPending, startTransition] = useTransition()
   const [successId, setSuccessId] = useState<string | null>(null)
+
+  const topReportId = reports?.[0]?.id || ''
+
+  useEffect(() => {
+    if (!topReportId) return
+    try {
+      const stored = localStorage.getItem('appflix_reports_expanded')
+      const storedTopId = localStorage.getItem('appflix_reports_top_id')
+      
+      // If a new report has arrived, force expand view
+      if (storedTopId && storedTopId !== topReportId) {
+        setIsExpanded(true)
+        localStorage.setItem('appflix_reports_expanded', 'true')
+        localStorage.setItem('appflix_reports_top_id', topReportId)
+      } else {
+        if (stored !== null) setIsExpanded(stored === 'true')
+        localStorage.setItem('appflix_reports_top_id', topReportId)
+      }
+    } catch (e) {}
+  }, [topReportId])
+
+  function toggleExpanded() {
+    const newState = !isExpanded
+    setIsExpanded(newState)
+    try {
+      localStorage.setItem('appflix_reports_expanded', String(newState))
+      localStorage.setItem('appflix_reports_top_id', topReportId)
+    } catch (e) {}
+  }
 
   if (!reports || reports.length === 0) return null
 
@@ -43,26 +73,35 @@ export default function DeveloperReportManager({ reports }: Props) {
       marginBottom: '2.5rem',
       boxShadow: '0 8px 30px rgba(239, 68, 68, 0.08)',
     }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '1.25rem' }}>
-        <div style={{
-          width: '34px', height: '34px', borderRadius: '0.5rem',
-          background: 'rgba(239, 68, 68, 0.2)', border: '1px solid rgba(239, 68, 68, 0.4)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#EF4444',
-        }}>
-          <ShieldAlert size={18} />
+      <div 
+        onClick={toggleExpanded}
+        style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: isExpanded ? '1.25rem' : '0', cursor: 'pointer' }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+          <div style={{
+            width: '34px', height: '34px', borderRadius: '0.5rem',
+            background: 'rgba(239, 68, 68, 0.2)', border: '1px solid rgba(239, 68, 68, 0.4)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#EF4444',
+          }}>
+            <ShieldAlert size={18} />
+          </div>
+          <div>
+            <h2 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#FFFFFF', margin: 0, letterSpacing: '-0.02em' }}>
+              Active Project Reports ({reports.length})
+            </h2>
+            <p style={{ fontSize: '0.8rem', color: '#AAAAAA', margin: 0 }}>
+              Issues flagged by platform users or administrators. Provide an explanation or context for admin review below.
+            </p>
+          </div>
         </div>
-        <div>
-          <h2 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#FFFFFF', margin: 0, letterSpacing: '-0.02em' }}>
-            Active Project Reports ({reports.length})
-          </h2>
-          <p style={{ fontSize: '0.8rem', color: '#AAAAAA', margin: 0 }}>
-            Issues flagged by platform users or administrators. Provide an explanation or context for admin review below.
-          </p>
+        <div style={{ color: '#AAAAAA', padding: '0.5rem' }}>
+          {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
         </div>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-        {reports.map(report => {
+      {isExpanded && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          {reports.map(report => {
           const formattedDate = new Date(report.created_at).toLocaleDateString('en-US', {
             month: 'short', day: 'numeric', year: 'numeric',
           })
@@ -224,6 +263,7 @@ export default function DeveloperReportManager({ reports }: Props) {
           )
         })}
       </div>
+      )}
     </div>
   )
 }

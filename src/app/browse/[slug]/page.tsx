@@ -1,13 +1,25 @@
 import { createServerClient, createServiceRoleClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
+import { headers } from 'next/headers'
 import Link from 'next/link'
 import UpvoteButton from '@/components/projects/UpvoteButton'
 import BookmarkButton from '@/components/projects/BookmarkButton'
-import { Globe, GitBranch, ExternalLink, Calendar, Tag, Monitor, Smartphone, Pencil } from 'lucide-react'
+import ExternalLinkButton from '@/components/projects/ExternalLinkButton'
+import ViewTracker from '@/components/projects/ViewTracker'
+import { Globe, GitBranch, Calendar, Tag, Monitor, Smartphone, Pencil, ExternalLink } from 'lucide-react'
 import ProductGallery from '@/components/projects/ProductGallery'
 import AdminDeleteButton from '@/components/admin/AdminDeleteButton'
 import ReportModal from '@/components/projects/ReportModal'
 import type { Metadata } from 'next'
+
+/** Parse User-Agent string into the device_type enum values used by the DB. */
+function detectDeviceType(ua: string | null): 'mobile' | 'tablet' | 'desktop' {
+  if (!ua) return 'desktop'
+  const s = ua.toLowerCase()
+  if (/tablet|ipad|playbook|silk|(android(?!.*mobile))/.test(s)) return 'tablet'
+  if (/mobile|iphone|ipod|android|blackberry|opera mini|iemobile|wpdesktop|windows phone/.test(s)) return 'mobile'
+  return 'desktop'
+}
 
 interface Props {
   params: Promise<{ slug: string }>
@@ -86,13 +98,10 @@ export default async function ProjectDetailPage({ params }: Props) {
     isBookmarked = !!bookmark
   }
 
-  // Log view event (fire-and-forget — don't await)
-  supabaseService.from('analytics_events').insert({
-    project_id: project.id,
-    event_type: 'view',
-    user_id: user?.id ?? null,
-    visitor_id: user ? null : 'server-render',
-  }).then(() => {})
+  // Detect device type server-side from User-Agent (passed to ViewTracker as prop)
+  const headersList = await headers()
+  const userAgent = headersList.get('user-agent')
+  const deviceType = detectDeviceType(userAgent)
 
   const screenshots = (project.project_images as any[])
     ?.filter((img: any) => img.image_type === 'screenshot')
@@ -104,6 +113,8 @@ export default async function ProjectDetailPage({ params }: Props) {
 
   return (
     <div style={{ minHeight: '100vh', background: '#141414' }}>
+      {/* View event tracker — fires client-side with proper visitor_id */}
+      <ViewTracker projectId={project.id} deviceType={deviceType} />
       {/* Hero banner */}
       <div style={{
         background: 'linear-gradient(180deg, rgba(229,9,20,0.06) 0%, #141414 100%)',
@@ -287,10 +298,9 @@ export default async function ProjectDetailPage({ params }: Props) {
               <AdminDeleteButton projectId={project.id} appName={project.name} />
             )}
             {project.website_url && (
-              <a
+              <ExternalLinkButton
                 href={project.website_url}
-                target="_blank"
-                rel="noopener noreferrer"
+                projectId={project.id}
                 id="project-website-link"
                 style={{
                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem',
@@ -301,7 +311,7 @@ export default async function ProjectDetailPage({ params }: Props) {
                 }}
               >
                 <ExternalLink size={14} /> Visit Site
-              </a>
+              </ExternalLinkButton>
             )}
           </div>
         </div>
@@ -380,34 +390,49 @@ export default async function ProjectDetailPage({ params }: Props) {
               <h3 style={{ fontSize: '0.7rem', fontWeight: 800, color: '#777777', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '0.75rem' }}>Links</h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                 {project.github_url && (
-                  <a href={project.github_url} target="_blank" rel="noopener noreferrer" id="project-github-link" style={{
-                    display: 'flex', alignItems: 'center', gap: '0.5rem',
-                    fontSize: '0.85rem', color: '#AAAAAA', textDecoration: 'none',
-                    padding: '0.45rem 0.6rem', borderRadius: '0.4rem',
-                    border: '1px solid #2B2B2B', transition: 'border-color 0.2s, color 0.2s',
-                  }}>
+                  <ExternalLinkButton
+                    href={project.github_url}
+                    projectId={project.id}
+                    id="project-github-link"
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: '0.5rem',
+                      fontSize: '0.85rem', color: '#AAAAAA', textDecoration: 'none',
+                      padding: '0.45rem 0.6rem', borderRadius: '0.4rem',
+                      border: '1px solid #2B2B2B', transition: 'border-color 0.2s, color 0.2s',
+                    }}
+                  >
                     <GitBranch size={14} /> GitHub Repo
-                  </a>
+                  </ExternalLinkButton>
                 )}
                 {project.appstore_url && (
-                  <a href={project.appstore_url} target="_blank" rel="noopener noreferrer" id="project-appstore-link" style={{
-                    display: 'flex', alignItems: 'center', gap: '0.5rem',
-                    fontSize: '0.85rem', color: '#AAAAAA', textDecoration: 'none',
-                    padding: '0.45rem 0.6rem', borderRadius: '0.4rem',
-                    border: '1px solid #2B2B2B',
-                  }}>
+                  <ExternalLinkButton
+                    href={project.appstore_url}
+                    projectId={project.id}
+                    id="project-appstore-link"
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: '0.5rem',
+                      fontSize: '0.85rem', color: '#AAAAAA', textDecoration: 'none',
+                      padding: '0.45rem 0.6rem', borderRadius: '0.4rem',
+                      border: '1px solid #2B2B2B',
+                    }}
+                  >
                     <Smartphone size={14} /> App Store
-                  </a>
+                  </ExternalLinkButton>
                 )}
                 {project.playstore_url && (
-                  <a href={project.playstore_url} target="_blank" rel="noopener noreferrer" id="project-playstore-link" style={{
-                    display: 'flex', alignItems: 'center', gap: '0.5rem',
-                    fontSize: '0.85rem', color: '#AAAAAA', textDecoration: 'none',
-                    padding: '0.45rem 0.6rem', borderRadius: '0.4rem',
-                    border: '1px solid #2B2B2B',
-                  }}>
+                  <ExternalLinkButton
+                    href={project.playstore_url}
+                    projectId={project.id}
+                    id="project-playstore-link"
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: '0.5rem',
+                      fontSize: '0.85rem', color: '#AAAAAA', textDecoration: 'none',
+                      padding: '0.45rem 0.6rem', borderRadius: '0.4rem',
+                      border: '1px solid #2B2B2B',
+                    }}
+                  >
                     <Smartphone size={14} /> Play Store
-                  </a>
+                  </ExternalLinkButton>
                 )}
               </div>
             </div>
