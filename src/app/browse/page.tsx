@@ -40,6 +40,40 @@ const PLATFORM_FILTERS = [
   { id: 'p-ext',     name: 'Browser Extension', slug: 'browser_extension', icon: '🧩' },
 ]
 
+const TAG_ICONS: Record<string, string> = {
+  notes: '📝',
+  assignments: '📚',
+  study: '✏️',
+  exams: '✍️',
+  attendance: '⏱️',
+  timetable: '📅',
+  hostel: '🏠',
+  events: '🎉',
+  library: '📖',
+  canteen: '🍽️',
+  todo: '✅',
+  calendar: '📆',
+  reminders: '🔔',
+  productivity: '⚡',
+  ai: '🤖',
+  chatbot: '💬',
+  web: '🌐',
+  mobile: '📱',
+  react: '⚛️',
+  python: '🐍',
+  offline: '🔌',
+  'open-source': '🔓',
+  authentication: '🔒',
+  analytics: '📈',
+  pdf: '📄',
+  images: '🖼️',
+  internships: '💼',
+  resume: '📄',
+  calculator: '🔢',
+  scanner: '🖨️',
+  other: '📦'
+}
+
 const SORT_OPTIONS: { value: SortOption; label: string; icon: React.ReactNode }[] = [
   { value: 'top',        label: 'Top',        icon: <TrendingUp size={14} /> },
   { value: 'newest',     label: 'Newest',     icon: <Clock size={14} /> },
@@ -54,6 +88,7 @@ export default function BrowsePage() {
   const [upvotedIds, setUpvotedIds] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(true)
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
+  const [tags, setTags] = useState<{ id: number; name: string; slug: string }[]>([])
   const [sort, setSort] = useState<SortOption>('top')
   const [search, setSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
@@ -78,13 +113,20 @@ export default function BrowsePage() {
     return () => subscription.unsubscribe()
   }, [])
 
-  // Fetch categories once
+  // Fetch categories and tags once
   useEffect(() => {
-    createClient()
+    const supabase = createClient()
+    supabase
       .from('categories')
       .select('id, name, slug, icon')
       .order('name')
       .then(({ data }) => setCategories(data ?? []))
+
+    supabase
+      .from('tags')
+      .select('id, name, slug')
+      .order('name')
+      .then(({ data }) => setTags(data ?? []))
   }, [])
 
   // Fetch projects
@@ -92,19 +134,30 @@ export default function BrowsePage() {
     setLoading(true)
     const supabase = createClient()
 
+    const isTag = selectedCategory.startsWith('t-')
+
+    let selectFields = 'id, name, slug, tagline, icon_url, upvote_count, stage, platforms, categories(name, slug)'
+    if (isTag) {
+      selectFields += ', project_tags!inner(tags!inner(slug))'
+    }
+
     let query = supabase
       .from('projects')
-      .select('id, name, slug, tagline, icon_url, upvote_count, stage, platforms, categories(name, slug)')
+      .select(selectFields)
       .eq('status', 'approved')
       .is('deleted_at', null)
 
     if (selectedCategory !== 'all') {
-      const isPlatform = PLATFORM_FILTERS.some(p => p.slug === selectedCategory)
-      if (isPlatform) {
-        query = query.contains('platforms', [selectedCategory])
-      } else {
-        const cat = categories.find(c => c.slug === selectedCategory)
+      if (selectedCategory.startsWith('p-')) {
+        const platform = selectedCategory.slice(2)
+        query = query.contains('platforms', [platform])
+      } else if (selectedCategory.startsWith('c-')) {
+        const catSlug = selectedCategory.slice(2)
+        const cat = categories.find(c => c.slug === catSlug)
         if (cat) query = query.eq('category_id', cat.id)
+      } else if (isTag) {
+        const tagSlug = selectedCategory.slice(2)
+        query = query.eq('project_tags.tags.slug', tagSlug)
       }
     }
 
@@ -142,11 +195,12 @@ export default function BrowsePage() {
     }
 
     const { data } = await query.limit(50)
-    setProjects((data as unknown as Project[]) ?? [])
+    const projectsList = (data as any[]) ?? []
+    setProjects(projectsList as Project[])
 
     // Fetch user's upvotes
-    if (user && data && data.length > 0) {
-      const ids = data.map(p => p.id)
+    if (user && projectsList.length > 0) {
+      const ids = projectsList.map(p => p.id)
       const { data: upvotes } = await supabase
         .from('upvotes')
         .select('project_id')
@@ -158,7 +212,7 @@ export default function BrowsePage() {
     }
 
     setLoading(false)
-  }, [selectedCategory, sort, debouncedSearch, user, categories])
+  }, [selectedCategory, sort, debouncedSearch, user, categories, tags])
 
   useEffect(() => {
     if (categories.length > 0 || selectedCategory === 'all') {
@@ -352,25 +406,50 @@ export default function BrowsePage() {
                 </p>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                {[{ id: 'all-0', name: 'All Projects', slug: 'all', icon: null }, ...PLATFORM_FILTERS, ...categories].map(cat => (
-                  <button
-                    key={cat.slug}
-                    id={`cat-${cat.slug}`}
-                    onClick={() => setSelectedCategory(cat.slug)}
-                    style={{
-                      textAlign: 'left', padding: '0.6rem 0.85rem',
-                      background: selectedCategory === cat.slug ? '#E50914' : 'transparent',
-                      color: selectedCategory === cat.slug ? '#FFFFFF' : '#AAAAAA',
-                      fontWeight: selectedCategory === cat.slug ? 700 : 400,
-                      border: 'none', borderRadius: '0.45rem', cursor: 'pointer',
-                      fontSize: '0.875rem', transition: 'all 0.15s', width: '100%',
-                      boxShadow: selectedCategory === cat.slug ? '0 4px 14px rgba(229, 9, 20, 0.4)' : 'none',
-                    }}
-                  >
-                    {cat.icon && <span style={{ marginRight: '0.45rem' }}>{cat.icon}</span>}
-                    {cat.name}
-                  </button>
-                ))}
+                {[
+                  { name: 'All Projects', slug: 'all', icon: null },
+                  ...PLATFORM_FILTERS.map(p => ({ ...p, slug: `p-${p.slug}` })),
+                  ...categories.map(c => ({ ...c, slug: `c-${c.slug}` }))
+                ].map(cat => {
+                  const active = selectedCategory === cat.slug
+                  return (
+                    <button
+                      key={cat.slug}
+                      id={`cat-${cat.slug}`}
+                      onClick={() => setSelectedCategory(active ? 'all' : cat.slug)}
+                      style={{
+                        textAlign: 'left', padding: '0.6rem 0.85rem',
+                        background: active ? '#E50914' : 'transparent',
+                        color: active ? '#FFFFFF' : '#AAAAAA',
+                        fontWeight: active ? 700 : 400,
+                        border: 'none', borderRadius: '0.45rem', cursor: 'pointer',
+                        fontSize: '0.875rem', transition: 'all 0.15s', width: '100%',
+                        boxShadow: active ? '0 4px 14px rgba(229, 9, 20, 0.4)' : 'none',
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between'
+                      }}
+                    >
+                      <span style={{ display: 'flex', alignItems: 'center' }}>
+                        {cat.icon && <span style={{ marginRight: '0.45rem' }}>{cat.icon}</span>}
+                        {cat.name}
+                      </span>
+                      {active && cat.slug !== 'all' && (
+                        <span
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setSelectedCategory('all')
+                          }}
+                          style={{
+                            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                            borderRadius: '50%', background: 'rgba(255,255,255,0.2)',
+                            width: '14px', height: '14px', fontSize: '0.65rem', color: '#FFF'
+                          }}
+                        >
+                          ×
+                        </span>
+                      )}
+                    </button>
+                  )
+                })}
               </div>
             </aside>
 
@@ -403,25 +482,54 @@ export default function BrowsePage() {
                     scrollbarWidth: 'none',
                   }}
                 >
-                  {[{ id: 'all-0', name: 'All', slug: 'all', icon: null }, ...PLATFORM_FILTERS, ...categories].map(cat => (
-                    <button
-                      key={cat.slug}
-                      id={`cat-pill-${cat.slug}`}
-                      onClick={() => setSelectedCategory(cat.slug)}
-                      style={{
-                        flexShrink: 0, padding: '0.5rem 1.1rem',
-                        background: selectedCategory === cat.slug ? '#E50914' : '#1A1A1A',
-                        color: '#FFFFFF',
-                        border: `1px solid ${selectedCategory === cat.slug ? '#E50914' : 'rgba(255,255,255,0.1)'}`,
-                        boxShadow: selectedCategory === cat.slug ? '0 4px 14px rgba(229, 9, 20, 0.45)' : 'none',
-                        borderRadius: '9999px', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer',
-                        transition: 'all 0.2s ease', whiteSpace: 'nowrap',
-                      }}
-                    >
-                      {cat.icon && <span style={{ marginRight: '0.35rem' }}>{cat.icon}</span>}
-                      {cat.name}
-                    </button>
-                  ))}
+                  {[
+                    { name: 'All', slug: 'all', icon: null },
+                    ...PLATFORM_FILTERS.map(p => ({ ...p, slug: `p-${p.slug}` })),
+                    ...categories.map(c => ({ ...c, slug: `c-${c.slug}` })),
+                    ...tags.map(t => ({
+                      name: t.name.charAt(0).toUpperCase() + t.name.slice(1),
+                      slug: `t-${t.slug}`,
+                      icon: TAG_ICONS[t.slug] || '🏷️'
+                    }))
+                  ].map(cat => {
+                    const active = selectedCategory === cat.slug
+                    return (
+                      <button
+                        key={cat.slug}
+                        id={`cat-pill-${cat.slug}`}
+                        onClick={() => setSelectedCategory(active ? 'all' : cat.slug)}
+                        style={{
+                          flexShrink: 0, padding: '0.5rem 1.1rem',
+                          background: active ? '#E50914' : '#1A1A1A',
+                          color: '#FFFFFF',
+                          border: `1px solid ${active ? '#E50914' : 'rgba(255,255,255,0.1)'}`,
+                          boxShadow: active ? '0 4px 14px rgba(229, 9, 20, 0.45)' : 'none',
+                          borderRadius: '9999px', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer',
+                          transition: 'all 0.2s ease', whiteSpace: 'nowrap',
+                          display: 'inline-flex', alignItems: 'center', gap: '0.35rem'
+                        }}
+                      >
+                        {cat.icon && <span>{cat.icon}</span>}
+                        <span>{cat.name}</span>
+                        {active && cat.slug !== 'all' && (
+                          <span
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setSelectedCategory('all')
+                            }}
+                            style={{
+                              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                              marginLeft: '0.2rem', padding: '0.1rem', borderRadius: '50%',
+                              background: 'rgba(255,255,255,0.2)', width: '12px', height: '12px',
+                              fontSize: '0.6rem', color: '#FFF'
+                            }}
+                          >
+                            ×
+                          </span>
+                        )}
+                      </button>
+                    )
+                  })}
                 </div>
 
                 <button

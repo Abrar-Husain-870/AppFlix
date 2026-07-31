@@ -11,6 +11,7 @@ import ProductGallery from '@/components/projects/ProductGallery'
 import AdminDeleteButton from '@/components/admin/AdminDeleteButton'
 import ReportModal from '@/components/projects/ReportModal'
 import type { Metadata } from 'next'
+import ShareCard from '@/components/projects/ShareCard'
 
 /** Parse User-Agent string into the device_type enum values used by the DB. */
 function detectDeviceType(ua: string | null): 'mobile' | 'tablet' | 'desktop' {
@@ -261,11 +262,13 @@ export default async function ProjectDetailPage({ params }: Props) {
                 initialCount={project.upvote_count}
                 initialUpvoted={isUpvoted}
                 requireAuth={!user}
+                variant="desktop"
               />
               <BookmarkButton
                 projectId={project.id}
                 initialBookmarked={isBookmarked}
                 requireAuth={!user}
+                variant="desktop"
               />
             </div>
 
@@ -456,6 +459,9 @@ export default async function ProjectDetailPage({ params }: Props) {
               </div>
             </div>
           )}
+
+          {/* Share Card */}
+          <ShareCard projectName={project.name} projectSlug={project.slug} />
 
           {/* Owner / Developer */}
           {(project.profiles as any)?.username && (

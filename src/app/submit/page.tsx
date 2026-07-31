@@ -13,6 +13,15 @@ const STAGES    = [
   { value: 'production', label: 'Production',  desc: 'Stable and actively maintained' },
 ]
 
+const AVAILABLE_TAGS = [
+  'notes', 'assignments', 'study', 'exams', 'attendance', 'timetable',
+  'hostel', 'events', 'library', 'canteen', 'todo', 'calendar',
+  'reminders', 'productivity', 'ai', 'chatbot', 'web', 'mobile',
+  'react', 'python', 'offline', 'open-source', 'authentication',
+  'analytics', 'pdf', 'images', 'internships', 'resume', 'calculator',
+  'scanner', 'Other'
+]
+
 interface Category { id: number; name: string; slug: string }
 
 function FieldError({ msg }: { msg?: string }) {
@@ -39,6 +48,7 @@ export default function SubmitPage() {
   const [state, action, pending] = useActionState(submitProject, undefined)
   const [categories, setCategories] = useState<Category[]>([])
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([])
+  const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [iconUrl, setIconUrl] = useState('')
   const [screenshotUrls, setScreenshotUrls] = useState<string[]>([])
   const [uploadingIcon, setUploadingIcon] = useState(false)
@@ -74,6 +84,14 @@ export default function SubmitPage() {
 
   function togglePlatform(p: string) {
     setSelectedPlatforms(prev => prev.includes(p) ? prev.filter(x => x !== p) : [...prev, p])
+  }
+
+  function toggleTag(t: string) {
+    setSelectedTags(prev => {
+      if (prev.includes(t)) return prev.filter(x => x !== t)
+      if (prev.length >= 5) return prev
+      return [...prev, t]
+    })
   }
 
   async function uploadFile(file: File, bucket: string, onDone: (url: string) => void) {
@@ -140,6 +158,9 @@ export default function SubmitPage() {
           ))}
           {selectedPlatforms.map(p => (
             <input key={p} type="hidden" name="platforms" value={p} />
+          ))}
+          {selectedTags.map(t => (
+            <input key={t} type="hidden" name="tags" value={t} />
           ))}
 
           {/* ── App Icon ── */}
@@ -266,6 +287,33 @@ export default function SubmitPage() {
                 })}
               </div>
               <FieldError msg={fe.platforms} />
+            </div>
+
+            <div>
+              <Label>Tags <span style={{ color: '#555', fontWeight: 400 }}>(Choose up to 5)</span></Label>
+              <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', marginTop: '0.25rem' }}>
+                {AVAILABLE_TAGS.map(t => {
+                  const active = selectedTags.includes(t)
+                  return (
+                    <button
+                      key={t}
+                      type="button"
+                      id={`tag-${t}`}
+                      onClick={() => toggleTag(t)}
+                      style={{
+                        padding: '0.35rem 0.8rem', fontSize: '0.78rem', fontWeight: 500,
+                        background: active ? 'rgba(229,9,20,0.15)' : '#262626',
+                        border: `1px solid ${active ? 'rgba(229,9,20,0.5)' : '#2B2B2B'}`,
+                        color: active ? '#FFFFFF' : '#AAAAAA',
+                        borderRadius: '9999px', cursor: 'pointer', transition: 'all 0.15s',
+                      }}
+                    >
+                      {t}
+                    </button>
+                  )
+                })}
+              </div>
+              <FieldError msg={fe.tags} />
             </div>
           </div>
 

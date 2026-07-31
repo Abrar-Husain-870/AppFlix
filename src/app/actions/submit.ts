@@ -27,6 +27,7 @@ export async function submitProject(state: SubmitState, formData: FormData): Pro
   const playstoreUrl  = (formData.get('playstore_url') as string)?.trim() || null
   const iconUrl     = (formData.get('icon_url') as string)?.trim() || null
   const platformsRaw = formData.getAll('platforms') as string[]
+  const tagsRaw      = formData.getAll('tags') as string[]
 
   const screenshotUrls = (formData.getAll('screenshot_urls') as string[]).filter(Boolean)
 
@@ -40,6 +41,8 @@ export async function submitProject(state: SubmitState, formData: FormData): Pro
   if (platformsRaw.length === 0)          errors.platforms = 'Select at least one platform.'
   if (!websiteUrl && !githubUrl && !appstoreUrl && !playstoreUrl)
     errors.links = 'Please provide at least one link (Website, GitHub, App Store, or Play Store).'
+  if (tagsRaw.length > 5)
+    errors.tags = 'You can select up to 5 tags only.'
 
   if (Object.keys(errors).length > 0) return { fieldErrors: errors }
 
@@ -88,6 +91,23 @@ export async function submitProject(state: SubmitState, formData: FormData): Pro
         display_order: i + 1,
       }))
     )
+  }
+
+  // Insert project tags
+  if (tagsRaw.length > 0 && project) {
+    const { data: dbTags } = await supabase
+      .from('tags')
+      .select('id, name')
+      .in('name', tagsRaw)
+    
+    if (dbTags && dbTags.length > 0) {
+      await supabase.from('project_tags').insert(
+        dbTags.map(t => ({
+          project_id: project.id,
+          tag_id: t.id
+        }))
+      )
+    }
   }
 
   revalidatePath('/dashboard/projects')
