@@ -1,3 +1,4 @@
+import { Suspense } from 'react'
 import Link from 'next/link'
 import { createServerClient } from '@/lib/supabase/server'
 import { Flame, ArrowRight, Zap, Shield, BarChart3, Users, ArrowUp } from 'lucide-react'
@@ -7,6 +8,7 @@ import HeroGetStartedButton from '@/components/ui/HeroGetStartedButton'
 import NetflixReasonCards from '@/components/ui/NetflixReasonCards'
 import NetflixFAQSection from '@/components/ui/NetflixFAQSection'
 import NetflixFooterCTA from '@/components/ui/NetflixFooterCTA'
+import AppFlixLandingIntro from '@/components/ui/AppFlixLandingIntro'
 
 async function getFeaturedProjects() {
   try {
@@ -58,6 +60,9 @@ async function HomeContent() {
 
   return (
     <main style={{ minHeight: '100vh', background: '#141414' }}>
+      <Suspense fallback={null}>
+        <AppFlixLandingIntro />
+      </Suspense>
       {/* ── Hero ─────────────────────────────────────────────────────── */}
       <section style={{
         position: 'relative', overflow: 'hidden',

@@ -6,7 +6,7 @@ import UpvoteButton from '@/components/projects/UpvoteButton'
 import BookmarkButton from '@/components/projects/BookmarkButton'
 import ExternalLinkButton from '@/components/projects/ExternalLinkButton'
 import ViewTracker from '@/components/projects/ViewTracker'
-import { Globe, GitBranch, Calendar, Tag, Monitor, Smartphone, Pencil, ExternalLink } from 'lucide-react'
+import { Globe, GitBranch, Calendar, Tag, Monitor, Smartphone, Pencil, ExternalLink, ArrowUpRight } from 'lucide-react'
 import ProductGallery from '@/components/projects/ProductGallery'
 import AdminDeleteButton from '@/components/admin/AdminDeleteButton'
 import ReportModal from '@/components/projects/ReportModal'
@@ -63,7 +63,7 @@ export default async function ProjectDetailPage({ params }: Props) {
       upvote_count, view_count, bookmark_count,
       stage, platforms, status, created_at,
       categories(name, slug),
-      profiles!user_id(username),
+      profiles!user_id(username, display_name, avatar_url),
       project_images(id, image_url, image_type, display_order),
       project_tags(tags(name, slug))
     `)
@@ -465,40 +465,43 @@ export default async function ProjectDetailPage({ params }: Props) {
 
           {/* Owner / Developer */}
           {(project.profiles as any)?.username && (
-            <div style={{
-              background: 'linear-gradient(145deg, #0F0F0F 0%, #080808 100%)',
-              border: '1px solid rgba(255, 255, 255, 0.07)',
-              borderRadius: '0.75rem', padding: '1.1rem 1.25rem',
-            }}>
-              <h3 style={{ fontSize: '0.7rem', fontWeight: 800, color: '#777777', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '0.75rem' }}>
-                Owner / Developer
-              </h3>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', minWidth: 0 }}>
-                <div style={{
-                  width: '36px', height: '36px', borderRadius: '50%',
-                  background: 'linear-gradient(135deg, #E50914 0%, #B20710 100%)',
-                  border: '1px solid rgba(255, 255, 255, 0.15)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: '0.9rem', fontWeight: 800, color: '#FFFFFF', flexShrink: 0,
-                  boxShadow: '0 2px 8px rgba(229, 9, 20, 0.3)',
-                }}>
-                  {(project.profiles as any).username[0].toUpperCase()}
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <span style={{
-                    fontSize: '0.85rem',
-                    color: '#FFFFFF',
-                    fontWeight: 600,
-                    display: 'block',
+            <Link
+              href={`/developer/${(project.profiles as any).username}`}
+              style={{ textDecoration: 'none', display: 'block' }}
+            >
+              <div className="dev-card-hover">
+                <h3 style={{ fontSize: '0.7rem', fontWeight: 800, color: '#777777', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '0.75rem' }}>
+                  Developer
+                </h3>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', minWidth: 0 }}>
+                  <div style={{
+                    width: '36px', height: '36px', borderRadius: '50%',
+                    background: 'linear-gradient(135deg, #E50914 0%, #B20710 100%)',
+                    border: '1px solid rgba(255, 255, 255, 0.15)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: '0.9rem', fontWeight: 800, color: '#FFFFFF', flexShrink: 0,
+                    boxShadow: '0 2px 8px rgba(229, 9, 20, 0.3)',
                     overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                  }} title={`@${(project.profiles as any).username}`}>
-                    @{(project.profiles as any).username}
-                  </span>
+                  }}>
+                    {(project.profiles as any).avatar_url
+                      ? <img src={(project.profiles as any).avatar_url} alt={(project.profiles as any).username} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      : (project.profiles as any).username[0].toUpperCase()}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <span style={{
+                      fontSize: '0.85rem', color: '#FFFFFF', fontWeight: 600,
+                      display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                    }}>
+                      {(project.profiles as any).display_name || `@${(project.profiles as any).username}`}
+                    </span>
+                    <span style={{ fontSize: '0.72rem', color: '#666' }}>
+                      @{(project.profiles as any).username}
+                    </span>
+                  </div>
+                  <ArrowUpRight size={13} style={{ color: '#555', flexShrink: 0 }} />
                 </div>
               </div>
-            </div>
+            </Link>
           )}
         </aside>
       </div>

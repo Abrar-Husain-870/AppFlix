@@ -27,17 +27,28 @@ export default async function EditProjectPage({
   if (!project) notFound()
 
   // Fetch screenshots separately (column is image_url, not url)
-  const { data: images } = await supabase
-    .from('project_images')
-    .select('image_url, display_order')
-    .eq('project_id', id)
-    .eq('image_type', 'screenshot')
-    .order('display_order', { ascending: true })
+  const [{ data: images }, { data: projectTags }] = await Promise.all([
+    supabase
+      .from('project_images')
+      .select('image_url, display_order')
+      .eq('project_id', id)
+      .eq('image_type', 'screenshot')
+      .order('display_order', { ascending: true }),
+    supabase
+      .from('project_tags')
+      .select('tags(name)')
+      .eq('project_id', id),
+  ])
+
+  const initialTags = (projectTags ?? [])
+    .map((pt: any) => pt.tags?.name)
+    .filter(Boolean)
 
   return (
     <EditProjectClient
       project={{
         ...project,
+        tags: initialTags,
         project_images: (images ?? []).map(img => ({
           url: img.image_url,
           display_order: img.display_order,

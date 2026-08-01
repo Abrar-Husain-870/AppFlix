@@ -7,7 +7,7 @@ import { createClient } from '@/lib/supabase/client'
 import { signOut } from '@/app/actions/auth'
 import {
   Flame, Search, PlusCircle, LogOut, User, Menu, X, Shield,
-  FolderKanban, BarChart2, Settings, ChevronDown, Bookmark,
+  FolderKanban, BarChart2, Settings, ChevronDown, Bookmark, UserRound,
 } from 'lucide-react'
 import type { User as SupabaseUser } from '@supabase/supabase-js'
 
@@ -100,7 +100,7 @@ export default function Navbar() {
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       }}>
         {/* Logo */}
-        <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+        <Link href="/?playIntro=true" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', flexShrink: 0 }}>
           <img
             src="/assets/app-logos/AppFlix_logo_trimmed.png"
             alt="AppFlix"

@@ -32,8 +32,11 @@ export default function LoginPage() {
       return
     }
 
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('play_appflix_intro', 'true')
+    }
     router.refresh()
-    router.push('/browse')
+    router.push('/?justLoggedIn=true')
   }
 
   return (

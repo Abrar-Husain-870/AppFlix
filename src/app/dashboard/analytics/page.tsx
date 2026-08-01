@@ -6,6 +6,7 @@ import dynamic from 'next/dynamic'
 const ViewsClicksAreaChart = dynamic(() => import('@/components/analytics/ViewsClicksAreaChart'), { ssr: false })
 const DeviceBarChart = dynamic(() => import('@/components/analytics/DeviceBarChart'), { ssr: false })
 const AnalyticsLineChart = dynamic(() => import('@/components/analytics/AnalyticsLineChart'), { ssr: false })
+const TagDonutChart = dynamic(() => import('@/components/analytics/TagDonutChart'), { ssr: false })
 import {
   BarChart3, Eye, TrendingUp, MousePointer, ArrowUpRight,
   Bookmark, Users, Lightbulb, Monitor, Smartphone, Tablet,
@@ -24,7 +25,7 @@ interface EventRow {
   device_type: 'mobile' | 'tablet' | 'desktop' | null
   project_id: string
 }
-interface TagRow { name: string }
+interface TagRow { name: string; project_id: string }
 
 const PERIODS = [
   { label: '7d',  days: 7  },
@@ -216,14 +217,14 @@ export default function AnalyticsPage() {
           .is('deleted_at', null)
           .order('created_at', { ascending: false }),
         supabase.from('project_tags')
-          .select('tags(name)')
+          .select('project_id, tags(name)')
           .in('project_id', ((await supabase.from('projects').select('id').eq('user_id', uid).is('deleted_at', null)).data ?? []).map((p: any) => p.id))
       ])
       setProjects((projs as Project[]) ?? [])
-      // Flatten tags
+      // Flatten tags — keep project_id so we can join to events later
       const flat: TagRow[] = []
       ;(tagRows ?? []).forEach((r: any) => {
-        if (r.tags?.name) flat.push({ name: r.tags.name })
+        if (r.tags?.name) flat.push({ name: r.tags.name, project_id: r.project_id })
       })
       setTags(flat)
     })
@@ -316,6 +317,20 @@ export default function AnalyticsPage() {
   const tagCounts: Record<string, number> = {}
   tags.forEach(t => { tagCounts[t.name] = (tagCounts[t.name] || 0) + 1 })
   const popularTags = Object.entries(tagCounts).sort((a, b) => b[1] - a[1]).slice(0, 8)
+
+  // Pie data: for each unique tag name, sum view events for all projects that have that tag
+  const tagPieData = (() => {
+    const viewEvents = events.filter(e => e.event_type === 'view')
+    const nameViews: Record<string, number> = {}
+    tags.forEach(t => {
+      const v = viewEvents.filter(e => e.project_id === t.project_id).length
+      nameViews[t.name] = (nameViews[t.name] || 0) + v
+    })
+    return Object.entries(nameViews)
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 8)
+  })()
 
   // Combined daily data for the dual-area chart (views + clicks per day)
   function combinedDailyData() {
@@ -477,24 +492,17 @@ export default function AnalyticsPage() {
                 )}
               </div>
 
-              {/* Popular Tags */}
+              {/* Tag Reach Donut */}
               <div style={{ background: '#1A1A1A', border: '1px solid #2B2B2B', borderRadius: '0.85rem', padding: '1.25rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.25rem' }}>
                   <Tag size={14} style={{ color: '#555' }} />
-                  <h3 style={{ fontSize: '0.82rem', fontWeight: 600, color: '#AAAAAA', margin: 0 }}>Project Tags</h3>
+                  <h3 style={{ fontSize: '0.82rem', fontWeight: 600, color: '#AAAAAA', margin: 0 }}>Tag Reach</h3>
+                  <span style={{ fontSize: '0.68rem', color: '#555', marginLeft: 'auto' }}>views per tag</span>
                 </div>
-                {popularTags.length === 0 ? (
+                {tags.length === 0 ? (
                   <p style={{ color: '#555', fontSize: '0.82rem' }}>No tags added to your projects yet.</p>
                 ) : (
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-                    {popularTags.map(([name]) => (
-                      <span key={name} style={{
-                        padding: '0.3rem 0.75rem', background: 'rgba(229,9,20,0.1)',
-                        border: '1px solid rgba(229,9,20,0.2)', borderRadius: '9999px',
-                        color: '#CCCCCC', fontSize: '0.78rem', fontWeight: 500,
-                      }}>#{name}</span>
-                    ))}
-                  </div>
+                  <TagDonutChart data={tagPieData} />
                 )}
               </div>
             </div>

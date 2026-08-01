@@ -34,8 +34,18 @@ interface Project {
   appstore_url: string | null
   playstore_url: string | null
   status: string
+  tags?: string[]
   project_images: { url: string; display_order: number }[]
 }
+
+const AVAILABLE_TAGS = [
+  'notes', 'assignments', 'study', 'exams', 'attendance', 'timetable',
+  'hostel', 'events', 'library', 'canteen', 'todo', 'calendar',
+  'reminders', 'productivity', 'ai', 'chatbot', 'web', 'mobile',
+  'react', 'python', 'offline', 'open-source', 'authentication',
+  'analytics', 'pdf', 'images', 'internships', 'resume', 'calculator',
+  'scanner', 'Other'
+]
 
 function FieldError({ msg }: { msg?: string }) {
   if (!msg) return null
@@ -64,6 +74,7 @@ export default function EditProjectClient({ project }: { project: Project }) {
   // Text form state
   const [textState, textAction, textPending] = useActionState(updateProjectText, undefined)
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>(project.platforms ?? [])
+  const [selectedTags, setSelectedTags] = useState<string[]>(project.tags ?? [])
   const [isOpenSource, setIsOpenSource] = useState(project.is_open_source)
   const [isFree, setIsFree] = useState(project.is_free)
   const [categories, setCategories] = useState<Category[]>([])
@@ -88,6 +99,14 @@ export default function EditProjectClient({ project }: { project: Project }) {
 
   function togglePlatform(p: string) {
     setSelectedPlatforms(prev => prev.includes(p) ? prev.filter(x => x !== p) : [...prev, p])
+  }
+
+  function toggleTag(t: string) {
+    setSelectedTags(prev => {
+      if (prev.includes(t)) return prev.filter(x => x !== t)
+      if (prev.length >= 5) return prev
+      return [...prev, t]
+    })
   }
 
   async function uploadFile(file: File, bucket: string, onDone: (url: string) => void) {
@@ -195,6 +214,9 @@ export default function EditProjectClient({ project }: { project: Project }) {
               {selectedPlatforms.map(p => (
                 <input key={p} type="hidden" name="platforms" value={p} />
               ))}
+              {selectedTags.map(t => (
+                <input key={t} type="hidden" name="tags" value={t} />
+              ))}
 
               {/* Basic Info */}
               <div style={{ background: '#1F1F1F', border: '1px solid #2B2B2B', borderRadius: '0.75rem', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -285,6 +307,33 @@ export default function EditProjectClient({ project }: { project: Project }) {
                           }}
                         >
                           {label}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                {/* Tags */}
+                <div>
+                  <Label>Tags <span style={{ color: '#555', fontWeight: 400 }}>(Choose up to 5)</span></Label>
+                  <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', marginTop: '0.25rem' }}>
+                    {AVAILABLE_TAGS.map(t => {
+                      const active = selectedTags.includes(t)
+                      return (
+                        <button
+                          key={t}
+                          type="button"
+                          id={`tag-${t}`}
+                          onClick={() => toggleTag(t)}
+                          style={{
+                            padding: '0.35rem 0.8rem', fontSize: '0.78rem', fontWeight: 500,
+                            background: active ? 'rgba(229,9,20,0.15)' : '#262626',
+                            border: `1px solid ${active ? 'rgba(229,9,20,0.5)' : '#2B2B2B'}`,
+                            color: active ? '#FFFFFF' : '#AAAAAA',
+                            borderRadius: '9999px', cursor: 'pointer', transition: 'all 0.15s',
+                          }}
+                        >
+                          {t}
                         </button>
                       )
                     })}

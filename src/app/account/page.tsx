@@ -7,9 +7,10 @@ import { signOut } from '@/app/actions/auth'
 import {
   User, Camera, Globe, GitBranch, AtSign, Briefcase, MapPin,
   Lock, LogOut, CheckCircle, AlertTriangle, Loader2,
-  BarChart2, FolderKanban, Shield,
+  BarChart2, FolderKanban, Shield, ExternalLink,
 } from 'lucide-react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 
 interface Profile {
   id: string
@@ -53,6 +54,7 @@ function Label({ children }: { children: React.ReactNode }) {
 }
 
 export default function AccountPage() {
+  const router = useRouter()
   const [profile, setProfile] = useState<Profile | null>(null)
   const [avatarUrl, setAvatarUrl] = useState('')
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
@@ -66,7 +68,10 @@ export default function AccountPage() {
     const supabase = createClient()
     supabase.auth.getUser().then(async ({ data }) => {
       const uid = data.user?.id
-      if (!uid) return
+      if (!uid) {
+        router.push('/login')
+        return
+      }
       setUserId(uid)
       const { data: prof } = await supabase
         .from('profiles')
@@ -123,11 +128,12 @@ export default function AccountPage() {
         {/* Quick links */}
         <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '2rem' }}>
           {[
+            { href: `/developer/${profile.username}`, icon: <ExternalLink size={14} />, label: 'View Public Profile', target: '_blank' },
             { href: '/dashboard/projects', icon: <FolderKanban size={14} />, label: 'My Apps' },
             { href: '/dashboard/analytics', icon: <BarChart2 size={14} />, label: 'Analytics' },
             ...(profile.role === 'admin' ? [{ href: '/admin/queue', icon: <Shield size={14} />, label: 'Admin Queue' }] : []),
           ].map(item => (
-            <Link key={item.href} href={item.href} style={{
+            <Link key={item.href} href={item.href} target={item.target} style={{
               display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
               padding: '0.5rem 1rem', background: '#1F1F1F',
               border: '1px solid #2B2B2B', borderRadius: '0.5rem',
@@ -208,6 +214,12 @@ export default function AccountPage() {
                 disabled
                 style={{ ...inputStyle, color: '#555', cursor: 'not-allowed' }}
               />
+              <p style={{ fontSize: '0.78rem', color: '#888888', marginTop: '0.35rem' }}>
+                Your public profile is at{' '}
+                <Link href={`/developer/${profile.username}`} target="_blank" style={{ color: '#E50914', textDecoration: 'none', fontWeight: 600 }}>
+                  appflix.app/developer/{profile.username}
+                </Link>
+              </p>
             </div>
 
             {/* Bio */}

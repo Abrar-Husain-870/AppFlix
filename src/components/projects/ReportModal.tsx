@@ -94,6 +94,8 @@ export default function ReportModal({ projectId, appName, requireAuth = false }:
         style={{
           display: 'inline-flex',
           alignItems: 'center',
+          justifyContent: 'center',
+          width: '100%',
           gap: '0.4rem',
           padding: '0.6rem 0.9rem',
           background: 'rgba(255, 255, 255, 0.05)',

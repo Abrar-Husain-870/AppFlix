@@ -389,3 +389,45 @@ body {
     display: none !important;
   }
 }
+
+/* Developer card hover — used in server component detail page */
+.dev-card-hover {
+  background: linear-gradient(145deg, #0F0F0F 0%, #080808 100%);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 0.75rem;
+  padding: 1.1rem 1.25rem;
+  transition: border-color 0.2s, background 0.2s;
+}
+.dev-card-hover:hover {
+  border-color: rgba(229, 9, 20, 0.4);
+  background: linear-gradient(145deg, #140606 0%, #0F0000 100%);
+}
+
+/* Social links on public developer profile page */
+.dev-social-link {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.78rem;
+  color: #888888;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.dev-social-link:hover {
+  color: #FFFFFF;
+}
+
+/* Project card on public developer profile page */
+.dev-project-card {
+  background: linear-gradient(145deg, #0F0F0F 0%, #080808 100%);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 0.85rem;
+  overflow: hidden;
+  transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  height: 100%;
+}
+.dev-project-card:hover {
+  border-color: #E50914;
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(229, 9, 20, 0.3);
+}

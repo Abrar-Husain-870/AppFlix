@@ -58,6 +58,7 @@ export async function updateProjectText(prevState: unknown, formData: FormData) 
   const categoryId  = formData.get('category_id') as string
   const stage       = formData.get('stage') as string
   const platforms   = formData.getAll('platforms') as string[]
+  const tagsRaw     = formData.getAll('tags') as string[]
   const isOpenSource = formData.get('is_open_source') === 'true'
   const isFree       = formData.get('is_free') === 'true'
 
@@ -74,6 +75,8 @@ export async function updateProjectText(prevState: unknown, formData: FormData) 
     return { error: 'Please select a stage.' }
   if (!platforms.length)
     return { error: 'Please select at least one platform.' }
+  if (tagsRaw.length > 5)
+    return { error: 'You can select up to 5 tags only.' }
 
   const { error } = await supabase
     .from('projects')
@@ -92,6 +95,23 @@ export async function updateProjectText(prevState: unknown, formData: FormData) 
     .eq('user_id', user.id)
 
   if (error) return { error: error.message }
+
+  // Update project tags (delete existing & insert selected)
+  await supabase.from('project_tags').delete().eq('project_id', projectId)
+  if (tagsRaw.length > 0) {
+    const { data: dbTags } = await supabase
+      .from('tags')
+      .select('id, name')
+      .in('name', tagsRaw)
+    if (dbTags && dbTags.length > 0) {
+      await supabase.from('project_tags').insert(
+        dbTags.map(t => ({
+          project_id: projectId,
+          tag_id: t.id,
+        }))
+      )
+    }
+  }
 
   revalidatePath('/dashboard/projects')
   revalidatePath(`/browse`)
