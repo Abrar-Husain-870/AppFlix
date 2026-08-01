@@ -12,6 +12,7 @@ import {
   Bookmark, Users, Lightbulb, Monitor, Smartphone, Tablet,
   ArrowUp, ArrowDown, Minus, Tag,
 } from 'lucide-react'
+import ChartInfoButton from '@/components/analytics/ChartInfoButton'
 
 // ─────────────────────────────────────────────
 // Types
@@ -433,7 +434,14 @@ export default function AnalyticsPage() {
             <div style={{ background: '#1A1A1A', border: '1px solid #2B2B2B', borderRadius: '0.85rem', padding: '1.25rem', marginBottom: '1.5rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.85rem', flexWrap: 'wrap', gap: '0.5rem' }}>
                 <div>
-                  <h3 style={{ fontSize: '0.9rem', fontWeight: 700, color: '#FFFFFF', margin: '0 0 0.2rem' }}>Views &amp; Clicks Over Time</h3>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.2rem' }}>
+                    <h3 style={{ fontSize: '0.9rem', fontWeight: 700, color: '#FFFFFF', margin: 0 }}>Views &amp; Clicks Over Time</h3>
+                    <ChartInfoButton
+                      title="Views & Clicks Over Time"
+                      description="A daily timeline showing how many people opened your app page versus how many clicked to visit your website or links."
+                      calculation="We track page visits and external button clicks for each day in the selected timeframe."
+                    />
+                  </div>
                   <p style={{ fontSize: '0.72rem', color: '#555', margin: 0 }}>Daily trend for the last {period} days</p>
                 </div>
                 <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
@@ -452,7 +460,14 @@ export default function AnalyticsPage() {
                 <div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
                     <div>
-                      <h3 style={{ fontSize: '0.82rem', fontWeight: 600, color: '#AAAAAA', margin: 0 }}>Views over time</h3>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <h3 style={{ fontSize: '0.82rem', fontWeight: 600, color: '#AAAAAA', margin: 0 }}>Views over time</h3>
+                        <ChartInfoButton
+                          title="Views Over Time"
+                          description="Shows how many times visitors opened and viewed your app page each day."
+                          calculation="We add up all page visits recorded across your apps during the selected timeframe."
+                        />
+                      </div>
                       <p style={{ fontSize: '0.65rem', color: '#555', margin: '0.1rem 0 0 0' }}>Filter custom start/end range below</p>
                     </div>
                     <BarChart3 size={14} style={{ color: '#555' }} />
@@ -467,7 +482,14 @@ export default function AnalyticsPage() {
                 <div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
                     <div>
-                      <h3 style={{ fontSize: '0.82rem', fontWeight: 600, color: '#AAAAAA', margin: 0 }}>Clicks over time</h3>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <h3 style={{ fontSize: '0.82rem', fontWeight: 600, color: '#AAAAAA', margin: 0 }}>Clicks over time</h3>
+                        <ChartInfoButton
+                          title="Clicks Over Time"
+                          description="Shows how many times visitors clicked your app's external links (like website, GitHub, or store links)."
+                          calculation="We count every click on your app's action buttons each day."
+                        />
+                      </div>
                       <p style={{ fontSize: '0.65rem', color: '#555', margin: '0.1rem 0 0 0' }}>Filter custom start/end range below</p>
                     </div>
                     <BarChart3 size={14} style={{ color: '#555' }} />
@@ -482,9 +504,16 @@ export default function AnalyticsPage() {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
               {/* Device Breakdown — SWAPPABLE sub-component */}
               <div style={{ background: '#1A1A1A', border: '1px solid #2B2B2B', borderRadius: '0.85rem', padding: '1.25rem' }}>
-                <h3 style={{ fontSize: '0.82rem', fontWeight: 600, color: '#AAAAAA', marginBottom: '1rem' }}>
-                  Device Breakdown <span style={{ color: '#444', fontWeight: 400 }}>(views)</span>
-                </h3>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '1rem' }}>
+                  <h3 style={{ fontSize: '0.82rem', fontWeight: 600, color: '#AAAAAA', margin: 0 }}>
+                    Device Breakdown <span style={{ color: '#444', fontWeight: 400 }}>(views)</span>
+                  </h3>
+                  <ChartInfoButton
+                    title="Device Breakdown"
+                    description="Shows what devices visitors used to view your app (Phone, Computer, or Tablet)."
+                    calculation="We identify whether visitors opened your app on a mobile phone, desktop computer, or tablet screen."
+                  />
+                </div>
                 {devMobile + devTablet + devDesktop === 0 ? (
                   <p style={{ color: '#555', fontSize: '0.82rem' }}>No device data yet — new view events will populate this.</p>
                 ) : (
@@ -497,6 +526,11 @@ export default function AnalyticsPage() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.25rem' }}>
                   <Tag size={14} style={{ color: '#555' }} />
                   <h3 style={{ fontSize: '0.82rem', fontWeight: 600, color: '#AAAAAA', margin: 0 }}>Tag Reach</h3>
+                  <ChartInfoButton
+                    title="Tag Reach"
+                    description="Shows which categories or topic tags (like AI, Web, Design) got the most visitor interest."
+                    calculation="We combine the total page views for all of your apps that share the same topic tag."
+                  />
                   <span style={{ fontSize: '0.68rem', color: '#555', marginLeft: 'auto' }}>views per tag</span>
                 </div>
                 {tags.length === 0 ? (

@@ -1,0 +1,1176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Appflix Intro Engine — Netflix Intro Replica</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-color: #0b0b0f;
+            --card-bg: rgba(20, 20, 28, 0.7);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --accent-color: #e50914;
+            --accent-hover: #ff1f2d;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0ab;
+            --font-main: 'Outfit', sans-serif;
+            --font-mono: 'Fira Code', monospace;
+            
+            /* Phase Colors */
+            --phase-dark: #27272a;
+            --phase-draw: #7f1d1d;
+            --phase-scale: #b91c1c;
+            --phase-zoom: #ea580c;
+            --phase-spectrum: #0284c7;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(229, 9, 20, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(2, 132, 199, 0.05) 0%, transparent 40%);
+            color: var(--text-primary);
+            font-family: var(--font-main);
+            min-height: 100vh;
+            padding: 40px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            max-width: 800px;
+            width: 100%;
+        }
+
+        header h1 {
+            font-size: 2.8rem;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #ffffff 40%, #e50914 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: inline-block;
+        }
+
+        header p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            font-weight: 300;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1440px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        /* Showroom Layout */
+        .showroom-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+            backdrop-filter: blur(12px);
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+
+        .players-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            width: 100%;
+        }
+
+        @media (max-width: 1024px) {
+            .players-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .player-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .player-panel h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .player-panel h3 span.badge {
+            font-size: 0.75rem;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-family: var(--font-mono);
+            font-weight: 500;
+        }
+
+        .badge-replica {
+            background: rgba(229, 9, 20, 0.15);
+            color: #ff4d4d;
+            border: 1px solid rgba(229, 9, 20, 0.3);
+        }
+
+        .badge-original {
+            background: rgba(255, 255, 255, 0.08);
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .screen-wrapper {
+            position: relative;
+            width: 100%;
+            padding-top: 56.6%; /* 16:9 Aspect Ratio */
+            background: #000;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
+        }
+
+        .screen-wrapper canvas, 
+        .screen-wrapper video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        /* Unified Controls */
+        .controls-row {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 15px 25px;
+            border-radius: 14px;
+        }
+
+        .btn {
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            outline: none;
+        }
+
+        .btn-main {
+            background: var(--accent-color);
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            box-shadow: 0 4px 15px rgba(229, 9, 20, 0.4);
+        }
+
+        .btn-main:hover {
+            background: var(--accent-hover);
+            transform: scale(1.05);
+        }
+
+        .btn-sec {
+            width: 38px;
+            height: 38px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .btn-sec:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-sec.active {
+            background: rgba(229, 9, 20, 0.15);
+            border-color: var(--accent-color);
+            color: var(--accent-color);
+        }
+
+        .slider-container {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .slider-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            font-family: var(--font-mono);
+        }
+
+        .slider-header span.highlight {
+            color: var(--accent-color);
+            font-weight: 600;
+        }
+
+        .seek-bar {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: #27272a;
+            outline: none;
+            cursor: pointer;
+            transition: background 0.15s ease;
+        }
+
+        .seek-bar::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--accent-color);
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(229, 9, 20, 0.8);
+            transition: transform 0.1s ease;
+        }
+
+        .seek-bar::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+
+        /* Phase Bar */
+        .phase-bar {
+            width: 100%;
+            height: 10px;
+            border-radius: 5px;
+            overflow: hidden;
+            display: flex;
+            margin-top: 5px;
+            background: #18181b;
+            border: 1px solid rgba(255, 255, 255, 0.02);
+        }
+
+        .phase-seg {
+            height: 100%;
+            cursor: pointer;
+            transition: opacity 0.2s ease, transform 0.2s ease;
+            position: relative;
+        }
+
+        .phase-seg:hover {
+            opacity: 0.85;
+            filter: brightness(1.2);
+        }
+
+        /* Dashboard Analysis info */
+        .grid-dashboard {
+            display: grid;
+            grid-template-columns: 1.8fr 1fr;
+            gap: 30px;
+            width: 100%;
+        }
+
+        @media (max-width: 1024px) {
+            .grid-dashboard {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .panel-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+            padding: 30px;
+            backdrop-filter: blur(12px);
+        }
+
+        .panel-card h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Timeline Info List */
+        .timeline-steps {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .step-item {
+            display: flex;
+            gap: 15px;
+            padding: 15px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .step-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .step-item.active {
+            background: rgba(229, 9, 20, 0.05);
+            border-color: rgba(229, 9, 20, 0.2);
+            box-shadow: inset 3px 0 0 var(--accent-color);
+        }
+
+        .step-marker {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-top: 6px;
+            flex-shrink: 0;
+        }
+
+        .step-content {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .step-title {
+            font-size: 1rem;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .step-time {
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .step-desc {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        /* Compare Grid */
+        .comparison-area {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .compare-box {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .compare-box span {
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            text-align: center;
+        }
+
+        .compare-img-wrapper {
+            background: #000;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            aspect-ratio: 16/9;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .compare-img-wrapper img,
+        .compare-img-wrapper canvas {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .compare-selector {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+        }
+
+        .compare-btn {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 8px;
+            color: var(--text-secondary);
+            padding: 8px 4px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: var(--font-mono);
+        }
+
+        .compare-btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--text-primary);
+        }
+
+        .compare-btn.active {
+            background: rgba(2, 132, 199, 0.15);
+            border-color: var(--phase-spectrum);
+            color: #38bdf8;
+            font-weight: 600;
+        }
+
+        /* Technical Info */
+        .tech-box {
+            margin-top: 20px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .tech-box h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #38bdf8;
+        }
+
+        .tech-box p {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: 10px;
+        }
+
+        .tech-box ul {
+            padding-left: 20px;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .tech-box ul li strong {
+            color: var(--text-primary);
+        }
+
+        /* SVG icons */
+        .icon {
+            width: 20px;
+            height: 20px;
+            fill: currentColor;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Appflix Intro Engine</h1>
+        <p>A high-performance frame-accurate replica of the Appflix intro animation, modeled directly from the original video. Implemented using vector shapes and pixel-perfect spectrum data.</p>
+    </header>
+
+    <div class="container">
+        
+        <!-- Showroom Panel -->
+        <div class="showroom-card">
+            <div class="players-grid">
+                
+                <!-- Coded Replica Player -->
+                <div class="player-panel">
+                    <h3>
+                        Coded Replica (Canvas)
+                        <span class="badge badge-replica">Vector + Pixel Stream</span>
+                    </h3>
+                    <div class="screen-wrapper">
+                        <canvas id="replica-canvas" width="848" height="480"></canvas>
+                    </div>
+                </div>
+                
+                <!-- Original Video Player -->
+                <div class="player-panel">
+                    <h3>
+                        Original Video Reference
+                        <span class="badge badge-original">Logo video.mp4</span>
+                    </h3>
+                    <div class="screen-wrapper">
+                        <video id="ref-video" preload="auto" playsinline>
+                            <source src="Logo video.mp4" type="video/mp4">
+                            Your browser does not support HTML5 video.
+                        </video>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Timeline Bar Visualizer -->
+            <div class="phase-bar" id="phase-bar">
+                <div class="phase-seg" style="width: 11.6%; background: var(--phase-dark);" title="Phase 1: Dark Silence (Frames 1-14)" onclick="seekToFrame(1)"></div>
+                <div class="phase-seg" style="width: 9.2%; background: var(--phase-draw);" title="Phase 2: Ribbon Draw (Frames 15-25)" onclick="seekToFrame(15)"></div>
+                <div class="phase-seg" style="width: 37.5%; background: var(--phase-scale);" title="Phase 3: Easing Scale (Frames 25-70)" onclick="seekToFrame(25)"></div>
+                <div class="phase-seg" style="width: 7.5%; background: var(--phase-zoom);" title="Phase 4: 3D Zoom (Frames 70-78)" onclick="seekToFrame(70)"></div>
+                <div class="phase-seg" style="width: 34.2%; background: var(--phase-spectrum);" title="Phase 5: Spectrum Flow (Frames 79-120)" onclick="seekToFrame(79)"></div>
+            </div>
+
+            <!-- Unified Control Center -->
+            <div class="controls-row">
+                <button class="btn btn-main" id="play-btn" onclick="togglePlay()" title="Play/Pause">
+                    <!-- Play icon -->
+                    <svg class="icon" viewBox="0 0 24 24" id="play-icon">
+                        <path d="M8 5v14l11-7z"/>
+                    </svg>
+                    <!-- Pause icon (hidden initially) -->
+                    <svg class="icon" viewBox="0 0 24 24" id="pause-icon" style="display:none;">
+                        <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+                    </svg>
+                </button>
+
+                <button class="btn btn-sec" id="sync-btn" onclick="toggleSync()" title="Sync Mode (Syncs video & audio)">
+                    <svg class="icon" viewBox="0 0 24 24">
+                        <path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm-1.7 10.3c-.1-.2-.2-.5-.3-.8h-2.1c.1.9.5 1.8 1.1 2.5l1.3-1.7zm1.7 5.7c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 8.74C4.46 9.97 4 11.43 4 13c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/>
+                    </svg>
+                </button>
+
+                <button class="btn btn-sec" id="audio-btn" onclick="toggleAudio()" title="Toggle Sound">
+                    <svg class="icon" viewBox="0 0 24 24" id="audio-on-icon" style="display:none;">
+                        <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+                    </svg>
+                    <svg class="icon" viewBox="0 0 24 24" id="audio-off-icon">
+                        <path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.21.05-.42.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>
+                    </svg>
+                </button>
+
+                <button class="btn btn-sec active" id="crossbar-btn" onclick="toggleCrossbar()" title="Toggle 'A' Crossbar (Optional)">
+                    <span style="font-family:var(--font-main); font-weight:800; font-size:1.1rem; line-height:1;">A</span>
+                </button>
+
+                <div class="slider-container">
+                    <div class="slider-header">
+                        <span id="animation-phase-text">Phase: Dark Silence</span>
+                        <span>Frame: <span id="frame-num-text" class="highlight">1</span> / 120</span>
+                    </div>
+                    <input type="range" class="seek-bar" id="seek-bar" min="1" max="120" value="1" oninput="handleSeek(this.value)">
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard / Analytical section -->
+        <div class="grid-dashboard">
+            
+            <!-- Timeline / Phases Details -->
+            <div class="panel-card">
+                <h2>
+                    <svg class="icon" viewBox="0 0 24 24" style="color:var(--accent-color);">
+                        <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/>
+                    </svg>
+                    Intro Phase Sequence
+                </h2>
+                
+                <div class="timeline-steps">
+                    <div class="step-item" id="step-1" onclick="seekToFrame(1)">
+                        <div class="step-marker" style="background:var(--phase-dark);"></div>
+                        <div class="step-content">
+                            <div class="step-title">
+                                Phase 1: Silence & Dark
+                                <span class="step-time">F1 – F14 (0.00s – 0.47s)</span>
+                            </div>
+                            <div class="step-desc">The screen is completely black. There is silence, building anticipation.</div>
+                        </div>
+                    </div>
+                    
+                    <div class="step-item" id="step-2" onclick="seekToFrame(15)">
+                        <div class="step-marker" style="background:var(--phase-draw);"></div>
+                        <div class="step-content">
+                            <div class="step-title">
+                                Phase 2: Ribbon Draw-Down
+                                <span class="step-time">F15 – F25 (0.50s – 0.83s)</span>
+                            </div>
+                            <div class="step-desc">The ribbon caret starts drawing downwards from the top apex while fading in. Both legs appear simultaneously.</div>
+                        </div>
+                    </div>
+                    
+                    <div class="step-item" id="step-3" onclick="seekToFrame(25)">
+                        <div class="step-marker" style="background:var(--phase-scale);"></div>
+                        <div class="step-content">
+                            <div class="step-title">
+                                Phase 3: Easing Scale-Up
+                                <span class="step-time">F25 – F70 (0.83s – 2.33s)</span>
+                            </div>
+                            <div class="step-desc">The logo grows smoothly from 48% to 100% size, centered on the screen. The scaling uses an ease-in-out cubic curve.</div>
+                        </div>
+                    </div>
+                    
+                    <div class="step-item" id="step-4" onclick="seekToFrame(70)">
+                        <div class="step-marker" style="background:var(--phase-zoom);"></div>
+                        <div class="step-content">
+                            <div class="step-title">
+                                Phase 4: Exponential 3D Zoom
+                                <span class="step-time">F70 – F78 (2.33s – 2.60s)</span>
+                            </div>
+                            <div class="step-desc">The camera rushes into the center of the logo. The scale jumps exponentially from 1.0 to 12.0 in a fraction of a second.</div>
+                        </div>
+                    </div>
+                    
+                    <div class="step-item" id="step-5" onclick="seekToFrame(79)">
+                        <div class="step-marker" style="background:var(--phase-spectrum);"></div>
+                        <div class="step-content">
+                            <div class="step-title">
+                                Phase 5: Spectrum Dissolve
+                                <span class="step-time">F79 – F120 (2.63s – 4.00s)</span>
+                            </div>
+                            <div class="step-desc">As the logo covers the screen, it breaks down into a spectrum of thin vertical lines (color barcodes) that drift, stretch, and fade out.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Load Spectrum Data JS file -->
+    <script src="spectrum_data.js"></script>
+    
+    <script>
+        // DOM Elements
+        const canvas = document.getElementById('replica-canvas');
+        const ctx = canvas.getContext('2d');
+        const video = document.getElementById('ref-video');
+        const seekBar = document.getElementById('seek-bar');
+        const playBtn = document.getElementById('play-btn');
+        const playIcon = document.getElementById('play-icon');
+        const pauseIcon = document.getElementById('pause-icon');
+        const syncBtn = document.getElementById('sync-btn');
+        const audioBtn = document.getElementById('audio-btn');
+        const audioOnIcon = document.getElementById('audio-on-icon');
+        const audioOffIcon = document.getElementById('audio-off-icon');
+        const phaseText = document.getElementById('animation-phase-text');
+        const frameText = document.getElementById('frame-num-text');
+        
+        const audio = new Audio('intro_audio.mp3');
+        audio.preload = 'auto';
+
+        // Animation Variables
+        const totalFrames = 120;
+        const fps = 30;
+        let currentFrame = 70;
+        let isPlaying = false;
+        let isSynced = true;
+        let isMuted = true;
+        let showCrossbar = true;
+        let animationFrameId = null;
+        let lastTime = 0;
+        let frameAccumulator = 0;
+
+        // Compare Frame state
+        let activeCompareFrame = 15;
+
+        // Initialize Audio settings
+        audio.muted = isMuted;
+
+        // Logo geometry bounds at scale 1.0 (derived frame-accurately from video)
+        // Center of canvas: (424, 240.5)
+        // Bounding Box: X [310, 539] (width 229), Y [77, 405] (height 328).
+        // Vertices defined relative to logo center (0, 0)
+        const logoGeom = {
+            leftLeg: {
+                topLeft: [-32, -163.5],
+                topRight: [26.3, -158.8],
+                bottomRight: [-31, 151.5],
+                bottomLeft: [-114, 161.5],
+                ctrlX: -82,
+                ctrlY: 141.5
+            },
+            rightLeg: {
+                topLeft: [-28.2, -158.8],
+                topRight: [33.8, -158.8],
+                bottomRight: [114, 164.5],
+                bottomLeft: [32, 154.5],
+                ctrlX: 82,
+                ctrlY: 144.5
+            }
+        };
+
+        // Easing Functions
+        function easeInOutCubic(x) {
+            return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+        }
+
+        function easeInQuad(x) {
+            return x * x;
+        }
+        
+        function easeOutCubic(x) {
+            return 1 - Math.pow(1 - x, 3);
+        }
+        
+        function easeInCubic(x) {
+            return x * x * x;
+        }
+
+        // Draw Logo on a Canvas Context with individual progress clipping
+        function drawVectorLogo(targetCtx, w, h, scale, leftDrawProgress, rightDrawProgress, crossbarDrawProgress, opacity = 1.0, isZoomPhase = false) {
+            targetCtx.fillStyle = '#000000';
+            targetCtx.fillRect(0, 0, w, h);
+
+            targetCtx.save();
+            targetCtx.globalAlpha = opacity;
+            targetCtx.translate(w / 2, h / 2);
+            targetCtx.scale(scale, scale);
+
+            const useInfiniteVectors = isZoomPhase && (scale > 1.45);
+
+            // Gradients
+            const leftGrad = targetCtx.createLinearGradient(-114, 0, 26, 0);
+            leftGrad.addColorStop(0, 'rgb(190, 22, 14)');
+            leftGrad.addColorStop(0.6, 'rgb(235, 30, 20)');
+            leftGrad.addColorStop(1, 'rgb(250, 35, 22)');
+
+            // Vertical gradient for Right Leg
+            const rightGrad = targetCtx.createLinearGradient(0, -158.8, 0, useInfiniteVectors ? 600 : 164.5);
+            rightGrad.addColorStop(0.0, 'rgb(110, 12, 8)');
+            rightGrad.addColorStop(0.20, 'rgb(160, 18, 12)');
+            rightGrad.addColorStop(0.35, 'rgb(230, 28, 18)');
+            rightGrad.addColorStop(1.0, 'rgb(245, 32, 20)');
+
+            // 1. Left Leg (Back Ribbon - Ascent from Bottom Origin to Top Apex)
+            targetCtx.save();
+            targetCtx.beginPath();
+            if (leftDrawProgress < 1.0) {
+                const leftY = 175 - 345 * leftDrawProgress;
+                targetCtx.rect(-1000, leftY, 2000, 2000);
+            } else {
+                targetCtx.rect(-1000, -1000, 2000, 2000);
+            }
+            targetCtx.clip();
+
+            targetCtx.beginPath();
+            if (!useInfiniteVectors) {
+                // Standalone floating logo (does not touch window bottom)
+                targetCtx.moveTo(-32.0, -163.5);
+                targetCtx.lineTo(26.3, -158.8);
+                targetCtx.lineTo(-31.0, 151.5);
+                targetCtx.quadraticCurveTo(-82, 154.5, -114.0, 161.5);
+            } else {
+                // Continuous straight vector paths for 3D zoom phase
+                targetCtx.moveTo(-32.0, -163.5);
+                targetCtx.lineTo(26.3, -158.8);
+                targetCtx.lineTo(-113.8, 600.0);
+                targetCtx.lineTo(-224.6, 600.0);
+            }
+            targetCtx.closePath();
+            targetCtx.fillStyle = leftGrad;
+            targetCtx.fill();
+
+            // Apex Junction Shadow cast by Right Leg fold onto Left Leg
+            if (rightDrawProgress > 0.05) {
+                targetCtx.save();
+                targetCtx.beginPath();
+                if (!useInfiniteVectors) {
+                    targetCtx.moveTo(-32.0, -163.5);
+                    targetCtx.lineTo(26.3, -158.8);
+                    targetCtx.lineTo(-31.0, 151.5);
+                    targetCtx.quadraticCurveTo(-82, 154.5, -114.0, 161.5);
+                } else {
+                    targetCtx.moveTo(-32.0, -163.5);
+                    targetCtx.lineTo(26.3, -158.8);
+                    targetCtx.lineTo(-113.8, 600.0);
+                    targetCtx.lineTo(-224.6, 600.0);
+                }
+                targetCtx.closePath();
+                targetCtx.clip();
+
+                const shadowEndY = useInfiniteVectors ? 500.0 : 156.5;
+                const shadowEndX = useInfiniteVectors ? -124.93 : -72.5;
+                const apexShadowGrad = targetCtx.createLinearGradient(-2.85, -161.15, shadowEndX, shadowEndY);
+                apexShadowGrad.addColorStop(0.0, 'rgba(0, 0, 0, 0.70)');
+                apexShadowGrad.addColorStop(0.40, 'rgba(0, 0, 0, 0.25)');
+                apexShadowGrad.addColorStop(1.0, 'rgba(0, 0, 0, 0.0)');
+                targetCtx.fillStyle = apexShadowGrad;
+                targetCtx.fillRect(-500, -600, 1000, 1200);
+                targetCtx.restore();
+            }
+
+            targetCtx.restore();
+
+            // 2. Right Leg (Front Ribbon - Descent from Top Apex to Bottom Origin)
+            if (rightDrawProgress > 0.0) {
+                targetCtx.save();
+                targetCtx.beginPath();
+                if (rightDrawProgress < 1.0) {
+                    targetCtx.rect(-1000, -200, 2000, 345 * rightDrawProgress + 5);
+                } else {
+                    targetCtx.rect(-1000, -1000, 2000, 2000);
+                }
+                targetCtx.clip();
+
+                targetCtx.beginPath();
+                if (!useInfiniteVectors) {
+                    targetCtx.moveTo(-28.2, -158.8);
+                    targetCtx.lineTo(33.8, -158.8);
+                    targetCtx.lineTo(114.0, 164.5);
+                    targetCtx.quadraticCurveTo(82, 157.5, 32.0, 154.5);
+                } else {
+                    targetCtx.moveTo(-28.2, -158.8);
+                    targetCtx.lineTo(33.8, -158.8);
+                    targetCtx.lineTo(222.0, 600.0);
+                    targetCtx.lineTo(117.6, 600.0);
+                }
+                targetCtx.closePath();
+                targetCtx.fillStyle = rightGrad;
+                targetCtx.fill();
+                targetCtx.restore();
+            }
+
+            targetCtx.restore();
+        }
+
+        // Draw Spectrum on a Canvas Context (Vertical Spectral Lines with 3D Vignette)
+        function drawSpectrum(targetCtx, w, h, frameIndex) {
+            targetCtx.fillStyle = '#000000';
+            targetCtx.fillRect(0, 0, w, h);
+
+            if (!window.spectrumData || !window.spectrumData[frameIndex]) return;
+
+            const profile = window.spectrumData[frameIndex];
+            const dataWidth = profile.length; // 848
+
+            // Optional: add a subtle fade out at the very end of the spectrum (Frames 110-120)
+            let opacity = 1.0;
+            const absoluteFrameNum = frameIndex + 79;
+            if (absoluteFrameNum > 110) {
+                opacity = 1.0 - (absoluteFrameNum - 110) / 10;
+            }
+
+            targetCtx.save();
+            targetCtx.globalAlpha = opacity;
+            
+            for (let x = 0; x < w; x++) {
+                const srcX = Math.floor(x * dataWidth / w);
+                const rgb = profile[srcX];
+                targetCtx.fillStyle = `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`;
+                targetCtx.fillRect(x, 0, 1.2, h);
+            }
+
+            // 3D Depth Vignette overlays
+            // 1. Vertical Vignette (dark at top and bottom, bright in middle)
+            const verticalVignette = targetCtx.createLinearGradient(0, 0, 0, h);
+            verticalVignette.addColorStop(0, 'rgba(0, 0, 0, 0.95)');
+            verticalVignette.addColorStop(0.2, 'rgba(0, 0, 0, 0.4)');
+            verticalVignette.addColorStop(0.5, 'rgba(0, 0, 0, 0.0)');
+            verticalVignette.addColorStop(0.8, 'rgba(0, 0, 0, 0.4)');
+            verticalVignette.addColorStop(1, 'rgba(0, 0, 0, 0.95)');
+            targetCtx.fillStyle = verticalVignette;
+            targetCtx.fillRect(0, 0, w, h);
+
+            // 2. Radial Vignette (dark at outer corners, bright in center)
+            const radialVignette = targetCtx.createRadialGradient(w/2, h/2, h/3, w/2, h/2, w/1.5);
+            radialVignette.addColorStop(0, 'rgba(0, 0, 0, 0.0)');
+            radialVignette.addColorStop(0.7, 'rgba(0, 0, 0, 0.4)');
+            radialVignette.addColorStop(1, 'rgba(0, 0, 0, 0.95)');
+            targetCtx.fillStyle = radialVignette;
+            targetCtx.fillRect(0, 0, w, h);
+            
+            targetCtx.restore();
+        }
+
+        // Main Render Frame Orchestrator
+        function renderFrame(targetCtx, w, h, frameNum) {
+            if (frameNum < 15) {
+                // Phase 1: Silence & Dark
+                targetCtx.fillStyle = '#000000';
+                targetCtx.fillRect(0, 0, w, h);
+            } 
+            else if (frameNum >= 15 && frameNum < 25) {
+                // Phase 2: Sequential Ribbon Draw (Origin -> Left Ascent -> Apex Fold -> Right Descent -> Origin)
+                let leftDrawProgress = 0.0;
+                let rightDrawProgress = 0.0;
+                let crossbarDrawProgress = 0.0;
+                let opacity = 1.0;
+
+                const p = (frameNum - 15) / 9; // 0.0 to 1.0 across frames 15..24
+
+                if (p <= 0.45) {
+                    leftDrawProgress = Math.min(1.0, (p / 0.45));
+                    rightDrawProgress = 0.0;
+                    opacity = Math.min(1.0, p / 0.10);
+                } else {
+                    leftDrawProgress = 1.0;
+                    rightDrawProgress = Math.min(1.0, (p - 0.45) / 0.55);
+                    opacity = 1.0;
+                }
+
+                drawVectorLogo(targetCtx, w, h, 0.49, leftDrawProgress, rightDrawProgress, crossbarDrawProgress, opacity);
+            } 
+            else if (frameNum >= 25 && frameNum < 70) {
+                // Phase 3: Easing Scale-Up
+                const progress = (frameNum - 25) / (70 - 25);
+                const scale = 0.49 + 0.51 * Math.pow(progress, 3.5);
+                drawVectorLogo(targetCtx, w, h, scale, 1.0, 1.0, 1.0, 1.0);
+            } 
+            else if (frameNum >= 70 && frameNum < 79) {
+                // Phase 4: Exponential 3D Camera Zoom into Apex Window
+                const progress = (frameNum - 70) / (79 - 70);
+                const eased = Math.pow(progress, 3.8); // hyper-realistic camera acceleration
+                const scale = 1.0 + eased * 14.0;
+                
+                // Track camera focus into central apex opening (Y = -35)
+                targetCtx.save();
+                targetCtx.translate(0, -35 * eased * scale);
+                drawVectorLogo(targetCtx, w, h, scale, 1.0, 1.0, 1.0, 1.0, true);
+                targetCtx.restore();
+            } 
+            else {
+                // Phase 5: Spectrum Dissolve (Vertical Spectral Light Lines)
+                const spectrumIdx = frameNum - 79;
+                drawSpectrum(targetCtx, w, h, spectrumIdx);
+            }
+        }
+
+        // Update UI State based on currentFrame
+        function updateUI() {
+            seekBar.value = currentFrame;
+            frameText.innerText = currentFrame;
+            
+            // Set Phase text and highlights
+            let phase = '';
+            let stepId = 1;
+            
+            if (currentFrame < 15) {
+                phase = 'Phase 1: Dark Silence';
+                stepId = 1;
+            } else if (currentFrame >= 15 && currentFrame < 25) {
+                phase = 'Phase 2: Ribbon Draw-Down';
+                stepId = 2;
+            } else if (currentFrame >= 25 && currentFrame < 70) {
+                phase = 'Phase 3: Easing Scale-Up';
+                stepId = 3;
+            } else if (currentFrame >= 70 && currentFrame < 79) {
+                phase = 'Phase 4: 3D Zoom';
+                stepId = 4;
+            } else {
+                phase = 'Phase 5: Spectrum Flow';
+                stepId = 5;
+            }
+
+            phaseText.innerText = phase;
+
+            // Highlight current step in list
+            document.querySelectorAll('.step-item').forEach(el => el.classList.remove('active'));
+            document.getElementById(`step-${stepId}`).classList.add('active');
+
+            // Render current frame on main canvas
+            renderFrame(ctx, canvas.width, canvas.height, currentFrame);
+
+            // Sync original video if enabled
+            if (isSynced) {
+                // Map frame to video time: (frame - 1) / 30
+                const targetTime = (currentFrame - 1) / fps;
+                // Only set if difference is significant to avoid stutter
+                if (Math.abs(video.currentTime - targetTime) > 0.05) {
+                    video.currentTime = targetTime;
+                }
+            }
+        }
+
+        // Animation Loop
+        function tick(timestamp) {
+            if (!isPlaying) return;
+
+            if (!lastTime) lastTime = timestamp;
+            const delta = timestamp - lastTime;
+            lastTime = timestamp;
+
+            frameAccumulator += delta;
+            const msPerFrame = 1000 / fps;
+
+            while (frameAccumulator >= msPerFrame) {
+                currentFrame++;
+                if (currentFrame > totalFrames) {
+                    currentFrame = 1;
+                    if (isSynced) {
+                        video.currentTime = 0;
+                        audio.currentTime = 0;
+                        if (!isMuted) audio.play();
+                    }
+                }
+                frameAccumulator -= msPerFrame;
+            }
+
+            updateUI();
+            animationFrameId = requestAnimationFrame(tick);
+        }
+
+        // Controls: Play / Pause
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            if (isPlaying) {
+                playIcon.style.display = 'none';
+                pauseIcon.style.display = 'block';
+                lastTime = performance.now();
+                
+                // Play audio
+                if (isSynced && !isMuted) {
+                    // Sync audio time with frame
+                    audio.currentTime = (currentFrame - 1) / fps;
+                    audio.play().catch(e => console.log("Audio play blocked by browser:", e));
+                }
+
+                // Play video if synced
+                if (isSynced) {
+                    video.currentTime = (currentFrame - 1) / fps;
+                    video.play().catch(e => console.log("Video play blocked:", e));
+                }
+
+                animationFrameId = requestAnimationFrame(tick);
+            } else {
+                playIcon.style.display = 'block';
+                pauseIcon.style.display = 'none';
+                
+                // Pause audio
+                audio.pause();
+                
+                // Pause video
+                video.pause();
+
+                if (animationFrameId) {
+                    cancelAnimationFrame(animationFrameId);
+                    animationFrameId = null;
+                }
+            }
+        }
+
+        // Controls: Seek
+        function handleSeek(val) {
+            currentFrame = parseInt(val);
+            frameAccumulator = 0;
+            lastTime = performance.now();
+            
+            // Sync Audio if playing
+            if (isPlaying && isSynced && !isMuted) {
+                audio.currentTime = (currentFrame - 1) / fps;
+            } else {
+                audio.pause();
+            }
+
+            updateUI();
+        }
+
+        function seekToFrame(num) {
+            currentFrame = num;
+            handleSeek(num);
+        }
+
+        // Controls: Toggle Crossbar
+        function toggleCrossbar() {
+            showCrossbar = !showCrossbar;
+            const btn = document.getElementById('crossbar-btn');
+            if (showCrossbar) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+            updateUI();
+            
+            // Also redraw compare frame if visible
+            selectCompareFrame(activeCompareFrame);
+        }
+
+        // Controls: Sync mode toggle
+        function toggleSync() {
+            isSynced = !isSynced;
+            if (isSynced) {
+                syncBtn.classList.add('active');
+                // Sync now
+                video.currentTime = (currentFrame - 1) / fps;
+                if (isPlaying) {
+                    video.play().catch(e => {});
+                    if (!isMuted) {
+                        audio.currentTime = (currentFrame - 1) / fps;
+                        audio.play().catch(e => {});
+                    }
+                }
+            } else {
+                syncBtn.classList.remove('active');
+                video.pause();
+                audio.pause();
+            }
+        }
+
+        // Controls: Audio toggle
+        function toggleAudio() {
+            isMuted = !isMuted;
+            audio.muted = isMuted;
+            
+            if (isMuted) {
+                audioOnIcon.style.display = 'none';
+                audioOffIcon.style.display = 'block';
+                audio.pause();
+            } else {
+                audioOnIcon.style.display = 'block';
+                audioOffIcon.style.display = 'none';
+                if (isPlaying && isSynced) {
+                    audio.currentTime = (currentFrame - 1) / fps;
+                    audio.play().catch(e => console.log("Audio play failed:", e));
+                }
+            }
+        }
+
+        // Initialize Page
+        window.addEventListener('load', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.has('frame')) {
+                currentFrame = parseInt(urlParams.get('frame'), 10);
+            }
+
+            // Set sync button active by default
+            syncBtn.classList.add('active');
+            
+            // Draw frame
+            updateUI();
+        });
+    </script>
+</body>
+</html>
