@@ -27,6 +27,17 @@ export default function ViewTracker({ projectId, deviceType }: Props) {
   useEffect(() => {
     async function recordView() {
       try {
+        // Deduplicate rapid page reloads / dev testing refreshes (1 view per project per 30 mins)
+        if (typeof window !== 'undefined') {
+          const VIEW_KEY = `appflix_viewed_${projectId}`
+          const lastViewed = sessionStorage.getItem(VIEW_KEY)
+          const now = Date.now()
+          if (lastViewed && now - parseInt(lastViewed, 10) < 1800000) {
+            return
+          }
+          sessionStorage.setItem(VIEW_KEY, now.toString())
+        }
+
         const supabase = createClient()
 
         // Always await getUser so we know for sure if the session is loaded
