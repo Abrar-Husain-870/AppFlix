@@ -456,41 +456,51 @@ export default function BrowsePage() {
 
             {/* Main content */}
             <main style={{ flex: 1, minWidth: 0 }}>
-              {/* Category scroller with arrows */}
-              <div style={{ position: 'relative', marginBottom: '1.25rem' }}>
-                <button
-                  id="cat-scroll-left"
-                  type="button"
-                  onClick={() => scroll(catScrollRef, 'left')}
-                  aria-label="Scroll categories left"
-                  style={{
-                    position: 'absolute', left: 0, top: '50%', transform: 'translateY(-50%)',
-                    zIndex: 10, width: '32px', height: '32px',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    background: 'linear-gradient(to right, #141414 60%, transparent)',
-                    border: 'none', cursor: 'pointer', color: '#FFFFFF',
-                  }}
-                >
-                  <ChevronLeft size={20} />
-                </button>
+              {/* Netflix-Style Minimal Category Navigation Rail */}
+              <div style={{ position: 'relative', marginBottom: '1.75rem' }}>
+                {/* Left Edge Fading Overlay */}
+                <div style={{
+                  position: 'absolute',
+                  left: 0,
+                  top: 0,
+                  bottom: 0,
+                  width: '24px',
+                  zIndex: 5,
+                  background: 'linear-gradient(to right, #141414 0%, transparent 100%)',
+                  pointerEvents: 'none',
+                }} />
 
-                {/* Scrollable pill strip */}
+                {/* Right Edge Fading Overlay */}
+                <div style={{
+                  position: 'absolute',
+                  right: 0,
+                  top: 0,
+                  bottom: 0,
+                  width: '28px',
+                  zIndex: 5,
+                  background: 'linear-gradient(to left, #141414 0%, transparent 100%)',
+                  pointerEvents: 'none',
+                }} />
+
+                {/* Scrollable Category Rail */}
                 <div
                   ref={catScrollRef}
                   style={{
-                    display: 'flex', gap: '0.6rem', overflowX: 'auto',
-                    paddingBottom: '0.4rem', paddingLeft: '32px', paddingRight: '32px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '1.5rem',
+                    overflowX: 'auto',
+                    padding: '0.2rem 0.5rem 0.6rem',
                     scrollbarWidth: 'none',
                   }}
                 >
                   {[
-                    { name: 'All', slug: 'all', icon: null },
-                    ...PLATFORM_FILTERS.map(p => ({ ...p, slug: `p-${p.slug}` })),
-                    ...categories.map(c => ({ ...c, slug: `c-${c.slug}` })),
+                    { name: 'All Apps', slug: 'all' },
+                    ...PLATFORM_FILTERS.map(p => ({ name: p.name, slug: `p-${p.slug}` })),
+                    ...categories.map(c => ({ name: c.name, slug: `c-${c.slug}` })),
                     ...tags.map(t => ({
                       name: t.name.charAt(0).toUpperCase() + t.name.slice(1),
                       slug: `t-${t.slug}`,
-                      icon: TAG_ICONS[t.slug] || '🏷️'
                     }))
                   ].map(cat => {
                     const active = selectedCategory === cat.slug
@@ -500,54 +510,45 @@ export default function BrowsePage() {
                         id={`cat-pill-${cat.slug}`}
                         onClick={() => setSelectedCategory(active ? 'all' : cat.slug)}
                         style={{
-                          flexShrink: 0, padding: '0.5rem 1.1rem',
-                          background: active ? '#E50914' : '#1A1A1A',
-                          color: '#FFFFFF',
-                          border: `1px solid ${active ? '#E50914' : 'rgba(255,255,255,0.1)'}`,
-                          boxShadow: active ? '0 4px 14px rgba(229, 9, 20, 0.45)' : 'none',
-                          borderRadius: '9999px', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer',
-                          transition: 'all 0.2s ease', whiteSpace: 'nowrap',
-                          display: 'inline-flex', alignItems: 'center', gap: '0.35rem'
+                          flexShrink: 0,
+                          padding: '0.4rem 0.2rem',
+                          background: 'transparent',
+                          color: active ? '#E50914' : '#888888',
+                          fontWeight: active ? 700 : 500,
+                          border: 'none',
+                          fontSize: '0.9rem',
+                          cursor: 'pointer',
+                          transition: 'color 0.2s ease',
+                          whiteSpace: 'nowrap',
+                          position: 'relative',
+                          letterSpacing: '-0.01em',
+                        }}
+                        onMouseEnter={e => {
+                          if (!active) e.currentTarget.style.color = '#FFFFFF'
+                        }}
+                        onMouseLeave={e => {
+                          if (!active) e.currentTarget.style.color = '#888888'
                         }}
                       >
-                        {cat.icon && <span>{cat.icon}</span>}
                         <span>{cat.name}</span>
-                        {active && cat.slug !== 'all' && (
-                          <span
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              setSelectedCategory('all')
-                            }}
-                            style={{
-                              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                              marginLeft: '0.2rem', padding: '0.1rem', borderRadius: '50%',
-                              background: 'rgba(255,255,255,0.2)', width: '12px', height: '12px',
-                              fontSize: '0.6rem', color: '#FFF'
-                            }}
-                          >
-                            ×
-                          </span>
+
+                        {/* Netflix Red Underline Indicator */}
+                        {active && (
+                          <span style={{
+                            position: 'absolute',
+                            bottom: 0,
+                            left: 0,
+                            right: 0,
+                            height: '2.5px',
+                            background: '#E50914',
+                            borderRadius: '2px',
+                            boxShadow: '0 0 8px rgba(229, 9, 20, 0.8)',
+                          }} />
                         )}
                       </button>
                     )
                   })}
                 </div>
-
-                <button
-                  id="cat-scroll-right"
-                  type="button"
-                  onClick={() => scroll(catScrollRef, 'right')}
-                  aria-label="Scroll categories right"
-                  style={{
-                    position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)',
-                    zIndex: 10, width: '32px', height: '32px',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    background: 'linear-gradient(to left, #141414 60%, transparent)',
-                    border: 'none', cursor: 'pointer', color: '#FFFFFF',
-                  }}
-                >
-                  <ChevronRight size={20} />
-                </button>
               </div>
 
               {/* Header + Sort controls bar */}
@@ -558,8 +559,6 @@ export default function BrowsePage() {
                 marginBottom: '1.5rem',
                 flexWrap: 'wrap',
                 gap: '1rem',
-                paddingBottom: '0.75rem',
-                borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
               }}>
                 {/* Netflix-style Title Header */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
@@ -582,23 +581,26 @@ export default function BrowsePage() {
                   </span>
                 </div>
 
-                {/* Sort tabs */}
-                <div style={{ display: 'flex', gap: '0.35rem', alignItems: 'center' }}>
+                {/* Sort tabs bar matching Developer Section styling */}
+                <div style={{ display: 'flex', gap: '0.3rem', background: '#1A1A1A', padding: '0.25rem', borderRadius: '0.5rem', border: '1px solid #2B2B2B', flexWrap: 'wrap' }}>
                   {SORT_OPTIONS.map(opt => (
                     <button
                       key={opt.value}
                       id={`sort-${opt.value}`}
                       onClick={() => setSort(opt.value)}
                       style={{
-                        display: 'flex', alignItems: 'center', gap: '0.4rem',
-                        padding: '0.45rem 0.95rem', fontSize: '0.85rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.35rem',
+                        padding: '0.4rem 0.75rem',
+                        fontSize: '0.78rem',
                         fontWeight: sort === opt.value ? 700 : 500,
-                        background: sort === opt.value ? 'rgba(229, 9, 20, 0.2)' : '#1A1A1A',
-                        color: sort === opt.value ? '#FFFFFF' : '#AAAAAA',
-                        border: `1px solid ${sort === opt.value ? '#E50914' : 'rgba(255,255,255,0.08)'}`,
-                        borderRadius: '0.45rem', cursor: 'pointer', transition: 'all 0.2s',
-                        whiteSpace: 'nowrap',
-                        boxShadow: sort === opt.value ? '0 4px 12px rgba(229, 9, 20, 0.25)' : 'none',
+                        background: sort === opt.value ? '#E50914' : 'transparent',
+                        color: sort === opt.value ? '#FFFFFF' : '#888888',
+                        border: 'none',
+                        borderRadius: '0.35rem',
+                        cursor: 'pointer',
+                        transition: 'all 0.15s',
                       }}
                     >
                       {opt.icon}

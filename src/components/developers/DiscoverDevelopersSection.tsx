@@ -7,7 +7,7 @@ import {
   Users, Search, Flame, ThumbsUp, Eye, ShieldCheck, MapPin,
   ArrowUpRight, Award, Trophy, Sparkles, Crown, Medal
 } from 'lucide-react'
-import NetflixHorizonDivider from '@/components/ui/NetflixHorizonDivider'
+
 
 interface Developer {
   id: string
@@ -206,9 +206,28 @@ export default function DiscoverDevelopersSection() {
       padding: '0 1.5rem',
       boxSizing: 'border-box',
     }}>
-      <NetflixHorizonDivider />
+      {/* Netflix Red Neon Gradient Partition Line */}
+      <div style={{
+        position: 'relative',
+        width: '100%',
+        height: '1px',
+        background: 'linear-gradient(90deg, transparent 0%, rgba(229, 9, 20, 0.6) 50%, transparent 100%)',
+        margin: '1rem 0 2.5rem 0',
+      }}>
+        <div style={{
+          position: 'absolute',
+          left: '50%',
+          top: '50%',
+          transform: 'translate(-50%, -50%)',
+          width: '6px',
+          height: '6px',
+          borderRadius: '50%',
+          background: '#E50914',
+          boxShadow: '0 0 10px #E50914',
+        }} />
+      </div>
 
-      <div style={{ marginTop: '2.5rem' }}>
+      <div>
         {/* Header */}
         <div style={{
           display: 'flex',
