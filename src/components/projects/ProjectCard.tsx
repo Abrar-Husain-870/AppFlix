@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import UpvoteButton from './UpvoteButton'
 import { Globe, ArrowUpRight, Flame, Pencil } from 'lucide-react'
 import { useState } from 'react'
@@ -32,11 +33,21 @@ const STAGE_COLORS: Record<string, { bg: string; color: string; border: string }
 }
 
 export default function ProjectCard({ project, isUpvoted = false, isAuthenticated = false, currentUserId }: ProjectCardProps) {
+  const router = useRouter()
   const [hovered, setHovered] = useState(false)
   const stage = STAGE_COLORS[project.stage] ?? { bg: 'rgba(229, 9, 20, 0.15)', color: '#E50914', border: 'rgba(229, 9, 20, 0.3)' }
 
+  const handleCardClick = (e: React.MouseEvent) => {
+    const target = e.target as HTMLElement
+    if (target.closest('button') || target.closest('a') || target.closest('#edit-card-' + project.id)) {
+      return
+    }
+    router.push(`/browse/${project.slug}`)
+  }
+
   return (
     <div
+      onClick={handleCardClick}
       style={{
         background: 'linear-gradient(145deg, #0F0F0F 0%, #080808 100%)',
         borderRadius: '0.85rem',
@@ -52,18 +63,11 @@ export default function ProjectCard({ project, isUpvoted = false, isAuthenticate
         flexDirection: 'column',
         height: '100%',
         boxSizing: 'border-box',
+        cursor: 'pointer',
       }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
-      {/* Top Red Accent Edge Line on Hover */}
-      <div style={{
-        height: '3px',
-        width: '100%',
-        background: hovered ? 'linear-gradient(90deg, #E50914 0%, #FF6B6B 100%)' : 'transparent',
-        transition: 'background 0.25s ease',
-      }} />
-
       {/* Card Header Container */}
       <div style={{
         padding: '1.25rem 1.25rem 0.5rem',
