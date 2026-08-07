@@ -8,6 +8,7 @@ import type { User } from '@supabase/supabase-js'
 import NetflixHorizonDivider from '@/components/ui/NetflixHorizonDivider'
 import NetflixTrendingRow from '@/components/projects/NetflixTrendingRow'
 import NetflixFooterCTA from '@/components/ui/NetflixFooterCTA'
+import DiscoverDevelopersSection from '@/components/developers/DiscoverDevelopersSection'
 
 interface Category {
   id: number
@@ -647,6 +648,9 @@ export default function BrowsePage() {
           </div>
         </div>
       </div>
+
+      {/* ── Discover Developers Section ───────────────────────────────────── */}
+      <DiscoverDevelopersSection />
 
       {/* ── Footer ───────────────────────────────────────────────────────────── */}
       <NetflixFooterCTA isAuthenticated={!!user} />
