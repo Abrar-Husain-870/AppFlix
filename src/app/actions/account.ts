@@ -2,7 +2,6 @@
 
 import { createServerClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
-import { redirect } from 'next/navigation'
 
 export async function updateProfile(prevState: unknown, formData: FormData) {
   const supabase = await createServerClient()
@@ -10,6 +9,7 @@ export async function updateProfile(prevState: unknown, formData: FormData) {
   if (!user) return { error: 'Unauthorized' }
 
   const displayName    = (formData.get('display_name') as string)?.trim()
+  const email          = (formData.get('email') as string)?.trim() || null
   const bio            = (formData.get('bio') as string)?.trim()
   const websiteUrl     = (formData.get('website_url') as string)?.trim() || null
   const twitterHandle  = (formData.get('twitter_handle') as string)?.trim().replace(/^@/, '') || null
@@ -30,6 +30,7 @@ export async function updateProfile(prevState: unknown, formData: FormData) {
     location,
     updated_at: new Date().toISOString(),
   }
+  if (email) update.email = email
   if (avatarUrl) update.avatar_url = avatarUrl
 
   const { error } = await supabase
@@ -37,7 +38,19 @@ export async function updateProfile(prevState: unknown, formData: FormData) {
     .update(update)
     .eq('id', user.id)
 
-  if (error) return { error: error.message }
+  if (error) {
+    // If email column does not exist in profiles table yet, retry without email field
+    if (error.message?.includes('email')) {
+      delete update.email
+      const { error: retryErr } = await supabase
+        .from('profiles')
+        .update(update)
+        .eq('id', user.id)
+      if (retryErr) return { error: retryErr.message }
+    } else {
+      return { error: error.message }
+    }
+  }
 
   revalidatePath('/account')
   revalidatePath('/', 'layout')

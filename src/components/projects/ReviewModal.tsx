@@ -1,8 +1,8 @@
 'use client'
 
-import React, { useState } from 'react'
-import { MessageSquarePlus, X, Loader2 } from 'lucide-react'
-import { submitComment } from '@/app/actions/comments'
+import React, { useState, useEffect } from 'react'
+import { MessageSquarePlus, X, Loader2, Edit3 } from 'lucide-react'
+import { submitComment, updateComment } from '@/app/actions/comments'
 
 interface ReviewModalProps {
   projectId: string
@@ -10,6 +10,11 @@ interface ReviewModalProps {
   isOpen: boolean
   onClose: () => void
   onSuccess: () => void
+  editComment?: {
+    id: string
+    headline: string
+    comment: string
+  } | null
 }
 
 export default function ReviewModal({
@@ -18,11 +23,25 @@ export default function ReviewModal({
   isOpen,
   onClose,
   onSuccess,
+  editComment = null,
 }: ReviewModalProps) {
   const [headline, setHeadline] = useState('')
   const [comment, setComment] = useState('')
   const [loading, setLoading] = useState(false)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
+
+  const isEditing = !!editComment
+
+  useEffect(() => {
+    if (editComment) {
+      setHeadline(editComment.headline || '')
+      setComment(editComment.comment || '')
+    } else {
+      setHeadline('')
+      setComment('')
+    }
+    setErrorMsg(null)
+  }, [editComment, isOpen])
 
   if (!isOpen) return null
 
@@ -41,13 +60,17 @@ export default function ReviewModal({
 
     try {
       setLoading(true)
-      await submitComment(projectId, slug, headline, comment)
+      if (isEditing && editComment) {
+        await updateComment(editComment.id, projectId, slug, headline, comment)
+      } else {
+        await submitComment(projectId, slug, headline, comment)
+      }
       setHeadline('')
       setComment('')
       onSuccess()
       onClose()
     } catch (err: any) {
-      setErrorMsg(err.message || 'Failed to submit comment. Please try again.')
+      setErrorMsg(err.message || 'Failed to save comment. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -86,9 +109,13 @@ export default function ReviewModal({
           borderBottom: '1px solid #2B2B2B',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-            <MessageSquarePlus size={20} style={{ color: '#E50914' }} />
+            {isEditing ? (
+              <Edit3 size={20} style={{ color: '#E50914' }} />
+            ) : (
+              <MessageSquarePlus size={20} style={{ color: '#E50914' }} />
+            )}
             <h3 style={{ color: '#FFFFFF', fontWeight: 800, fontSize: '1.1rem', margin: 0 }}>
-              Add a Comment
+              {isEditing ? 'Edit Your Comment' : 'Add a Comment'}
             </h3>
           </div>
           <button
@@ -219,8 +246,10 @@ export default function ReviewModal({
               {loading ? (
                 <>
                   <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} />
-                  Posting…
+                  Saving…
                 </>
+              ) : isEditing ? (
+                'Save Changes'
               ) : (
                 'Post Comment'
               )}

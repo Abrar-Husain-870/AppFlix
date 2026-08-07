@@ -7,7 +7,7 @@ import { signOut } from '@/app/actions/auth'
 import {
   User, Camera, Globe, GitBranch, AtSign, Briefcase, MapPin,
   Lock, LogOut, CheckCircle, AlertTriangle, Loader2,
-  BarChart2, FolderKanban, Shield, ExternalLink,
+  BarChart2, FolderKanban, Shield, ExternalLink, Mail,
 } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -16,6 +16,7 @@ interface Profile {
   id: string
   username: string
   display_name: string | null
+  email: string | null
   bio: string | null
   avatar_url: string | null
   website_url: string | null
@@ -59,6 +60,7 @@ export default function AccountPage() {
   const [avatarUrl, setAvatarUrl] = useState('')
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
   const [userId, setUserId] = useState<string | null>(null)
+  const [authEmail, setAuthEmail] = useState<string>('')
   const [bioLen, setBioLen] = useState(0)
 
   const [profileState, profileAction, profilePending] = useActionState(updateProfile, undefined)
@@ -73,6 +75,7 @@ export default function AccountPage() {
         return
       }
       setUserId(uid)
+      setAuthEmail(data.user?.email ?? '')
       const { data: prof } = await supabase
         .from('profiles')
         .select('*')
@@ -204,6 +207,22 @@ export default function AccountPage() {
                 onFocus={e => e.currentTarget.style.borderColor = '#E50914'}
                 onBlur={e => e.currentTarget.style.borderColor = '#2B2B2B'}
               />
+            </div>
+
+            {/* Email ID (optional) */}
+            <div style={{ marginBottom: '1rem' }}>
+              <Label>Email ID <span style={{ color: '#555', fontWeight: 400 }}>(optional)</span></Label>
+              <div style={{ position: 'relative' }}>
+                <Mail size={14} style={{ position: 'absolute', left: '0.85rem', top: '50%', transform: 'translateY(-50%)', color: '#555' }} />
+                <input
+                  id="email" name="email" type="email"
+                  defaultValue={profile.email ?? authEmail ?? ''}
+                  placeholder="name@example.com (optional)"
+                  style={{ ...inputStyle, paddingLeft: '2.4rem' }}
+                  onFocus={e => e.currentTarget.style.borderColor = '#E50914'}
+                  onBlur={e => e.currentTarget.style.borderColor = '#2B2B2B'}
+                />
+              </div>
             </div>
 
             {/* Username (read-only) */}
