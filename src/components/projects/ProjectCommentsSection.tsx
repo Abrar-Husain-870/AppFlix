@@ -3,7 +3,7 @@
 import React, { useState } from 'react'
 import {
   MessageSquare, ChevronDown, ChevronUp, Lock, Sparkles, Pencil, Trash2, Loader2,
-  CornerDownRight, ShieldCheck, Send
+  CornerDownRight, ShieldCheck, Send, Star, ArrowUpDown
 } from 'lucide-react'
 import ReviewModal from './ReviewModal'
 import { ProjectComment, deleteComment, replyToComment, deleteDeveloperReply } from '@/app/actions/comments'
@@ -14,6 +14,7 @@ interface Props {
   slug: string
   isDeveloper: boolean
   isLoggedIn: boolean
+  isAdmin?: boolean
   currentUserId: string | null
   initialComments: ProjectComment[]
 }
@@ -23,10 +24,12 @@ export default function ProjectCommentsSection({
   slug,
   isDeveloper,
   isLoggedIn,
+  isAdmin = false,
   currentUserId,
   initialComments,
 }: Props) {
   const [comments, setComments] = useState<ProjectComment[]>(initialComments)
+  const [sortBy, setSortBy] = useState<'newest' | 'highest' | 'lowest'>('highest')
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingComment, setEditingComment] = useState<ProjectComment | null>(null)
   const [isExpanded, setIsExpanded] = useState(false)
@@ -39,7 +42,24 @@ export default function ProjectCommentsSection({
   const [replyError, setReplyError] = useState<string | null>(null)
 
   const totalCount = comments.length
-  const visibleComments = isExpanded ? comments : comments.slice(0, 3)
+
+  // Sort comments client-side according to selected mode
+  const sortedComments = [...comments].sort((a, b) => {
+    if (sortBy === 'highest') {
+      const diff = (b.rating ?? 5) - (a.rating ?? 5)
+      if (diff !== 0) return diff
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    }
+    if (sortBy === 'lowest') {
+      const diff = (a.rating ?? 5) - (b.rating ?? 5)
+      if (diff !== 0) return diff
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    }
+    // newest
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+  })
+
+  const visibleComments = isExpanded ? sortedComments : sortedComments.slice(0, 3)
   const hasMoreThan3 = totalCount > 3
 
   // Check if current logged-in user has already posted a comment
@@ -68,7 +88,7 @@ export default function ProjectCommentsSection({
   }
 
   const handleDelete = async (commentId: string) => {
-    if (!window.confirm('Are you sure you want to delete your comment?')) {
+    if (!window.confirm('Are you sure you want to delete this comment?')) {
       return
     }
     try {
@@ -134,7 +154,7 @@ export default function ProjectCommentsSection({
         justifyContent: 'space-between',
         flexWrap: 'wrap',
         gap: '1rem',
-        marginBottom: '1.75rem',
+        marginBottom: '1.25rem',
         paddingBottom: '1.25rem',
         borderBottom: '1px solid #262626',
       }}>
@@ -156,7 +176,7 @@ export default function ProjectCommentsSection({
             </span>
           </div>
           <p style={{ color: '#888888', fontSize: '0.82rem', margin: '0.3rem 0 0 0' }}>
-            User thoughts, feedback, and community discussion.
+            User thoughts, satisfaction ratings, and community discussion.
           </p>
         </div>
 
@@ -253,7 +273,46 @@ export default function ProjectCommentsSection({
         )}
       </div>
 
-      {/* ── 2. Comments List ── */}
+      {/* ── 2. Sorting Toolbar ── */}
+      {totalCount > 1 && (
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.5rem',
+          marginBottom: '1.25rem',
+          flexWrap: 'wrap',
+        }}>
+          <span style={{ fontSize: '0.78rem', color: '#777777', display: 'flex', alignItems: 'center', gap: '0.3rem', fontWeight: 600 }}>
+            <ArrowUpDown size={13} /> Sort by satisfaction:
+          </span>
+
+          {[
+            { id: 'highest', label: '★ Highest Rated' },
+            { id: 'newest',  label: '🕒 Newest' },
+            { id: 'lowest',   label: 'Lowest Rated' },
+          ].map(s => (
+            <button
+              key={s.id}
+              onClick={() => setSortBy(s.id as any)}
+              style={{
+                padding: '0.35rem 0.75rem',
+                fontSize: '0.78rem',
+                fontWeight: sortBy === s.id ? 700 : 500,
+                borderRadius: '0.4rem',
+                background: sortBy === s.id ? 'rgba(229, 9, 20, 0.15)' : '#222222',
+                border: sortBy === s.id ? '1px solid rgba(229, 9, 20, 0.4)' : '1px solid #2B2B2B',
+                color: sortBy === s.id ? '#FFFFFF' : '#888888',
+                cursor: 'pointer',
+                transition: 'all 0.15s',
+              }}
+            >
+              {s.label}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* ── 3. Comments List ── */}
       {totalCount === 0 ? (
         <div style={{
           textAlign: 'center',
@@ -268,7 +327,7 @@ export default function ProjectCommentsSection({
           </h4>
           <p style={{ color: '#888888', fontSize: '0.82rem', margin: 0 }}>
             {isDeveloper
-              ? 'Visitors will be able to share their comments and feedback here.'
+              ? 'Visitors will be able to share their comments and satisfaction ratings here.'
               : 'Be the first visitor to leave a comment for this app!'}
           </p>
         </div>
@@ -285,6 +344,7 @@ export default function ProjectCommentsSection({
             const isEdited = c.updated_at && c.updated_at !== c.created_at
 
             const isReplyingThis = replyingCommentId === c.id
+            const commentRating = c.rating ?? 5
 
             return (
               <div key={c.id} style={{
@@ -348,10 +408,25 @@ export default function ProjectCommentsSection({
                     </div>
                   </div>
 
-                  {/* Actions for Author vs Developer */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                    {isAuthor && (
-                      <>
+                  {/* Stars + Action Buttons */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    {/* Gold Star Satisfaction Rating */}
+                    <div style={{ display: 'flex', gap: '0.15rem' }}>
+                      {[1, 2, 3, 4, 5].map(s => (
+                        <Star
+                          key={s}
+                          size={14}
+                          style={{
+                            fill: s <= commentRating ? '#F59E0B' : 'none',
+                            color: s <= commentRating ? '#F59E0B' : '#333333',
+                          }}
+                        />
+                      ))}
+                    </div>
+
+                    {/* Actions for Author vs Developer vs Admin */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      {isAuthor && (
                         <button
                           onClick={() => handleOpenEdit(c)}
                           title="Edit Comment"
@@ -379,17 +454,21 @@ export default function ProjectCommentsSection({
                         >
                           <Pencil size={13} /> Edit
                         </button>
+                      )}
+
+                      {(isAuthor || isAdmin) && (
                         <button
                           onClick={() => handleDelete(c.id)}
                           disabled={deletingId === c.id}
-                          title="Delete Comment"
+                          title={isAdmin && !isAuthor ? "Delete Comment (Admin Moderation)" : "Delete Comment"}
                           style={{
-                            background: 'rgba(229, 9, 20, 0.1)',
-                            border: 'none',
+                            background: isAdmin && !isAuthor ? 'rgba(229, 9, 20, 0.2)' : 'rgba(229, 9, 20, 0.1)',
+                            border: isAdmin && !isAuthor ? '1px solid rgba(229, 9, 20, 0.4)' : 'none',
                             borderRadius: '0.4rem',
                             padding: '0.4rem 0.65rem',
                             color: '#FF6B6B',
                             fontSize: '0.78rem',
+                            fontWeight: isAdmin && !isAuthor ? 700 : 400,
                             cursor: deletingId === c.id ? 'not-allowed' : 'pointer',
                             display: 'flex',
                             alignItems: 'center',
@@ -397,10 +476,10 @@ export default function ProjectCommentsSection({
                             transition: 'all 0.15s',
                           }}
                           onMouseEnter={e => {
-                            e.currentTarget.style.background = 'rgba(229, 9, 20, 0.25)'
+                            e.currentTarget.style.background = 'rgba(229, 9, 20, 0.35)'
                           }}
                           onMouseLeave={e => {
-                            e.currentTarget.style.background = 'rgba(229, 9, 20, 0.1)'
+                            e.currentTarget.style.background = isAdmin && !isAuthor ? 'rgba(229, 9, 20, 0.2)' : 'rgba(229, 9, 20, 0.1)'
                           }}
                         >
                           {deletingId === c.id ? (
@@ -408,34 +487,34 @@ export default function ProjectCommentsSection({
                           ) : (
                             <Trash2 size={13} />
                           )}
-                          Delete
+                          {isAdmin && !isAuthor ? 'Delete (Admin)' : 'Delete'}
                         </button>
-                      </>
-                    )}
+                      )}
 
-                    {/* Developer Reply Button */}
-                    {isDeveloper && (
-                      <button
-                        onClick={() => handleOpenReplyForm(c)}
-                        style={{
-                          background: isReplyingThis ? '#E50914' : '#262626',
-                          color: isReplyingThis ? '#FFFFFF' : '#AAAAAA',
-                          border: 'none',
-                          borderRadius: '0.4rem',
-                          padding: '0.4rem 0.75rem',
-                          fontSize: '0.78rem',
-                          fontWeight: 600,
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '0.35rem',
-                          transition: 'all 0.15s',
-                        }}
-                      >
-                        <CornerDownRight size={13} />
-                        {c.developer_reply ? 'Edit Reply' : 'Reply'}
-                      </button>
-                    )}
+                      {/* Developer Reply Button */}
+                      {isDeveloper && (
+                        <button
+                          onClick={() => handleOpenReplyForm(c)}
+                          style={{
+                            background: isReplyingThis ? '#E50914' : '#262626',
+                            color: isReplyingThis ? '#FFFFFF' : '#AAAAAA',
+                            border: 'none',
+                            borderRadius: '0.4rem',
+                            padding: '0.4rem 0.75rem',
+                            fontSize: '0.78rem',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.35rem',
+                            transition: 'all 0.15s',
+                          }}
+                        >
+                          <CornerDownRight size={13} />
+                          {c.developer_reply ? 'Edit Reply' : 'Reply'}
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -591,7 +670,7 @@ export default function ProjectCommentsSection({
         </div>
       )}
 
-      {/* ── 3. Amazon / Flipkart Approach: Expandable "View All Comments" Button ── */}
+      {/* ── 4. Amazon / Flipkart Approach: Expandable "View All Comments" Button ── */}
       {hasMoreThan3 && (
         <div style={{ marginTop: '1.5rem', textAlign: 'center' }}>
           <button

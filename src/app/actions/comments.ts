@@ -7,6 +7,7 @@ export interface ProjectComment {
   id: string
   project_id: string
   user_id: string
+  rating: number
   headline: string
   comment: string
   created_at: string
@@ -24,7 +25,8 @@ export async function submitComment(
   projectId: string,
   slug: string,
   headline: string,
-  comment: string
+  comment: string,
+  rating: number = 5
 ) {
   const supabaseUser = await createServerClient()
   const supabaseService = await createServiceRoleClient()
@@ -65,6 +67,7 @@ export async function submitComment(
   // 4. Validation
   const cleanHeadline = headline.trim()
   const cleanComment = comment.trim()
+  const validRating = Math.max(1, Math.min(5, Math.round(rating || 5)))
 
   if (!cleanHeadline) {
     throw new Error('Please provide a short comment summary / tagline.')
@@ -73,12 +76,13 @@ export async function submitComment(
     throw new Error('Please provide your detailed comment.')
   }
 
-  // 5. Insert comment
+  // 5. Insert comment with rating
   const { error } = await supabaseService
     .from('project_comments')
     .insert({
       project_id: projectId,
       user_id: user.id,
+      rating: validRating,
       headline: cleanHeadline,
       comment: cleanComment,
     })
@@ -99,7 +103,8 @@ export async function updateComment(
   projectId: string,
   slug: string,
   headline: string,
-  comment: string
+  comment: string,
+  rating: number = 5
 ) {
   const supabaseUser = await createServerClient()
   const supabaseService = await createServiceRoleClient()
@@ -111,6 +116,7 @@ export async function updateComment(
 
   const cleanHeadline = headline.trim()
   const cleanComment = comment.trim()
+  const validRating = Math.max(1, Math.min(5, Math.round(rating || 5)))
 
   if (!cleanHeadline) {
     throw new Error('Please provide a short comment summary / tagline.')
@@ -122,6 +128,7 @@ export async function updateComment(
   const { error } = await supabaseService
     .from('project_comments')
     .update({
+      rating: validRating,
       headline: cleanHeadline,
       comment: cleanComment,
       updated_at: new Date().toISOString(),
@@ -188,7 +195,6 @@ export async function replyToComment(
     throw new Error('You must be signed in to reply to a comment.')
   }
 
-  // Verify user is project owner or admin
   const [{ data: project }, { data: profile }] = await Promise.all([
     supabaseService.from('projects').select('id, user_id').eq('id', projectId).single(),
     supabaseService.from('profiles').select('role').eq('id', user.id).single(),
@@ -270,7 +276,7 @@ export async function getProjectComments(projectId: string): Promise<ProjectComm
     const { data, error } = await supabaseService
       .from('project_comments')
       .select(`
-        id, project_id, user_id, headline, comment, created_at, updated_at,
+        id, project_id, user_id, rating, headline, comment, created_at, updated_at,
         developer_reply, developer_replied_at,
         profiles!user_id(username, display_name, avatar_url)
       `)
@@ -285,6 +291,7 @@ export async function getProjectComments(projectId: string): Promise<ProjectComm
       id: item.id,
       project_id: item.project_id,
       user_id: item.user_id,
+      rating: item.rating ?? 5,
       headline: item.headline,
       comment: item.comment,
       created_at: item.created_at,

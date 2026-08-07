@@ -376,6 +376,7 @@ export default async function ProjectDetailPage({ params }: Props) {
             slug={project.slug}
             isDeveloper={project.user_id === user?.id}
             isLoggedIn={!!user}
+            isAdmin={isAdmin}
             currentUserId={user?.id ?? null}
             initialComments={initialComments}
           />

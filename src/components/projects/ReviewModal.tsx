@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { MessageSquarePlus, X, Loader2, Edit3 } from 'lucide-react'
+import { MessageSquarePlus, X, Loader2, Edit3, Star } from 'lucide-react'
 import { submitComment, updateComment } from '@/app/actions/comments'
 
 interface ReviewModalProps {
@@ -14,6 +14,7 @@ interface ReviewModalProps {
     id: string
     headline: string
     comment: string
+    rating?: number
   } | null
 }
 
@@ -25,6 +26,8 @@ export default function ReviewModal({
   onSuccess,
   editComment = null,
 }: ReviewModalProps) {
+  const [rating, setRating] = useState<number>(5)
+  const [hoverRating, setHoverRating] = useState<number>(0)
   const [headline, setHeadline] = useState('')
   const [comment, setComment] = useState('')
   const [loading, setLoading] = useState(false)
@@ -36,9 +39,11 @@ export default function ReviewModal({
     if (editComment) {
       setHeadline(editComment.headline || '')
       setComment(editComment.comment || '')
+      setRating(editComment.rating || 5)
     } else {
       setHeadline('')
       setComment('')
+      setRating(5)
     }
     setErrorMsg(null)
   }, [editComment, isOpen])
@@ -49,6 +54,10 @@ export default function ReviewModal({
     e.preventDefault()
     setErrorMsg(null)
 
+    if (rating < 1 || rating > 5) {
+      setErrorMsg('Please select a rating between 1 and 5 stars.')
+      return
+    }
     if (!headline.trim()) {
       setErrorMsg('Please enter a comment summary / tagline (e.g. "Makes matchmaking easy!").')
       return
@@ -61,12 +70,13 @@ export default function ReviewModal({
     try {
       setLoading(true)
       if (isEditing && editComment) {
-        await updateComment(editComment.id, projectId, slug, headline, comment)
+        await updateComment(editComment.id, projectId, slug, headline, comment, rating)
       } else {
-        await submitComment(projectId, slug, headline, comment)
+        await submitComment(projectId, slug, headline, comment, rating)
       }
       setHeadline('')
       setComment('')
+      setRating(5)
       onSuccess()
       onClose()
     } catch (err: any) {
@@ -151,6 +161,48 @@ export default function ReviewModal({
               {errorMsg}
             </div>
           )}
+
+          {/* Star Rating Picker (Satisfaction indicator) */}
+          <div>
+            <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: '#FFFFFF', marginBottom: '0.4rem' }}>
+              Satisfaction Rating <span style={{ color: '#E50914' }}>*</span>
+            </label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+              {[1, 2, 3, 4, 5].map(starIndex => {
+                const filled = starIndex <= (hoverRating || rating)
+                return (
+                  <button
+                    key={starIndex}
+                    type="button"
+                    onClick={() => setRating(starIndex)}
+                    onMouseEnter={() => setHoverRating(starIndex)}
+                    onMouseLeave={() => setHoverRating(0)}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      padding: '0.2rem',
+                      display: 'flex',
+                      transition: 'transform 0.15s',
+                      transform: (hoverRating || rating) === starIndex ? 'scale(1.15)' : 'scale(1)',
+                    }}
+                  >
+                    <Star
+                      size={26}
+                      style={{
+                        fill: filled ? '#F59E0B' : 'none',
+                        color: filled ? '#F59E0B' : '#444444',
+                        transition: 'fill 0.15s, color 0.15s',
+                      }}
+                    />
+                  </button>
+                )
+              })}
+              <span style={{ marginLeft: '0.5rem', fontSize: '0.82rem', color: '#AAAAAA', fontWeight: 600 }}>
+                {(hoverRating || rating)} / 5 stars
+              </span>
+            </div>
+          </div>
 
           {/* Comment Tagline / Headline */}
           <div>
