@@ -59,7 +59,7 @@ export async function submitComment(
     throw new Error('Please provide your detailed comment.')
   }
 
-  // 4. Insert comment into project_comments table (default rating = 5 for schema compatibility)
+  // 4. Insert comment into project_comments table
   const { error } = await supabaseService
     .from('project_comments')
     .insert({
@@ -71,11 +71,9 @@ export async function submitComment(
     })
 
   if (error) {
-    // Handle table missing or SQL error gracefully
     if (error.code === '42P01') {
-      throw new Error('Comments system table is initializing. Please try again in a moment.')
+      throw new Error('The comments table is currently being setup in database. Please run schema.sql in Supabase SQL Editor.')
     }
-    console.error('[submitComment] error:', error)
     throw new Error(error.message || 'Failed to submit comment.')
   }
 
@@ -84,36 +82,37 @@ export async function submitComment(
 }
 
 export async function getProjectComments(projectId: string): Promise<ProjectComment[]> {
-  const supabaseService = await createServiceRoleClient()
+  try {
+    const supabaseService = await createServiceRoleClient()
 
-  const { data, error } = await supabaseService
-    .from('project_comments')
-    .select(`
-      id, project_id, user_id, rating, headline, comment, created_at,
-      profiles!user_id(username, display_name, avatar_url)
-    `)
-    .eq('project_id', projectId)
-    .order('created_at', { ascending: false })
+    const { data, error } = await supabaseService
+      .from('project_comments')
+      .select(`
+        id, project_id, user_id, rating, headline, comment, created_at,
+        profiles!user_id(username, display_name, avatar_url)
+      `)
+      .eq('project_id', projectId)
+      .order('created_at', { ascending: false })
 
-  if (error) {
-    // If table doesn't exist yet or relation fails, return empty array silently
-    if (error.code === '42P01' || !error.message) return []
-    console.error('[getProjectComments] error:', error)
+    if (error || !data) {
+      return []
+    }
+
+    return (data as any[]).map(item => ({
+      id: item.id,
+      project_id: item.project_id,
+      user_id: item.user_id,
+      rating: item.rating,
+      headline: item.headline,
+      comment: item.comment,
+      created_at: item.created_at,
+      user_profile: item.profiles ? {
+        username: item.profiles.username,
+        display_name: item.profiles.display_name,
+        avatar_url: item.profiles.avatar_url,
+      } : null,
+    }))
+  } catch {
     return []
   }
-
-  return (data as any[] ?? []).map(item => ({
-    id: item.id,
-    project_id: item.project_id,
-    user_id: item.user_id,
-    rating: item.rating,
-    headline: item.headline,
-    comment: item.comment,
-    created_at: item.created_at,
-    user_profile: item.profiles ? {
-      username: item.profiles.username,
-      display_name: item.profiles.display_name,
-      avatar_url: item.profiles.avatar_url,
-    } : null,
-  }))
 }
