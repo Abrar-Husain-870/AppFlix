@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
-import { Star, X, Loader2, MessageSquarePlus } from 'lucide-react'
+import { MessageSquarePlus, X, Loader2 } from 'lucide-react'
 import { submitComment } from '@/app/actions/comments'
 
 interface ReviewModalProps {
@@ -19,8 +19,6 @@ export default function ReviewModal({
   onClose,
   onSuccess,
 }: ReviewModalProps) {
-  const [rating, setRating] = useState<number>(5)
-  const [hoverRating, setHoverRating] = useState<number>(0)
   const [headline, setHeadline] = useState('')
   const [comment, setComment] = useState('')
   const [loading, setLoading] = useState(false)
@@ -32,12 +30,8 @@ export default function ReviewModal({
     e.preventDefault()
     setErrorMsg(null)
 
-    if (rating < 1 || rating > 5) {
-      setErrorMsg('Please select a star rating between 1 and 5.')
-      return
-    }
     if (!headline.trim()) {
-      setErrorMsg('Please enter a short headline for your review (e.g. "Makes matchmaking easy!").')
+      setErrorMsg('Please enter a comment summary / tagline (e.g. "Makes matchmaking easy!").')
       return
     }
     if (!comment.trim()) {
@@ -47,14 +41,13 @@ export default function ReviewModal({
 
     try {
       setLoading(true)
-      await submitComment(projectId, slug, rating, headline, comment)
+      await submitComment(projectId, slug, headline, comment)
       setHeadline('')
       setComment('')
-      setRating(5)
       onSuccess()
       onClose()
     } catch (err: any) {
-      setErrorMsg(err.message || 'Failed to submit review. Please try again.')
+      setErrorMsg(err.message || 'Failed to submit comment. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -95,7 +88,7 @@ export default function ReviewModal({
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
             <MessageSquarePlus size={20} style={{ color: '#E50914' }} />
             <h3 style={{ color: '#FFFFFF', fontWeight: 800, fontSize: '1.1rem', margin: 0 }}>
-              Write a Review
+              Add a Comment
             </h3>
           </div>
           <button
@@ -132,52 +125,10 @@ export default function ReviewModal({
             </div>
           )}
 
-          {/* Star Rating Picker */}
-          <div>
-            <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: '#FFFFFF', marginBottom: '0.5rem' }}>
-              Overall Rating <span style={{ color: '#E50914' }}>*</span>
-            </label>
-            <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
-              {[1, 2, 3, 4, 5].map(starIndex => {
-                const filled = starIndex <= (hoverRating || rating)
-                return (
-                  <button
-                    key={starIndex}
-                    type="button"
-                    onClick={() => setRating(starIndex)}
-                    onMouseEnter={() => setHoverRating(starIndex)}
-                    onMouseLeave={() => setHoverRating(0)}
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      cursor: 'pointer',
-                      padding: '0.2rem',
-                      display: 'flex',
-                      transition: 'transform 0.15s',
-                      transform: hoverRating === starIndex ? 'scale(1.2)' : 'scale(1)',
-                    }}
-                  >
-                    <Star
-                      size={28}
-                      style={{
-                        fill: filled ? '#F59E0B' : 'none',
-                        color: filled ? '#F59E0B' : '#444444',
-                        transition: 'fill 0.15s, color 0.15s',
-                      }}
-                    />
-                  </button>
-                )
-              })}
-              <span style={{ marginLeft: '0.6rem', fontSize: '0.85rem', color: '#AAAAAA', fontWeight: 600 }}>
-                {hoverRating || rating} out of 5 stars
-              </span>
-            </div>
-          </div>
-
           {/* Comment Tagline / Headline */}
           <div>
             <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: '#FFFFFF', marginBottom: '0.4rem' }}>
-              Comment Tagline / Headline <span style={{ color: '#E50914' }}>*</span>
+              Comment Tagline / Summary <span style={{ color: '#E50914' }}>*</span>
             </label>
             <input
               type="text"
@@ -203,11 +154,11 @@ export default function ReviewModal({
           {/* Detailed Comment */}
           <div>
             <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: '#FFFFFF', marginBottom: '0.4rem' }}>
-              Detailed Review Comment <span style={{ color: '#E50914' }}>*</span>
+              Detailed Comment <span style={{ color: '#E50914' }}>*</span>
             </label>
             <textarea
               rows={4}
-              placeholder="Share what you liked, how it helped you, or your overall experience with this app..."
+              placeholder="Share your thoughts, feedback, or experience using this app..."
               value={comment}
               onChange={e => setComment(e.target.value)}
               style={{
@@ -268,10 +219,10 @@ export default function ReviewModal({
               {loading ? (
                 <>
                   <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} />
-                  Submitting…
+                  Posting…
                 </>
               ) : (
-                'Post Review'
+                'Post Comment'
               )}
             </button>
           </div>

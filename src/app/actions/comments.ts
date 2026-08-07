@@ -7,7 +7,7 @@ export interface ProjectComment {
   id: string
   project_id: string
   user_id: string
-  rating: number
+  rating?: number
   headline: string
   comment: string
   created_at: string
@@ -21,7 +21,6 @@ export interface ProjectComment {
 export async function submitComment(
   projectId: string,
   slug: string,
-  rating: number,
   headline: string,
   comment: string
 ) {
@@ -31,7 +30,7 @@ export async function submitComment(
   // 1. Must be logged in
   const { data: { user } } = await supabaseUser.auth.getUser()
   if (!user) {
-    throw new Error('You must be signed in to leave a review.')
+    throw new Error('You must be signed in to leave a comment.')
   }
 
   // 2. Fetch project to check ownership (developers cannot comment on their own app)
@@ -46,41 +45,38 @@ export async function submitComment(
   }
 
   if (project.user_id === user.id) {
-    throw new Error('As the developer of this app, you cannot leave a review on your own project.')
+    throw new Error('As the developer of this app, you cannot leave a comment on your own project.')
   }
 
   // 3. Validation
-  if (!rating || rating < 1 || rating > 5) {
-    throw new Error('Please select a star rating between 1 and 5.')
-  }
   const cleanHeadline = headline.trim()
   const cleanComment = comment.trim()
 
   if (!cleanHeadline) {
-    throw new Error('Please provide a comment headline/tagline.')
+    throw new Error('Please provide a short comment summary / tagline.')
   }
   if (!cleanComment) {
-    throw new Error('Please provide your detailed review comment.')
+    throw new Error('Please provide your detailed comment.')
   }
 
-  // 4. Insert comment into project_comments table
+  // 4. Insert comment into project_comments table (default rating = 5 for schema compatibility)
   const { error } = await supabaseService
     .from('project_comments')
     .insert({
       project_id: projectId,
       user_id: user.id,
-      rating,
+      rating: 5,
       headline: cleanHeadline,
       comment: cleanComment,
     })
 
   if (error) {
-    console.error('[submitComment] error:', error)
     // Handle table missing or SQL error gracefully
     if (error.code === '42P01') {
       throw new Error('Comments system table is initializing. Please try again in a moment.')
     }
-    throw new Error(error.message || 'Failed to submit review.')
+    console.error('[submitComment] error:', error)
+    throw new Error(error.message || 'Failed to submit comment.')
   }
 
   revalidatePath(`/browse/${slug}`)
@@ -100,8 +96,8 @@ export async function getProjectComments(projectId: string): Promise<ProjectComm
     .order('created_at', { ascending: false })
 
   if (error) {
-    // If table doesn't exist yet, return empty array instead of crashing
-    if (error.code === '42P01') return []
+    // If table doesn't exist yet or relation fails, return empty array silently
+    if (error.code === '42P01' || !error.message) return []
     console.error('[getProjectComments] error:', error)
     return []
   }
