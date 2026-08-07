@@ -7,7 +7,6 @@ export interface ProjectComment {
   id: string
   project_id: string
   user_id: string
-  rating?: number
   headline: string
   comment: string
   created_at: string
@@ -65,14 +64,13 @@ export async function submitComment(
     .insert({
       project_id: projectId,
       user_id: user.id,
-      rating: 5,
       headline: cleanHeadline,
       comment: cleanComment,
     })
 
   if (error) {
     if (error.code === '42P01') {
-      throw new Error('The comments table is currently being setup in database. Please run schema.sql in Supabase SQL Editor.')
+      throw new Error('The comments table is currently being setup in database.')
     }
     throw new Error(error.message || 'Failed to submit comment.')
   }
@@ -88,7 +86,7 @@ export async function getProjectComments(projectId: string): Promise<ProjectComm
     const { data, error } = await supabaseService
       .from('project_comments')
       .select(`
-        id, project_id, user_id, rating, headline, comment, created_at,
+        id, project_id, user_id, headline, comment, created_at,
         profiles!user_id(username, display_name, avatar_url)
       `)
       .eq('project_id', projectId)
@@ -102,7 +100,6 @@ export async function getProjectComments(projectId: string): Promise<ProjectComm
       id: item.id,
       project_id: item.project_id,
       user_id: item.user_id,
-      rating: item.rating,
       headline: item.headline,
       comment: item.comment,
       created_at: item.created_at,

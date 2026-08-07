@@ -408,7 +408,6 @@ CREATE TABLE IF NOT EXISTS public.project_comments (
   id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   project_id  UUID NOT NULL REFERENCES public.projects(id) ON DELETE CASCADE,
   user_id     UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
-  rating      INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
   headline    TEXT NOT NULL,
   comment     TEXT NOT NULL,
   created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
