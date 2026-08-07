@@ -12,6 +12,8 @@ import AdminDeleteButton from '@/components/admin/AdminDeleteButton'
 import ReportModal from '@/components/projects/ReportModal'
 import type { Metadata } from 'next'
 import ShareCard from '@/components/projects/ShareCard'
+import ProjectCommentsSection from '@/components/projects/ProjectCommentsSection'
+import { getProjectComments } from '@/app/actions/comments'
 
 /** Parse User-Agent string into the device_type enum values used by the DB. */
 function detectDeviceType(ua: string | null): 'mobile' | 'tablet' | 'desktop' {
@@ -103,6 +105,9 @@ export default async function ProjectDetailPage({ params }: Props) {
   const headersList = await headers()
   const userAgent = headersList.get('user-agent')
   const deviceType = detectDeviceType(userAgent)
+
+  // Fetch comments for this project
+  const initialComments = await getProjectComments(project.id)
 
   const screenshots = (project.project_images as any[])
     ?.filter((img: any) => img.image_type === 'screenshot')
@@ -364,6 +369,15 @@ export default async function ProjectDetailPage({ params }: Props) {
               </div>
             </div>
           )}
+
+          {/* Customer Reviews & Comments Section */}
+          <ProjectCommentsSection
+            projectId={project.id}
+            slug={project.slug}
+            isDeveloper={project.user_id === user?.id}
+            isLoggedIn={!!user}
+            initialComments={initialComments}
+          />
         </div>
 
         {/* Right sidebar — links + stats */}

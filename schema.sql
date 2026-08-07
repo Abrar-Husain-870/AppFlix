@@ -400,6 +400,23 @@ CREATE TABLE public.reports (
 CREATE INDEX idx_reports_project ON public.reports(project_id);
 CREATE INDEX idx_reports_status  ON public.reports(status) WHERE status = 'open';
 
+-- ============================================================
+-- PROJECT COMMENTS & REVIEWS
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS public.project_comments (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  project_id  UUID NOT NULL REFERENCES public.projects(id) ON DELETE CASCADE,
+  user_id     UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  rating      INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
+  headline    TEXT NOT NULL,
+  comment     TEXT NOT NULL,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_project_comments_project ON public.project_comments(project_id, created_at DESC);
+
 -- Note: project_status_history was intentionally removed.
 -- Reason: the log_status_change trigger called auth.uid() which returns NULL
 -- when using the service role key in Server Actions, causing NOT NULL violations
