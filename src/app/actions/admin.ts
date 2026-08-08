@@ -133,3 +133,84 @@ export async function adminDeleteProject(projectId: string, reason?: string) {
   revalidatePath('/dashboard/projects')
   revalidatePath('/admin/queue')
 }
+
+export async function getSupportInquiries() {
+  await assertAdmin()
+  const supabase = await createServiceRoleClient()
+
+  const { data, error } = await supabase
+    .from('support_inquiries')
+    .select('*')
+    .order('created_at', { ascending: false })
+
+  if (error) {
+    console.error('[getSupportInquiries error]:', error)
+    return []
+  }
+  return data ?? []
+}
+
+export async function toggleInquiryStatus(inquiryId: string, currentStatus: string) {
+  await assertAdmin()
+  const supabase = await createServiceRoleClient()
+  const newStatus = currentStatus === 'resolved' ? 'unread' : 'resolved'
+
+  const { error } = await supabase
+    .from('support_inquiries')
+    .update({ status: newStatus })
+    .eq('id', inquiryId)
+
+  if (error) throw new Error(error.message)
+  revalidatePath('/admin/inquiries')
+}
+
+export async function deleteInquiry(inquiryId: string) {
+  await assertAdmin()
+  const supabase = await createServiceRoleClient()
+
+  const { error } = await supabase
+    .from('support_inquiries')
+    .delete()
+    .eq('id', inquiryId)
+
+  if (error) throw new Error(error.message)
+  revalidatePath('/admin/inquiries')
+}
+
+export async function sendReplyToStudent(data: {
+  inquiryId: string
+  studentEmail: string
+  subject: string
+  replyMessage: string
+}) {
+  await assertAdmin()
+
+  try {
+    await fetch('https://api.web3forms.com/submit', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: JSON.stringify({
+        access_key: '4b8c6628-9844-42b7-a3f2-efef88d928bb',
+        to_email: data.studentEmail,
+        from_name: 'AppFlix Support Team',
+        subject: data.subject,
+        message: data.replyMessage,
+      }),
+    })
+  } catch (err) {
+    console.error('Reply dispatch attempt:', err)
+  }
+
+  // Automatically mark inquiry as resolved
+  const supabase = await createServiceRoleClient()
+  await supabase
+    .from('support_inquiries')
+    .update({ status: 'resolved' })
+    .eq('id', data.inquiryId)
+
+  revalidatePath('/admin/inquiries')
+  return { success: true }
+}

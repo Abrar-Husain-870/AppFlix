@@ -7,11 +7,12 @@ import { createClient } from '@/lib/supabase/client'
 import { signOut } from '@/app/actions/auth'
 import {
   Flame, Search, PlusCircle, LogOut, User, Menu, X, Shield,
-  FolderKanban, BarChart2, Settings, ChevronDown, Bookmark, UserRound,
+  FolderKanban, BarChart2, Settings, ChevronDown, Bookmark, UserRound, Mail, MessageSquare,
 } from 'lucide-react'
 import type { User as SupabaseUser } from '@supabase/supabase-js'
 
 import InstallPwaButton from '@/components/pwa/InstallPwaButton'
+import ContactUsModal from '@/components/ui/ContactUsModal'
 
 interface Profile {
   display_name: string | null
@@ -25,6 +26,7 @@ export default function Navbar() {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [dropdownOpen, setDropdownOpen] = useState(false)
+  const [showContactModal, setShowContactModal] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const pathname = usePathname()
   const router = useRouter()
@@ -149,19 +151,31 @@ export default function Navbar() {
 
           {user ? (
             <>
-              {/* Admin badge */}
+              {/* Admin badges */}
               {isAdmin && (
-                <Link href="/admin/queue" id="nav-admin-btn" title="Admin Queue"
-                  style={{
-                    alignItems: 'center', justifyContent: 'center',
-                    width: '32px', height: '32px',
-                    background: 'rgba(229,9,20,0.15)', border: '1px solid rgba(229,9,20,0.4)',
-                    borderRadius: '50%', color: '#E50914', transition: 'all 0.2s',
-                  }}
-                  className="desktop-only"
-                >
-                  <Shield size={15} />
-                </Link>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }} className="desktop-only">
+                  <Link href="/admin/queue" id="nav-admin-btn" title="Admin Queue"
+                    style={{
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      width: '32px', height: '32px',
+                      background: 'rgba(229,9,20,0.15)', border: '1px solid rgba(229,9,20,0.4)',
+                      borderRadius: '50%', color: '#E50914', transition: 'all 0.2s',
+                    }}
+                  >
+                    <Shield size={15} />
+                  </Link>
+
+                  <Link href="/admin/inquiries" id="nav-admin-inquiries-btn" title="Support & Feedback Inbox"
+                    style={{
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      width: '32px', height: '32px',
+                      background: 'rgba(229,9,20,0.15)', border: '1px solid rgba(229,9,20,0.4)',
+                      borderRadius: '50%', color: '#E50914', transition: 'all 0.2s',
+                    }}
+                  >
+                    <MessageSquare size={15} />
+                  </Link>
+                </div>
               )}
 
               {/* Avatar dropdown (Desktop) */}
@@ -223,7 +237,10 @@ export default function Navbar() {
                         { href: '/dashboard/projects',    icon: <FolderKanban size={14} />,  label: 'My Apps' },
                         { href: '/dashboard/analytics',   icon: <BarChart2 size={14} />,     label: 'Analytics' },
                         { href: '/submit',                icon: <PlusCircle size={14} />,    label: 'Submit App' },
-                        ...(isAdmin ? [{ href: '/admin/queue', icon: <Shield size={14} />, label: 'Admin Queue' }] : []),
+                        ...(isAdmin ? [
+                          { href: '/admin/queue', icon: <Shield size={14} />, label: 'Admin Queue' },
+                          { href: '/admin/inquiries', icon: <MessageSquare size={14} />, label: 'Support Inbox' },
+                        ] : []),
                       ].map(item => (
                         <Link
                           key={item.href}
@@ -255,6 +272,31 @@ export default function Navbar() {
                           {item.label}
                         </Link>
                       ))}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setDropdownOpen(false)
+                            setShowContactModal(true)
+                          }}
+                          style={{
+                            width: '100%', display: 'flex', alignItems: 'center', gap: '0.6rem',
+                            padding: '0.55rem 0.75rem', borderRadius: '0.4rem',
+                            color: '#AAAAAA', background: 'transparent', border: 'none',
+                            fontWeight: 400, fontSize: '0.875rem', cursor: 'pointer',
+                            transition: 'background 0.15s, color 0.15s',
+                          }}
+                          onMouseEnter={e => {
+                            e.currentTarget.style.background = '#262626'
+                            e.currentTarget.style.color = '#FFFFFF'
+                          }}
+                          onMouseLeave={e => {
+                            e.currentTarget.style.background = 'transparent'
+                            e.currentTarget.style.color = '#AAAAAA'
+                          }}
+                        >
+                          <span style={{ color: 'inherit', display: 'flex' }}><Mail size={14} /></span>
+                          Contact Us
+                        </button>
                     </div>
 
                     {/* Sign out */}
@@ -358,7 +400,10 @@ export default function Navbar() {
               { href: '/login',   label: '🔑 Sign In' },
               { href: '/signup',  label: '🚀 Get Started' },
             ]),
-            ...(isAdmin ? [{ href: '/admin/queue', label: '🛡️ Admin Queue' }] : []),
+            ...(isAdmin ? [
+              { href: '/admin/queue', label: '🛡️ Admin Queue' },
+              { href: '/admin/inquiries', label: '📥 Support Inbox' },
+            ] : []),
           ].map(link => (
             <Link
               key={link.href}
@@ -379,6 +424,27 @@ export default function Navbar() {
             </Link>
           ))}
 
+          <button
+            type="button"
+            onClick={() => {
+              setMobileOpen(false)
+              setShowContactModal(true)
+            }}
+            style={{
+              padding: '0.7rem 0.85rem',
+              color: '#CCCCCC',
+              fontWeight: 500,
+              textDecoration: 'none', fontSize: '0.92rem',
+              borderRadius: '0.5rem',
+              background: 'rgba(255,255,255,0.03)',
+              border: '1px solid transparent',
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              cursor: 'pointer', textAlign: 'left', width: '100%',
+            }}
+          >
+            <span>✉️ Contact Us</span>
+          </button>
+
           {user && (
             <form action={signOut} style={{ marginTop: '0.5rem', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '0.65rem' }}>
               <button type="submit" style={{
@@ -394,6 +460,12 @@ export default function Navbar() {
           )}
         </div>
       )}
+
+      {/* Contact Support Modal */}
+      <ContactUsModal
+        isOpen={showContactModal}
+        onClose={() => setShowContactModal(false)}
+      />
 
       <style>{`
         @keyframes dropdownIn {

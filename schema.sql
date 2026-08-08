@@ -88,6 +88,16 @@ CREATE TYPE device_type AS ENUM (
 -- Extends Supabase auth.users. Created automatically on signup.
 -- ============================================================
 
+CREATE TABLE IF NOT EXISTS public.support_inquiries (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT,
+  email TEXT NOT NULL,
+  message TEXT NOT NULL,
+  recipient_email TEXT DEFAULT 'husainabrar870@gmail.com',
+  status TEXT DEFAULT 'unread',
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
+);
+
 CREATE TABLE public.profiles (
   id             UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   username       TEXT UNIQUE NOT NULL,
