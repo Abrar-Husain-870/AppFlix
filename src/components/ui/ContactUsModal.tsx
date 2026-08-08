@@ -34,11 +34,36 @@ export default function ContactUsModal({
 
     try {
       setSubmitting(true)
+
+      // 1. Save to Supabase DB via Server Action
       await submitContactInquiry({
         name,
         email,
         message,
       })
+
+      // 2. Dispatch real email notification directly from visitor's browser (Bypasses Cloudflare Serverless IP Blocks)
+      try {
+        const params = new URLSearchParams()
+        params.append('name', name || 'AppFlix Visitor')
+        params.append('email', email)
+        params.append('message', message)
+        params.append('_subject', `📥 New AppFlix Support Query from ${email}`)
+        params.append('_template', 'table')
+        params.append('_captcha', 'false')
+
+        await fetch('https://formsubmit.co/ajax/b107a8b204a0eb824a0f9bf06b3a9f44', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Accept': 'application/json',
+          },
+          body: params.toString(),
+        })
+      } catch (browserMailErr) {
+        console.error('Browser email dispatch error:', browserMailErr)
+      }
+
       setSubmitted(true)
       setTimeout(() => {
         setSubmitted(false)
