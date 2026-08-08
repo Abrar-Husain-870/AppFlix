@@ -1,6 +1,7 @@
 'use server'
 
 import { createServiceRoleClient } from '@/lib/supabase/server'
+import { headers } from 'next/headers'
 
 export async function submitContactInquiry(formData: {
   name?: string
@@ -12,6 +13,17 @@ export async function submitContactInquiry(formData: {
     const name = formData.name?.trim() || 'AppFlix Visitor'
     const email = formData.email.trim()
     const message = formData.message.trim()
+
+    // Dynamically derive current origin (works on Production Vercel & localhost)
+    let origin = 'http://localhost:3000'
+    try {
+      const headerList = await headers()
+      const host = headerList.get('host') || 'localhost:3000'
+      const protocol = host.includes('localhost') ? 'http' : 'https'
+      origin = `${protocol}://${host}`
+    } catch {
+      // fallback
+    }
 
     // 1. Save inquiry into Supabase DB table `support_inquiries`
     try {
@@ -28,7 +40,7 @@ export async function submitContactInquiry(formData: {
       console.warn('DB log notice:', dbErr)
     }
 
-    // 2. Dispatch email notification using FormSubmit Secure Hashed Token (b107a8b204a0eb824a0f9bf06b3a9f44)
+    // 2. Dispatch email notification using FormSubmit Secure Hashed Token with dynamic origin
     try {
       const params = new URLSearchParams()
       params.append('name', name)
@@ -44,7 +56,8 @@ export async function submitContactInquiry(formData: {
           'Content-Type': 'application/x-www-form-urlencoded',
           'Accept': 'application/json',
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-          'Referer': 'http://localhost:3000',
+          'Referer': origin,
+          'Origin': origin,
         },
         body: params.toString(),
       })
@@ -52,7 +65,7 @@ export async function submitContactInquiry(formData: {
       console.error('FormSubmit dispatch error:', fsErr)
     }
 
-    // 3. Backup dispatch via Web3Forms API
+    // 3. Backup dispatch via Web3Forms API (Works universally on all deployed production domains)
     try {
       await fetch('https://api.web3forms.com/submit', {
         method: 'POST',
