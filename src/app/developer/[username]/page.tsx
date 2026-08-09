@@ -1,5 +1,7 @@
 import { createServerClient } from '@/lib/supabase/server'
+import { applyPublicVisibilityFilter } from '@/lib/supabase/public-queries'
 import { notFound } from 'next/navigation'
+
 import Link from 'next/link'
 import {
   Globe, GitBranch, Link2, AtSign, MapPin, Calendar, ArrowUpRight,
@@ -49,14 +51,15 @@ export default async function DeveloperProfilePage({ params }: Props) {
     notFound()
   }
 
-  // 2. Fetch approved projects by this developer
-  const { data: projects } = await supabase
+  // 2. Fetch approved active projects by this developer (using public visibility filter)
+  const baseQuery = supabase
     .from('projects')
     .select('id, name, slug, tagline, icon_url, upvote_count, view_count, stage, platforms, categories(name, slug)')
     .eq('user_id', profile.id)
-    .eq('status', 'approved')
-    .is('deleted_at', null)
+
+  const { data: projects } = await applyPublicVisibilityFilter(baseQuery)
     .order('upvote_count', { ascending: false })
+
 
   const projectsList = (projects as any[]) ?? []
 

@@ -64,6 +64,7 @@ export default async function ProjectDetailPage({ params }: Props) {
       website_url, github_url, appstore_url, playstore_url,
       upvote_count, view_count, bookmark_count,
       stage, platforms, status, created_at,
+      listing_type, listing_paid, listing_expires_at,
       categories(name, slug),
       profiles!user_id(username, display_name, avatar_url),
       project_images(id, image_url, image_type, display_order),
@@ -84,10 +85,25 @@ export default async function ProjectDetailPage({ params }: Props) {
     isAdmin = profile?.role === 'admin'
   }
 
+  const isOwnerOrAdmin = user && (project.user_id === user.id || isAdmin)
+
   // If project is not approved, only the project owner or admin can view it
-  if (project.status !== 'approved' && project.user_id !== user?.id && !isAdmin) {
+  if (project.status !== 'approved' && !isOwnerOrAdmin) {
     notFound()
   }
+
+  // Check Plus listing visibility for public visitors
+  const isPaidListingActive = project.listing_type === 'paid' &&
+    project.listing_paid === true &&
+    project.listing_expires_at &&
+    new Date(project.listing_expires_at) > new Date()
+
+  const isPubliclyVisible = project.listing_type === 'free' || isPaidListingActive
+
+  if (!isPubliclyVisible && !isOwnerOrAdmin) {
+    notFound()
+  }
+
 
   let isUpvoted = false
   let isBookmarked = false

@@ -1,6 +1,6 @@
 'use server'
 
-import { createServerClient } from '@/lib/supabase/server'
+import { createServerClient, createServiceRoleClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 
@@ -13,17 +13,33 @@ export async function deleteProject(projectId: string) {
   // Verify ownership
   const { data: project } = await supabase
     .from('projects')
-    .select('id, user_id, name')
+    .select('id, user_id, name, listing_type, listing_paid')
     .eq('id', projectId)
     .eq('user_id', user.id)
     .single()
 
   if (!project) throw new Error('Project not found or you do not own this project')
 
-  // Soft delete: set deleted_at and status to 'deleted'
+  // If deleting a paid active app, release the listing slot for reuse
+  if (project.listing_type === 'paid' && project.listing_paid) {
+    const supabaseService = await createServiceRoleClient()
+    const now = new Date().toISOString()
+    await supabaseService
+      .from('listing_slots')
+      .update({ project_id: null })
+      .eq('project_id', projectId)
+      .eq('status', 'paid')
+      .gt('expires_at', now)
+  }
+
+  // Soft delete: set deleted_at and status to 'deleted', set rejection_reason to null
   const { error } = await supabase
     .from('projects')
-    .update({ deleted_at: new Date().toISOString(), status: 'deleted' })
+    .update({
+      deleted_at: new Date().toISOString(),
+      status: 'deleted',
+      rejection_reason: null,
+    })
     .eq('id', projectId)
     .eq('user_id', user.id)
 

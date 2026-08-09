@@ -1,0 +1,325 @@
+-- ============================================================
+-- APPFLIX PLUS MEMBERSHIP FEATURE MIGRATION (FINAL VERIFIED REVISION)
+-- Target Database: AppFlix Development Supabase project ONLY
+-- Date: 2026-08-09
+-- ============================================================
+
+-- ── 1. PROFILES ENHANCEMENT ─────────────────────────────────
+-- Track whether developer has consumed their single permanent free app listing.
+-- Defaults to FALSE. Set to TRUE on first approved project and NEVER reset.
+ALTER TABLE public.profiles
+  ADD COLUMN IF NOT EXISTS free_listing_used BOOLEAN NOT NULL DEFAULT FALSE;
+
+
+-- ── 2. PROJECTS TABLE ENHANCEMENTS ──────────────────────────
+-- Add listing type, payment confirmation, and expiration date columns.
+-- Submission defaults: listing_type='free', listing_paid=FALSE, listing_expires_at=NULL
+ALTER TABLE public.projects
+  ADD COLUMN IF NOT EXISTS listing_type     TEXT NOT NULL DEFAULT 'free',
+  ADD COLUMN IF NOT EXISTS listing_paid     BOOLEAN NOT NULL DEFAULT FALSE,
+  ADD COLUMN IF NOT EXISTS listing_expires_at TIMESTAMPTZ;
+
+
+-- ── 3. EXISTING DATA MIGRATION ──────────────────────────────
+-- For any developer with existing projects prior to Plus migration:
+-- A) For developers with approved projects:
+--    - Earliest approved project gets listing_type='free', listing_paid=TRUE
+--    - Profile free_listing_used is set to TRUE
+--    - Any subsequent pre-existing approved projects (2nd, 3rd...) are marked
+--      as listing_type='paid', listing_paid=FALSE (unpaid, requiring payment to remain visible)
+-- B) For unapproved projects (pending/draft/rejected):
+--    - Set listing_type='free', listing_paid=FALSE (submission default)
+DO $$
+DECLARE
+  rec RECORD;
+  first_proj_id UUID;
+BEGIN
+  -- Handle developers with approved, non-deleted projects
+  FOR rec IN
+    SELECT DISTINCT user_id
+    FROM public.projects
+    WHERE status = 'approved' AND deleted_at IS NULL
+  LOOP
+    -- Mark profile as having consumed their free listing entitlement
+    UPDATE public.profiles
+    SET free_listing_used = TRUE
+    WHERE id = rec.user_id;
+
+    -- Identify earliest approved project
+    SELECT id INTO first_proj_id
+    FROM public.projects
+    WHERE user_id = rec.user_id AND status = 'approved' AND deleted_at IS NULL
+    ORDER BY approved_at ASC NULLS LAST, created_at ASC
+    LIMIT 1;
+
+    -- Set earliest approved project to free & active
+    UPDATE public.projects
+    SET listing_type = 'free',
+        listing_paid = TRUE,
+        listing_expires_at = NULL
+    WHERE id = first_proj_id;
+
+    -- Set any other pre-existing approved projects for this user to paid & unpaid
+    -- (Prevents violation of chk_free_listing_always_paid constraint)
+    UPDATE public.projects
+    SET listing_type = 'paid',
+        listing_paid = FALSE,
+        listing_expires_at = NULL
+    WHERE user_id = rec.user_id
+      AND status = 'approved'
+      AND deleted_at IS NULL
+      AND id != first_proj_id;
+  END LOOP;
+
+  -- Ensure any pre-existing unapproved/deleted projects conform to submission defaults
+  UPDATE public.projects
+  SET listing_type = 'free',
+      listing_paid = FALSE,
+      listing_expires_at = NULL
+  WHERE status != 'approved' OR deleted_at IS NOT NULL;
+END $$;
+
+
+-- ── 4. PROJECTS CHECK CONSTRAINTS ────────────────────────────
+DO $$
+BEGIN
+  -- Approved free listing must be listing_paid = TRUE
+  -- (Allows pending/draft/rejected free projects to be listing_paid = FALSE prior to approval)
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'chk_free_listing_always_paid') THEN
+    ALTER TABLE public.projects
+      ADD CONSTRAINT chk_free_listing_always_paid
+        CHECK (NOT (status = 'approved' AND listing_type = 'free' AND listing_paid = FALSE));
+  END IF;
+
+  -- Free listing must never have an expiration date
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'chk_free_listing_no_expiry') THEN
+    ALTER TABLE public.projects
+      ADD CONSTRAINT chk_free_listing_no_expiry
+        CHECK (listing_type != 'free' OR listing_expires_at IS NULL);
+  END IF;
+
+  -- Paid listing marked as active (listing_paid = TRUE) must have an expiration date
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'chk_paid_active_has_expiry') THEN
+    ALTER TABLE public.projects
+      ADD CONSTRAINT chk_paid_active_has_expiry
+        CHECK (NOT (listing_type = 'paid' AND listing_paid = TRUE AND listing_expires_at IS NULL));
+  END IF;
+END $$;
+
+-- Index for fast public browse filtering
+CREATE INDEX IF NOT EXISTS idx_projects_listing_visibility
+  ON public.projects (status, deleted_at, listing_type, listing_paid, listing_expires_at)
+  WHERE status = 'approved';
+
+
+-- ── 5. LISTING SLOTS TABLE ──────────────────────────────────
+-- Track paid 90-day listing slots and Razorpay payment history.
+CREATE TABLE IF NOT EXISTS public.listing_slots (
+  id                   UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id              UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  project_id           UUID REFERENCES public.projects(id) ON DELETE SET NULL,
+
+  -- Razorpay tracking & event-level / payment-level idempotency
+  razorpay_order_id    TEXT UNIQUE,
+  razorpay_payment_id  TEXT UNIQUE,
+  razorpay_event_id    TEXT UNIQUE,
+
+  amount_paise         INT NOT NULL DEFAULT 7900,  -- ₹79 in paise
+
+  status               TEXT NOT NULL DEFAULT 'pending', -- 'pending' | 'paid'
+
+  expires_at           TIMESTAMPTZ,                -- Set to NOW() + 90 days on webhook confirmation
+  created_at           TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Listing slots integrity constraints
+DO $$
+BEGIN
+  -- Status must be 'pending' or 'paid'
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'chk_listing_slots_status') THEN
+    ALTER TABLE public.listing_slots
+      ADD CONSTRAINT chk_listing_slots_status
+        CHECK (status IN ('pending', 'paid'));
+  END IF;
+
+  -- Pending slots must not have an expiration date
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'chk_listing_slots_pending_no_expiry') THEN
+    ALTER TABLE public.listing_slots
+      ADD CONSTRAINT chk_listing_slots_pending_no_expiry
+        CHECK (status != 'pending' OR expires_at IS NULL);
+  END IF;
+
+  -- Paid slots must have an expiration date
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'chk_listing_slots_paid_has_expiry') THEN
+    ALTER TABLE public.listing_slots
+      ADD CONSTRAINT chk_listing_slots_paid_has_expiry
+        CHECK (status != 'paid' OR expires_at IS NOT NULL);
+  END IF;
+
+  -- Amount must be positive
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'chk_listing_slots_positive_amount') THEN
+    ALTER TABLE public.listing_slots
+      ADD CONSTRAINT chk_listing_slots_positive_amount
+        CHECK (amount_paise > 0);
+  END IF;
+END $$;
+
+-- Indexes for slot assignment lookups and developer dashboard
+CREATE INDEX IF NOT EXISTS idx_listing_slots_user_status
+  ON public.listing_slots (user_id, status, expires_at);
+
+CREATE INDEX IF NOT EXISTS idx_listing_slots_project
+  ON public.listing_slots (project_id);
+
+
+-- ── 6. ROW LEVEL SECURITY FOR LISTING SLOTS ─────────────────
+ALTER TABLE public.listing_slots ENABLE ROW LEVEL SECURITY;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE tablename = 'listing_slots' AND policyname = 'ListingSlots: own read'
+  ) THEN
+    CREATE POLICY "ListingSlots: own read"
+      ON public.listing_slots FOR SELECT
+      USING (user_id = auth.uid());
+  END IF;
+END $$;
+
+
+-- ── 7. ATOMIC ENTITLEMENT APPROVAL RPC ────────────────────────
+-- Guarantees race-condition-free entitlement assignment during project approval.
+-- Uses SELECT ... FOR UPDATE to lock developer profile and slot rows.
+-- Hardened with SECURITY DEFINER, explicit search_path, and EXECUTE permissions restricted to service_role.
+CREATE OR REPLACE FUNCTION public.approve_project_entitlement(p_project_id UUID)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+DECLARE
+  v_user_id UUID;
+  v_status TEXT;
+  v_free_used BOOLEAN;
+  v_slot_id UUID;
+  v_slot_expires_at TIMESTAMPTZ;
+  v_now TIMESTAMPTZ := NOW();
+  v_project_name TEXT;
+  v_caller_role user_role;
+BEGIN
+  -- Defense-in-depth authorization check
+  IF auth.role() != 'service_role' THEN
+    SELECT role INTO v_caller_role FROM public.profiles WHERE id = auth.uid();
+    IF v_caller_role IS NULL OR v_caller_role != 'admin' THEN
+      RAISE EXCEPTION 'Unauthorized: Only admins or service_role can approve project entitlements';
+    END IF;
+  END IF;
+
+  -- 1. Fetch & lock project row
+  SELECT user_id, status, name INTO v_user_id, v_status, v_project_name
+  FROM public.projects
+  WHERE id = p_project_id
+  FOR UPDATE;
+
+  IF v_user_id IS NULL THEN
+    RAISE EXCEPTION 'Project not found';
+  END IF;
+
+  IF v_status = 'approved' THEN
+    RAISE EXCEPTION 'Project is already approved';
+  END IF;
+
+  -- 2. Lock developer profile row to serialize concurrent approvals for this user
+  SELECT free_listing_used INTO v_free_used
+  FROM public.profiles
+  WHERE id = v_user_id
+  FOR UPDATE;
+
+  IF v_free_used IS NULL THEN
+    RAISE EXCEPTION 'Developer profile not found';
+  END IF;
+
+  -- 3. Entitlement Evaluation
+  IF NOT v_free_used THEN
+    -- CASE A: First approved project -> permanent free listing
+    UPDATE public.profiles
+    SET free_listing_used = TRUE
+    WHERE id = v_user_id;
+
+    UPDATE public.projects
+    SET status = 'approved',
+        approved_at = v_now,
+        listing_type = 'free',
+        listing_paid = TRUE,
+        listing_expires_at = NULL
+    WHERE id = p_project_id;
+
+    RETURN jsonb_build_object(
+      'result', 'approved_free',
+      'user_id', v_user_id,
+      'project_name', v_project_name,
+      'listing_type', 'free',
+      'listing_paid', true,
+      'expires_at', NULL
+    );
+  ELSE
+    -- Check for active reusable paid slot (lock slot row to prevent concurrent assignment)
+    SELECT id, expires_at INTO v_slot_id, v_slot_expires_at
+    FROM public.listing_slots
+    WHERE user_id = v_user_id
+      AND status = 'paid'
+      AND expires_at > v_now
+      AND project_id IS NULL
+    ORDER BY expires_at ASC
+    LIMIT 1
+    FOR UPDATE SKIP LOCKED;
+
+    IF v_slot_id IS NOT NULL THEN
+      -- CASE B: Active reusable paid slot found -> assign slot & preserve original expires_at
+      UPDATE public.listing_slots
+      SET project_id = p_project_id
+      WHERE id = v_slot_id;
+
+      UPDATE public.projects
+      SET status = 'approved',
+          approved_at = v_now,
+          listing_type = 'paid',
+          listing_paid = TRUE,
+          listing_expires_at = v_slot_expires_at
+      WHERE id = p_project_id;
+
+      RETURN jsonb_build_object(
+        'result', 'approved_reused_slot',
+        'user_id', v_user_id,
+        'project_name', v_project_name,
+        'listing_type', 'paid',
+        'listing_paid', true,
+        'expires_at', v_slot_expires_at
+      );
+    ELSE
+      -- CASE C: Additional project, no reusable slot -> set as paid, unpaid (requires ₹79 payment)
+      UPDATE public.projects
+      SET status = 'approved',
+          approved_at = v_now,
+          listing_type = 'paid',
+          listing_paid = FALSE,
+          listing_expires_at = NULL
+      WHERE id = p_project_id;
+
+      RETURN jsonb_build_object(
+        'result', 'approved_unpaid',
+        'user_id', v_user_id,
+        'project_name', v_project_name,
+        'listing_type', 'paid',
+        'listing_paid', false,
+        'expires_at', NULL
+      );
+    END IF;
+  END IF;
+END;
+$$;
+
+-- Revoke default PUBLIC execution rights and grant strictly to service_role and postgres
+REVOKE EXECUTE ON FUNCTION public.approve_project_entitlement(UUID) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.approve_project_entitlement(UUID) TO service_role;

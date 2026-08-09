@@ -5,14 +5,16 @@ import { CheckCircle, Clock, XCircle, FileText, Edit3, Eye, Trash2, ArrowUp } fr
 import DeleteProjectButton from '@/components/projects/DeleteProjectButton'
 import { getDeveloperProjectReports } from '@/app/actions/reports'
 import DeveloperReportManager from '@/components/dashboard/DeveloperReportManager'
+import PlusPaymentButton from '@/components/dashboard/PlusPaymentButton'
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; icon: React.ReactNode }> = {
   draft:    { label: 'Draft',            color: '#AAAAAA', bg: 'rgba(170,170,170,0.1)', icon: <FileText size={12} /> },
   pending:  { label: 'Pending',          color: '#F39C12', bg: 'rgba(243,156,18,0.1)', icon: <Clock size={12} /> },
   approved: { label: 'Approved',         color: '#2ECC71', bg: 'rgba(46,204,113,0.1)', icon: <CheckCircle size={12} /> },
   rejected: { label: 'Rejected',         color: '#E50914', bg: 'rgba(229,9,20,0.1)',   icon: <XCircle size={12} /> },
-  deleted:  { label: 'Removed by Admin', color: '#EF4444', bg: 'rgba(239,68,68,0.12)', icon: <Trash2 size={12} /> },
+  deleted:  { label: 'Deleted Apps',     color: '#888888', bg: 'rgba(136,136,136,0.12)', icon: <Trash2 size={12} /> },
 }
+
 
 export default async function DashboardProjectsPage({
   searchParams,
@@ -30,13 +32,15 @@ export default async function DashboardProjectsPage({
   const justMediaUpdated = params.media_updated === 'true'
 
   const [projectsRes, reports] = await Promise.all([
+
     supabaseService
       .from('projects')
-      .select('id, name, slug, tagline, icon_url, status, deleted_at, upvote_count, view_count, stage, created_at, rejection_reason')
+      .select('id, name, slug, tagline, icon_url, status, deleted_at, upvote_count, view_count, stage, created_at, rejection_reason, listing_type, listing_paid, listing_expires_at')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false }),
     getDeveloperProjectReports(),
   ])
+
 
   const projects = projectsRes.data
 
@@ -162,14 +166,91 @@ export default async function DashboardProjectsPage({
                     <div style={{ flex: '1 1 200px', minWidth: 0 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
                         <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#FFFFFF' }}>{project.name}</h3>
-                        <span style={{
-                          fontSize: '0.65rem', fontWeight: 700, padding: '0.15rem 0.5rem',
-                          borderRadius: '9999px', background: cfg.bg, color: cfg.color,
-                          letterSpacing: '0.04em', textTransform: 'uppercase',
-                          display: 'flex', alignItems: 'center', gap: '0.25rem',
-                        }}>
-                          {cfg.icon}{cfg.label}
-                        </span>
+                        {(() => {
+                          const isDeleted = project.status === 'deleted' || project.deleted_at !== null
+                          let label = cfg.label
+                          let bg = cfg.bg
+                          let color = cfg.color
+                          let icon = cfg.icon
+
+                          if (isDeleted) {
+                            if (project.rejection_reason) {
+                              label = 'Removed by Admin'
+                              color = '#EF4444'
+                              bg = 'rgba(239,68,68,0.12)'
+                              icon = <Trash2 size={12} />
+                            } else {
+                              label = 'Deleted by You'
+                              color = '#888888'
+                              bg = 'rgba(136,136,136,0.12)'
+                              icon = <Trash2 size={12} />
+                            }
+                          }
+
+                          return (
+                            <span style={{
+                              fontSize: '0.65rem', fontWeight: 700, padding: '0.15rem 0.5rem',
+                              borderRadius: '9999px', background: bg, color: color,
+                              letterSpacing: '0.04em', textTransform: 'uppercase',
+                              display: 'flex', alignItems: 'center', gap: '0.25rem',
+                            }}>
+                              {icon}{label}
+                            </span>
+                          )
+                        })()}
+
+
+                        {/* Plus Listing Status Badge */}
+                        {project.status === 'approved' && !project.deleted_at && (
+                          (() => {
+                            const isFree = project.listing_type === 'free'
+                            const isExpired = project.listing_type === 'paid' && project.listing_expires_at && new Date(project.listing_expires_at) <= new Date()
+                            const isUnpaid = project.listing_type === 'paid' && !project.listing_paid
+
+                            if (isFree) {
+                              return (
+                                <span style={{
+                                  fontSize: '0.65rem', fontWeight: 700, padding: '0.15rem 0.5rem',
+                                  borderRadius: '9999px', background: 'rgba(59,130,246,0.12)', color: '#60A5FA',
+                                  letterSpacing: '0.04em', textTransform: 'uppercase', border: '1px solid rgba(59,130,246,0.3)',
+                                }}>
+                                  ✨ Free Listing
+                                </span>
+                              )
+                            }
+                            if (isUnpaid) {
+                              return (
+                                <span style={{
+                                  fontSize: '0.65rem', fontWeight: 700, padding: '0.15rem 0.5rem',
+                                  borderRadius: '9999px', background: 'rgba(239,68,68,0.15)', color: '#F87171',
+                                  letterSpacing: '0.04em', textTransform: 'uppercase', border: '1px solid rgba(239,68,68,0.3)',
+                                }}>
+                                  💳 Payment Required
+                                </span>
+                              )
+                            }
+                            if (isExpired) {
+                              return (
+                                <span style={{
+                                  fontSize: '0.65rem', fontWeight: 700, padding: '0.15rem 0.5rem',
+                                  borderRadius: '9999px', background: 'rgba(245,158,11,0.15)', color: '#FBBF24',
+                                  letterSpacing: '0.04em', textTransform: 'uppercase', border: '1px solid rgba(245,158,11,0.3)',
+                                }}>
+                                  ⏳ Expired (Hidden)
+                                </span>
+                              )
+                            }
+                            return (
+                              <span style={{
+                                fontSize: '0.65rem', fontWeight: 700, padding: '0.15rem 0.5rem',
+                                borderRadius: '9999px', background: 'rgba(168,85,247,0.15)', color: '#C084FC',
+                                letterSpacing: '0.04em', textTransform: 'uppercase', border: '1px solid rgba(168,85,247,0.3)',
+                              }}>
+                                🌟 Plus Active (until {new Date(project.listing_expires_at).toLocaleDateString()})
+                              </span>
+                            )
+                          })()
+                        )}
                       </div>
                       <p style={{
                         fontSize: '0.82rem', color: '#AAAAAA', marginTop: '0.15rem',
@@ -184,6 +265,20 @@ export default async function DashboardProjectsPage({
                       )}
                     </div>
 
+                    {/* Plus Payment / Renewal Button */}
+                    {project.status === 'approved' && !project.deleted_at && project.listing_type === 'paid' && (
+                      (!project.listing_paid || (project.listing_expires_at && new Date(project.listing_expires_at) <= new Date())) && (
+                        <div style={{ flexShrink: 0, marginLeft: 'auto' }}>
+                          <PlusPaymentButton
+                            projectId={project.id}
+                            projectName={project.name}
+                            isExpired={Boolean(project.listing_expires_at && new Date(project.listing_expires_at) <= new Date())}
+                          />
+                        </div>
+                      )
+                    )}
+
+
                     {/* Stats */}
                     <div style={{ display: 'flex', gap: '1.25rem', flexShrink: 0 }}>
                       {[
@@ -197,11 +292,28 @@ export default async function DashboardProjectsPage({
                       ))}
                     </div>
 
-                    {/* Action Buttons */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flexShrink: 0 }}>
-                      {/* View live (approved only) */}
-                      {project.status === 'approved' && (
-                        <Link href={`/browse/${project.slug}`} id={`view-project-${project.id}`} title="View live"
+                    {/* Action Buttons (Active / Non-deleted projects only) */}
+                    {project.status !== 'deleted' && project.deleted_at === null && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flexShrink: 0 }}>
+                        {/* View live (approved only) */}
+                        {project.status === 'approved' && (
+                          <Link href={`/browse/${project.slug}`} id={`view-project-${project.id}`} title="View live"
+                            style={{
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              width: '32px', height: '32px', borderRadius: '0.4rem',
+                              color: '#AAAAAA', transition: 'all 0.15s',
+                              border: '1px solid transparent', textDecoration: 'none',
+                            }}
+                          >
+                            <Eye size={15} />
+                          </Link>
+                        )}
+
+                        {/* Edit button */}
+                        <Link
+                          href={`/dashboard/projects/edit/${project.id}`}
+                          id={`edit-project-${project.id}`}
+                          title="Edit project"
                           style={{
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
                             width: '32px', height: '32px', borderRadius: '0.4rem',
@@ -209,28 +321,14 @@ export default async function DashboardProjectsPage({
                             border: '1px solid transparent', textDecoration: 'none',
                           }}
                         >
-                          <Eye size={15} />
+                          <Edit3 size={15} />
                         </Link>
-                      )}
 
-                      {/* Edit button */}
-                      <Link
-                        href={`/dashboard/projects/edit/${project.id}`}
-                        id={`edit-project-${project.id}`}
-                        title="Edit project"
-                        style={{
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          width: '32px', height: '32px', borderRadius: '0.4rem',
-                          color: '#AAAAAA', transition: 'all 0.15s',
-                          border: '1px solid transparent', textDecoration: 'none',
-                        }}
-                      >
-                        <Edit3 size={15} />
-                      </Link>
+                        {/* Delete button with confirmation modal */}
+                        <DeleteProjectButton projectId={project.id} projectName={project.name} />
+                      </div>
+                    )}
 
-                      {/* Delete button with confirmation modal */}
-                      <DeleteProjectButton projectId={project.id} projectName={project.name} />
-                    </div>
                   </div>
                 ))}
               </div>

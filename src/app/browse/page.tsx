@@ -2,7 +2,9 @@
 
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { applyPublicVisibilityFilter } from '@/lib/supabase/public-queries'
 import ProjectCard from '@/components/projects/ProjectCard'
+
 import { TrendingUp, Clock, Flame, ChevronLeft, ChevronRight, Bookmark, Search } from 'lucide-react'
 import type { User } from '@supabase/supabase-js'
 import NetflixHorizonDivider from '@/components/ui/NetflixHorizonDivider'
@@ -142,11 +144,13 @@ export default function BrowsePage() {
       selectFields += ', project_tags!inner(tags!inner(slug))'
     }
 
-    let query = supabase
+    let baseQuery = supabase
       .from('projects')
       .select(selectFields)
-      .eq('status', 'approved')
-      .is('deleted_at', null)
+
+    let query = applyPublicVisibilityFilter(baseQuery)
+
+
 
     if (selectedCategory !== 'all') {
       if (selectedCategory.startsWith('p-')) {
