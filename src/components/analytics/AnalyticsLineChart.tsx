@@ -38,6 +38,8 @@ function CustomTooltip({ active, payload, label, strokeColor, labelText }: any) 
   )
 }
 
+//random comment ignore it
+
 function formatDate(dateStr: string, period: number): string {
   const d = new Date(dateStr)
   if (period <= 7) return d.toLocaleDateString('en-US', { weekday: 'short' })
