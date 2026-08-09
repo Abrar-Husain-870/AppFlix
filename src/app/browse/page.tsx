@@ -142,11 +142,15 @@ export default function BrowsePage() {
       selectFields += ', project_tags!inner(tags!inner(slug))'
     }
 
+    const nowIso = new Date().toISOString()
+
     let query = supabase
       .from('projects')
       .select(selectFields)
       .eq('status', 'approved')
       .is('deleted_at', null)
+      .or(`listing_type.eq.free,and(listing_paid.eq.true,listing_expires_at.gt.${nowIso})`)
+
 
     if (selectedCategory !== 'all') {
       if (selectedCategory.startsWith('p-')) {
