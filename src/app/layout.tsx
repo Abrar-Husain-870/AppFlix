@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import Navbar from "@/components/layout/Navbar";
@@ -71,6 +72,7 @@ export default function RootLayout({
         style={{ backgroundColor: "#141414", color: "#FFFFFF" }}
         suppressHydrationWarning
       >
+        <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
         <PwaRegister />
         <Navbar />
         {children}

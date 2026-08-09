@@ -56,13 +56,23 @@ export default function PlusPaymentButton({
         return
       }
 
-      // Dev fallback: if Razorpay script is not loaded or in mock mode
-      const result = await devSimulatePaymentSuccess(order.order_id)
-      if (result.success) {
-        setMessage('Payment successful! 90-day listing activated.')
-        startTransition(() => {
-          window.location.reload()
-        })
+      // If Razorpay SDK is unavailable in production, NEVER call devSimulatePaymentSuccess
+      if (process.env.NODE_ENV === 'production') {
+        console.error('[PlusPaymentButton] Razorpay Checkout SDK (window.Razorpay) unavailable in production environment.')
+        setMessage('Payment gateway could not be loaded. Please refresh the page and try again.')
+        setLoading(false)
+        return
+      }
+
+      // Dev fallback: ONLY available when NODE_ENV === 'development'
+      if (process.env.NODE_ENV === 'development') {
+        const result = await devSimulatePaymentSuccess(order.order_id)
+        if (result.success) {
+          setMessage('Payment successful! 90-day listing activated.')
+          startTransition(() => {
+            window.location.reload()
+          })
+        }
       }
     } catch (err: any) {
       console.error('[PlusPaymentButton error]', err)
@@ -108,3 +118,4 @@ export default function PlusPaymentButton({
     </div>
   )
 }
+
