@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import ProjectCard from '@/components/projects/ProjectCard'
-import { TrendingUp, Clock, Flame, ChevronLeft, ChevronRight, Bookmark } from 'lucide-react'
+import { TrendingUp, Clock, Flame, ChevronLeft, ChevronRight, Bookmark, Search } from 'lucide-react'
 import type { User } from '@supabase/supabase-js'
 import NetflixHorizonDivider from '@/components/ui/NetflixHorizonDivider'
 import NetflixTrendingRow from '@/components/projects/NetflixTrendingRow'
@@ -581,32 +581,67 @@ export default function BrowsePage() {
                   </span>
                 </div>
 
-                {/* Sort tabs bar matching Developer Section styling */}
-                <div style={{ display: 'flex', gap: '0.3rem', background: '#1A1A1A', padding: '0.25rem', borderRadius: '0.5rem', border: '1px solid #2B2B2B', flexWrap: 'wrap' }}>
-                  {SORT_OPTIONS.map(opt => (
-                    <button
-                      key={opt.value}
-                      id={`sort-${opt.value}`}
-                      onClick={() => setSort(opt.value)}
+                {/* Right-aligned Controls: Apps Search Input + Sort Tabs */}
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'flex-end',
+                  gap: '0.75rem',
+                  flexWrap: 'wrap',
+                  marginLeft: 'auto',
+                }}>
+                  {/* Apps Search Input - Identical CSS to Developer search bar */}
+                  <div style={{ position: 'relative', width: '220px', maxWidth: '100%' }}>
+                    <Search size={15} style={{ position: 'absolute', left: '0.85rem', top: '50%', transform: 'translateY(-50%)', color: '#777777' }} />
+                    <input
+                      type="text"
+                      placeholder="Search apps…"
+                      value={search}
+                      onChange={e => setSearch(e.target.value)}
                       style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.35rem',
-                        padding: '0.4rem 0.75rem',
-                        fontSize: '0.78rem',
-                        fontWeight: sort === opt.value ? 700 : 500,
-                        background: sort === opt.value ? '#E50914' : 'transparent',
-                        color: sort === opt.value ? '#FFFFFF' : '#888888',
-                        border: 'none',
-                        borderRadius: '0.35rem',
-                        cursor: 'pointer',
-                        transition: 'all 0.15s',
+                        width: '100%',
+                        padding: '0.55rem 0.85rem 0.55rem 2.4rem',
+                        background: '#1A1A1A',
+                        border: '1px solid #2B2B2B',
+                        borderRadius: '0.5rem',
+                        color: '#FFFFFF',
+                        fontSize: '0.85rem',
+                        outline: 'none',
+                        transition: 'border-color 0.2s',
+                        boxSizing: 'border-box',
                       }}
-                    >
-                      {opt.icon}
-                      {opt.label}
-                    </button>
-                  ))}
+                      onFocus={e => (e.currentTarget.style.borderColor = '#E50914')}
+                      onBlur={e => (e.currentTarget.style.borderColor = '#2B2B2B')}
+                    />
+                  </div>
+
+                  {/* Sort tabs bar matching Developer Section styling */}
+                  <div style={{ display: 'flex', gap: '0.3rem', background: '#1A1A1A', padding: '0.25rem', borderRadius: '0.5rem', border: '1px solid #2B2B2B', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                    {SORT_OPTIONS.map(opt => (
+                      <button
+                        key={opt.value}
+                        id={`sort-${opt.value}`}
+                        onClick={() => setSort(opt.value)}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.35rem',
+                          padding: '0.4rem 0.75rem',
+                          fontSize: '0.78rem',
+                          fontWeight: sort === opt.value ? 700 : 500,
+                          background: sort === opt.value ? '#E50914' : 'transparent',
+                          color: sort === opt.value ? '#FFFFFF' : '#888888',
+                          border: 'none',
+                          borderRadius: '0.35rem',
+                          cursor: 'pointer',
+                          transition: 'all 0.15s',
+                        }}
+                      >
+                        {opt.icon}
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
 

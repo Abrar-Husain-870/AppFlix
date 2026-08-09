@@ -65,7 +65,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={cn("h-full", "antialiased", "font-sans", geist.variable)} suppressHydrationWarning>
+    <html lang="en" className={cn("h-full", "antialiased", "font-sans", geist.variable)} suppressHydrationWarning data-scroll-behavior="smooth">
       <body
         className="min-h-full flex flex-col"
         style={{ backgroundColor: "#141414", color: "#FFFFFF" }}

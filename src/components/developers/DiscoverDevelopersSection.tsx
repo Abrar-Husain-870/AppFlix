@@ -260,10 +260,17 @@ export default function DiscoverDevelopersSection() {
             </p>
           </div>
 
-          {/* Controls Bar: Search + Sort Pills */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+          {/* Controls Bar: Search + Sort Pills (Aligned to the Right) */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'flex-end',
+            gap: '0.75rem',
+            flexWrap: 'wrap',
+            marginLeft: 'auto',
+          }}>
             {/* Developer Search Input */}
-            <div style={{ position: 'relative', width: '220px' }}>
+            <div style={{ position: 'relative', width: '220px', maxWidth: '100%' }}>
               <Search size={15} style={{ position: 'absolute', left: '0.85rem', top: '50%', transform: 'translateY(-50%)', color: '#777777' }} />
               <input
                 type="text"
@@ -288,7 +295,7 @@ export default function DiscoverDevelopersSection() {
             </div>
 
             {/* Sort options */}
-            <div style={{ display: 'flex', gap: '0.3rem', background: '#1A1A1A', padding: '0.25rem', borderRadius: '0.5rem', border: '1px solid #2B2B2B' }}>
+            <div style={{ display: 'flex', gap: '0.3rem', background: '#1A1A1A', padding: '0.25rem', borderRadius: '0.5rem', border: '1px solid #2B2B2B', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
               {[
                 { id: 'upvotes', label: 'Top Upvoted', icon: <ThumbsUp size={13} /> },
                 { id: 'apps',    label: 'Most Apps',   icon: <Flame size={13} /> },
