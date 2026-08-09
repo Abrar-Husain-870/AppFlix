@@ -191,10 +191,12 @@ END $$;
 -- ── 7. ATOMIC ENTITLEMENT APPROVAL RPC ────────────────────────
 -- Guarantees race-condition-free entitlement assignment during project approval.
 -- Uses SELECT ... FOR UPDATE to lock developer profile and slot rows.
+-- Hardened with SECURITY DEFINER, explicit search_path, and EXECUTE permissions restricted to service_role.
 CREATE OR REPLACE FUNCTION public.approve_project_entitlement(p_project_id UUID)
 RETURNS JSONB
 LANGUAGE plpgsql
 SECURITY DEFINER
+SET search_path = public, pg_temp
 AS $$
 DECLARE
   v_user_id UUID;
@@ -204,7 +206,16 @@ DECLARE
   v_slot_expires_at TIMESTAMPTZ;
   v_now TIMESTAMPTZ := NOW();
   v_project_name TEXT;
+  v_caller_role user_role;
 BEGIN
+  -- Defense-in-depth authorization check
+  IF auth.role() != 'service_role' THEN
+    SELECT role INTO v_caller_role FROM public.profiles WHERE id = auth.uid();
+    IF v_caller_role IS NULL OR v_caller_role != 'admin' THEN
+      RAISE EXCEPTION 'Unauthorized: Only admins or service_role can approve project entitlements';
+    END IF;
+  END IF;
+
   -- 1. Fetch & lock project row
   SELECT user_id, status, name INTO v_user_id, v_status, v_project_name
   FROM public.projects
@@ -309,3 +320,6 @@ BEGIN
 END;
 $$;
 
+-- Revoke default PUBLIC execution rights and grant strictly to service_role and postgres
+REVOKE EXECUTE ON FUNCTION public.approve_project_entitlement(UUID) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.approve_project_entitlement(UUID) TO service_role;
