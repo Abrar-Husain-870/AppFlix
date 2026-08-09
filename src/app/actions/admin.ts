@@ -24,7 +24,47 @@ export async function approveProject(projectId: string) {
   await assertAdmin()
   const supabase = await createServiceRoleClient()
 
-  // 1. Fetch project details
+  // Try executing via atomic database RPC for maximum row-level lock safety
+  const { data: rpcResult, error: rpcErr } = await supabase
+    .rpc('approve_project_entitlement', { p_project_id: projectId })
+
+  if (!rpcErr && rpcResult) {
+    const resObj = typeof rpcResult === 'string' ? JSON.parse(rpcResult) : rpcResult
+    const userId = resObj.user_id
+    const resultType = resObj.result
+
+    if (resultType === 'approved_free') {
+      await supabase.from('notifications').insert({
+        user_id: userId,
+        type: 'project_approved',
+        title: 'Project Approved',
+        project_id: projectId,
+        message: 'Your project has been approved and is now live!',
+      })
+    } else if (resultType === 'approved_reused_slot') {
+      await supabase.from('notifications').insert({
+        user_id: userId,
+        type: 'project_approved',
+        title: 'Project Approved',
+        project_id: projectId,
+        message: 'Your project has been approved and is now live with your existing listing slot!',
+      })
+    } else {
+      await supabase.from('notifications').insert({
+        user_id: userId,
+        type: 'project_approved',
+        title: 'Project Approved — Payment Required',
+        project_id: projectId,
+        message: 'Your project has been approved! Pay ₹79 for a 90-day listing to make it publicly visible.',
+      })
+    }
+
+    revalidatePath('/admin/queue')
+    revalidatePath('/browse')
+    return
+  }
+
+  // Fallback if RPC is not installed in database: use atomic conditional filtering
   const { data: project, error: projErr } = await supabase
     .from('projects')
     .select('id, user_id, name')
@@ -35,23 +75,18 @@ export async function approveProject(projectId: string) {
     throw new Error('Project not found')
   }
 
-  // 2. Fetch profile to check free_listing_used entitlement
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('free_listing_used')
-    .eq('id', project.user_id)
-    .single()
-
-  const freeListingUsed = profile?.free_listing_used ?? false
   const now = new Date().toISOString()
 
-  if (!freeListingUsed) {
-    // A) First approved app -> permanent free listing
-    await supabase
-      .from('profiles')
-      .update({ free_listing_used: true })
-      .eq('id', project.user_id)
+  // Attempt atomic claim of free entitlement using conditional .eq('free_listing_used', false)
+  const { data: claimProfile } = await supabase
+    .from('profiles')
+    .update({ free_listing_used: true })
+    .eq('id', project.user_id)
+    .eq('free_listing_used', false)
+    .select('id')
 
+  if (claimProfile && claimProfile.length > 0) {
+    // Successfully claimed free listing
     await supabase
       .from('projects')
       .update({
@@ -63,7 +98,6 @@ export async function approveProject(projectId: string) {
       })
       .eq('id', projectId)
 
-    // Notify developer
     await supabase.from('notifications').insert({
       user_id: project.user_id,
       type: 'project_approved',
@@ -72,7 +106,7 @@ export async function approveProject(projectId: string) {
       message: 'Your project has been approved and is now live!',
     })
   } else {
-    // B) Additional app -> check for reusable paid slot
+    // Free entitlement already used -> check for active reusable paid slot
     const { data: reusableSlots } = await supabase
       .from('listing_slots')
       .select('id, expires_at')
@@ -85,13 +119,22 @@ export async function approveProject(projectId: string) {
 
     const reusableSlot = reusableSlots && reusableSlots.length > 0 ? reusableSlots[0] : null
 
+    let claimedSlot = null
     if (reusableSlot) {
-      // Assign reusable slot
-      await supabase
+      // Atomic claim of reusable slot using conditional .is('project_id', null)
+      const { data: slotRes } = await supabase
         .from('listing_slots')
         .update({ project_id: projectId })
         .eq('id', reusableSlot.id)
+        .is('project_id', null)
+        .select('id, expires_at')
 
+      if (slotRes && slotRes.length > 0) {
+        claimedSlot = slotRes[0]
+      }
+    }
+
+    if (claimedSlot) {
       await supabase
         .from('projects')
         .update({
@@ -99,7 +142,7 @@ export async function approveProject(projectId: string) {
           approved_at: now,
           listing_type: 'paid',
           listing_paid: true,
-          listing_expires_at: reusableSlot.expires_at,
+          listing_expires_at: claimedSlot.expires_at,
         })
         .eq('id', projectId)
 
@@ -111,7 +154,6 @@ export async function approveProject(projectId: string) {
         message: 'Your project has been approved and is now live with your existing listing slot!',
       })
     } else {
-      // Require payment (approved but unpaid until ₹79 payment confirmed)
       await supabase
         .from('projects')
         .update({

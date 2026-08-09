@@ -3,6 +3,8 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+import { applyPublicVisibilityFilter } from '@/lib/supabase/public-queries'
+
 import {
   Users, Search, Flame, ThumbsUp, Eye, ShieldCheck, MapPin,
   ArrowUpRight, Award, Trophy, Sparkles, Crown, Medal
@@ -46,11 +48,8 @@ export default function DiscoverDevelopersSection() {
         const supabase = createClient()
 
         // 1. Fetch all approved non-deleted projects first
-        const { data: projectsData, error: projErr } = await supabase
-          .from('projects')
-          .select('id, user_id, upvote_count, view_count')
-          .eq('status', 'approved')
-          .is('deleted_at', null)
+        const baseQuery = supabase.from('projects').select('id, user_id, upvote_count, view_count')
+        const { data: projectsData, error: projErr } = await applyPublicVisibilityFilter(baseQuery)
 
         if (projErr || !projectsData || projectsData.length === 0) {
           setDevelopers([])

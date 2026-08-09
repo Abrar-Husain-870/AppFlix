@@ -164,8 +164,17 @@ export async function createListingOrder(projectId: string): Promise<RazorpayOrd
 
 /**
  * Dev utility action: Manually confirm payment for testing when webhooks/ngrok are absent.
+ * Strictly guarded against execution in production environment.
  */
 export async function devSimulatePaymentSuccess(orderId: string) {
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('Payment simulation is disabled in production environment')
+  }
+
+  const supabase = await createServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Unauthenticated')
+
   const supabaseService = await createServiceRoleClient()
   const now = new Date()
   const expiresAt = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000).toISOString()
@@ -178,6 +187,19 @@ export async function devSimulatePaymentSuccess(orderId: string) {
     .single()
 
   if (!slot) throw new Error('Slot order not found')
+
+  // Verify ownership
+  if (slot.user_id !== user.id) {
+    const { data: profile } = await supabaseService
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+
+    if (profile?.role !== 'admin') {
+      throw new Error('Unauthorized slot access')
+    }
+  }
 
   const mockPaymentId = `pay_mock_${Date.now()}`
   const mockEventId = `evt_mock_${Date.now()}`
@@ -208,3 +230,4 @@ export async function devSimulatePaymentSuccess(orderId: string) {
   revalidatePath('/dashboard/projects')
   return { success: true, expires_at: expiresAt }
 }
+

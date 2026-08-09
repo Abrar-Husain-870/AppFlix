@@ -186,3 +186,126 @@ BEGIN
       USING (user_id = auth.uid());
   END IF;
 END $$;
+
+
+-- ── 7. ATOMIC ENTITLEMENT APPROVAL RPC ────────────────────────
+-- Guarantees race-condition-free entitlement assignment during project approval.
+-- Uses SELECT ... FOR UPDATE to lock developer profile and slot rows.
+CREATE OR REPLACE FUNCTION public.approve_project_entitlement(p_project_id UUID)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  v_user_id UUID;
+  v_status TEXT;
+  v_free_used BOOLEAN;
+  v_slot_id UUID;
+  v_slot_expires_at TIMESTAMPTZ;
+  v_now TIMESTAMPTZ := NOW();
+  v_project_name TEXT;
+BEGIN
+  -- 1. Fetch & lock project row
+  SELECT user_id, status, name INTO v_user_id, v_status, v_project_name
+  FROM public.projects
+  WHERE id = p_project_id
+  FOR UPDATE;
+
+  IF v_user_id IS NULL THEN
+    RAISE EXCEPTION 'Project not found';
+  END IF;
+
+  IF v_status = 'approved' THEN
+    RAISE EXCEPTION 'Project is already approved';
+  END IF;
+
+  -- 2. Lock developer profile row to serialize concurrent approvals for this user
+  SELECT free_listing_used INTO v_free_used
+  FROM public.profiles
+  WHERE id = v_user_id
+  FOR UPDATE;
+
+  IF v_free_used IS NULL THEN
+    RAISE EXCEPTION 'Developer profile not found';
+  END IF;
+
+  -- 3. Entitlement Evaluation
+  IF NOT v_free_used THEN
+    -- CASE A: First approved project -> permanent free listing
+    UPDATE public.profiles
+    SET free_listing_used = TRUE
+    WHERE id = v_user_id;
+
+    UPDATE public.projects
+    SET status = 'approved',
+        approved_at = v_now,
+        listing_type = 'free',
+        listing_paid = TRUE,
+        listing_expires_at = NULL
+    WHERE id = p_project_id;
+
+    RETURN jsonb_build_object(
+      'result', 'approved_free',
+      'user_id', v_user_id,
+      'project_name', v_project_name,
+      'listing_type', 'free',
+      'listing_paid', true,
+      'expires_at', NULL
+    );
+  ELSE
+    -- Check for active reusable paid slot (lock slot row to prevent concurrent assignment)
+    SELECT id, expires_at INTO v_slot_id, v_slot_expires_at
+    FROM public.listing_slots
+    WHERE user_id = v_user_id
+      AND status = 'paid'
+      AND expires_at > v_now
+      AND project_id IS NULL
+    ORDER BY expires_at ASC
+    LIMIT 1
+    FOR UPDATE SKIP LOCKED;
+
+    IF v_slot_id IS NOT NULL THEN
+      -- CASE B: Active reusable paid slot found -> assign slot & preserve original expires_at
+      UPDATE public.listing_slots
+      SET project_id = p_project_id
+      WHERE id = v_slot_id;
+
+      UPDATE public.projects
+      SET status = 'approved',
+          approved_at = v_now,
+          listing_type = 'paid',
+          listing_paid = TRUE,
+          listing_expires_at = v_slot_expires_at
+      WHERE id = p_project_id;
+
+      RETURN jsonb_build_object(
+        'result', 'approved_reused_slot',
+        'user_id', v_user_id,
+        'project_name', v_project_name,
+        'listing_type', 'paid',
+        'listing_paid', true,
+        'expires_at', v_slot_expires_at
+      );
+    ELSE
+      -- CASE C: Additional project, no reusable slot -> set as paid, unpaid (requires ₹79 payment)
+      UPDATE public.projects
+      SET status = 'approved',
+          approved_at = v_now,
+          listing_type = 'paid',
+          listing_paid = FALSE,
+          listing_expires_at = NULL
+      WHERE id = p_project_id;
+
+      RETURN jsonb_build_object(
+        'result', 'approved_unpaid',
+        'user_id', v_user_id,
+        'project_name', v_project_name,
+        'listing_type', 'paid',
+        'listing_paid', false,
+        'expires_at', NULL
+      );
+    END IF;
+  END IF;
+END;
+$$;
+

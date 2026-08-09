@@ -9,15 +9,17 @@ import NetflixReasonCards from '@/components/ui/NetflixReasonCards'
 import NetflixFAQSection from '@/components/ui/NetflixFAQSection'
 import NetflixFooterCTA from '@/components/ui/NetflixFooterCTA'
 import AppFlixLandingIntro from '@/components/ui/AppFlixLandingIntro'
+import { applyPublicVisibilityFilter } from '@/lib/supabase/public-queries'
 
 async function getFeaturedProjects() {
   try {
     const supabase = await createServerClient()
-    const { data } = await supabase
-      .from('projects')
-      .select('id, name, slug, tagline, icon_url, upvote_count, stage, platforms, categories(name, slug)')
-      .eq('status', 'approved')
-      .is('deleted_at', null)
+    const query = applyPublicVisibilityFilter(
+      supabase
+        .from('projects')
+        .select('id, name, slug, tagline, icon_url, upvote_count, stage, platforms, categories(name, slug)')
+    )
+    const { data } = await query
       .order('upvote_count', { ascending: false })
       .limit(10)
     return data ?? []
@@ -29,8 +31,11 @@ async function getFeaturedProjects() {
 async function getStats() {
   try {
     const supabase = await createServerClient()
+    const projectQuery = applyPublicVisibilityFilter(
+      supabase.from('projects').select('*', { count: 'exact', head: true })
+    )
     const [{ count: projects }, { count: categories }] = await Promise.all([
-      supabase.from('projects').select('*', { count: 'exact', head: true }).eq('status', 'approved'),
+      projectQuery,
       supabase.from('categories').select('*', { count: 'exact', head: true }),
     ])
     return { projects: projects ?? 0, categories: categories ?? 0 }
@@ -38,6 +43,7 @@ async function getStats() {
     return { projects: 0, categories: 0 }
   }
 }
+
 
 const FEATURES = [
   { icon: <Zap size={22} style={{ color: '#E50914' }} />, title: 'Submit Your Project', desc: 'List your app in minutes. Add screenshots, links, and a description.' },

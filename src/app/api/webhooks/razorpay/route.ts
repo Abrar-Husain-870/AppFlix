@@ -10,8 +10,14 @@ export async function POST(req: NextRequest) {
 
     const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET?.trim()
 
-    // 1. Signature Verification
-    if (webhookSecret) {
+    // 1. Signature Verification (Fail closed in production if secret is missing)
+    if (!webhookSecret) {
+      if (process.env.NODE_ENV === 'production') {
+        console.error('[Razorpay Webhook FATAL] RAZORPAY_WEBHOOK_SECRET is missing in production environment.')
+        return NextResponse.json({ error: 'Webhook configuration error' }, { status: 500 })
+      }
+      console.warn('[Razorpay Webhook] RAZORPAY_WEBHOOK_SECRET not set in environment. Skipping signature check in dev.')
+    } else {
       if (!signature) {
         return NextResponse.json({ error: 'Missing signature' }, { status: 400 })
       }
@@ -24,9 +30,8 @@ export async function POST(req: NextRequest) {
         console.error('[Razorpay Webhook] Invalid signature mismatch')
         return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
       }
-    } else {
-      console.warn('[Razorpay Webhook] RAZORPAY_WEBHOOK_SECRET not set in environment. Skipping signature check in dev.')
     }
+
 
     const payload = JSON.parse(rawBody)
     const supabaseService = await createServiceRoleClient()
