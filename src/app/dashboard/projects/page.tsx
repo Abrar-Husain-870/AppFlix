@@ -6,6 +6,7 @@ import DeleteProjectButton from '@/components/projects/DeleteProjectButton'
 import { getDeveloperProjectReports } from '@/app/actions/reports'
 import DeveloperReportManager from '@/components/dashboard/DeveloperReportManager'
 import PlusPaymentButton from '@/components/dashboard/PlusPaymentButton'
+import BannerUrlCleaner from '@/components/dashboard/BannerUrlCleaner'
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; icon: React.ReactNode }> = {
   draft:    { label: 'Draft',            color: '#AAAAAA', bg: 'rgba(170,170,170,0.1)', icon: <FileText size={12} /> },
@@ -54,6 +55,7 @@ export default async function DashboardProjectsPage({
 
   return (
     <div style={{ minHeight: '100vh', background: '#141414', padding: '2rem 1.5rem' }}>
+      <BannerUrlCleaner />
       <div style={{ maxWidth: '900px', margin: '0 auto' }}>
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
@@ -76,7 +78,7 @@ export default async function DashboardProjectsPage({
         <DeveloperReportManager reports={reports} />
 
         {/* Banners */}
-        {justSubmitted && (
+        {justSubmitted && grouped.pending.length > 0 && (
           <div style={{
             background: 'rgba(46,204,113,0.1)', border: '1px solid rgba(46,204,113,0.3)',
             borderRadius: '0.6rem', padding: '0.85rem 1.1rem',
