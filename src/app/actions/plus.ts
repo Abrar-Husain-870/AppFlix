@@ -94,7 +94,7 @@ export async function createListingOrder(projectId: string): Promise<RazorpayOrd
         user_id: user.id,
         project_id: projectId,
         razorpay_order_id: mockOrderId,
-        amount_paise: 7900,
+        amount_paise: 100,
         status: 'pending',
       })
 
@@ -103,7 +103,7 @@ export async function createListingOrder(projectId: string): Promise<RazorpayOrd
     return {
       order_id: mockOrderId,
       key_id: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_test_mock_key',
-      amount: 7900,
+      amount: 100,
       currency: 'INR',
       project_id: projectId,
     }
@@ -119,7 +119,7 @@ export async function createListingOrder(projectId: string): Promise<RazorpayOrd
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      amount: 7900, // ₹79 in paise
+      amount: 100, // ₹1 in paise (temporary dev testing)
       currency: 'INR',
       receipt: `rcpt_${projectId.slice(0, 8)}_${Date.now()}`,
       notes: {
@@ -144,7 +144,7 @@ export async function createListingOrder(projectId: string): Promise<RazorpayOrd
       user_id: user.id,
       project_id: projectId,
       razorpay_order_id: razorpayOrder.id,
-      amount_paise: 7900,
+      amount_paise: 100,
       status: 'pending',
     })
 
@@ -156,7 +156,7 @@ export async function createListingOrder(projectId: string): Promise<RazorpayOrd
   return {
     order_id: razorpayOrder.id,
     key_id: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || keyId,
-    amount: 7900,
+    amount: 100,
     currency: 'INR',
     project_id: projectId,
   }

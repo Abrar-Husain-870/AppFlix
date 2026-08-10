@@ -181,7 +181,7 @@ async function runRemediationTests() {
         razorpay_order_id: `order_conc_slot_${timestamp}`,
         status: 'paid',
         expires_at: slotExpiry,
-        amount_paise: 7900,
+        amount_paise: 100,
       }).select().single()
 
       if (sErr || !slot) throw new Error(`Slot insertion failed: ${sErr?.message}`)

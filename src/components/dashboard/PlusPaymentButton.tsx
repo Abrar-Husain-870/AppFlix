@@ -108,7 +108,7 @@ export default function PlusPaymentButton({
         ) : (
           <CreditCard size={13} />
         )}
-        {isExpired ? 'Renew ₹79 (90 days)' : 'Pay ₹79 to Publish'}
+        {isExpired ? 'Renew ₹1 (90 days)' : 'Pay ₹1 to Publish'}
       </button>
       {message && (
         <span style={{ fontSize: '0.7rem', color: '#2ECC71', fontWeight: 600 }}>

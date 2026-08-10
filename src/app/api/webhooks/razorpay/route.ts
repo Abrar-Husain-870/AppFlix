@@ -75,8 +75,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid currency' }, { status: 400 })
     }
 
-    // 5. Amount Validation (7900 paise = ₹79)
-    if (amount !== 7900) {
+    // 5. Amount Validation (100 paise = ₹1 - temporary dev testing)
+    if (amount !== 100) {
       console.error(`[Razorpay Webhook] Invalid amount: ${amount}`)
       return NextResponse.json({ error: 'Invalid payment amount' }, { status: 400 })
     }
