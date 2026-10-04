@@ -210,6 +210,7 @@
         img.src = `posters/${webpFilename}`;
         img.alt = "";
         img.loading = "eager";
+        img.decoding = "async";
         card.appendChild(img);
         rowEl.appendChild(card);
       });

@@ -5,6 +5,7 @@ import "./globals.css";
 import { cn } from "@/lib/utils";
 import Navbar from "@/components/layout/Navbar";
 import PwaRegister from "@/components/pwa/PwaRegister";
+import HeroPosterWall from "@/components/layout/HeroPosterWall";
 
 const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
@@ -68,12 +69,13 @@ export default function RootLayout({
   return (
     <html lang="en" className={cn("h-full", "antialiased", "font-sans", geist.variable)} suppressHydrationWarning data-scroll-behavior="smooth">
       <body
-        className="min-h-full flex flex-col"
+        className="min-h-full flex flex-col relative"
         style={{ backgroundColor: "#080808", color: "#FFFFFF" }}
         suppressHydrationWarning
       >
         <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
         <PwaRegister />
+        <HeroPosterWall />
         <Navbar />
         {children}
       </body>

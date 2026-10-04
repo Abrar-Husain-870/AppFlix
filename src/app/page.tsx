@@ -67,32 +67,17 @@ async function HomeContent() {
   ])
 
   return (
-    <main style={{ minHeight: '100vh', background: '#080808' }}>
+    <main style={{ minHeight: '100vh', background: 'transparent' }}>
       <Suspense fallback={null}>
         <AppFlixLandingIntro />
       </Suspense>
       {/* ── Hero ─────────────────────────────────────────────────────── */}
       <section style={{
         position: 'relative', overflow: 'hidden',
-        background: 'radial-gradient(ellipse at 50% -20%, rgba(229,9,20,0.18) 0%, transparent 60%), #080808',
+        background: 'radial-gradient(ellipse at 50% -20%, rgba(229,9,20,0.18) 0%, transparent 60%)',
         padding: 'clamp(4rem, 10vw, 7rem) 1.5rem clamp(3rem, 8vw, 5rem)',
         textAlign: 'center',
       }}>
-        {/* 3D Poster Wall Background from bg-standalone.html */}
-        <iframe
-          src="/bg-standalone.html"
-          title="AppFlix 3D Wall Background"
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            border: 'none',
-            zIndex: 0,
-            pointerEvents: 'none',
-          }}
-        />
 
         {/* Multi-layer dark overlay — Netflix style */}
         <div style={{

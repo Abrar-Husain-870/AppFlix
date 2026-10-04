@@ -4,6 +4,8 @@ import { useEffect, useState, useRef } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Script from 'next/script'
 
+import { createPortal } from 'react-dom'
+
 export default function AppFlixLandingIntro() {
   const [shouldPlay, setShouldPlay] = useState(false)
   const [spectrumLoaded, setSpectrumLoaded] = useState(false)
@@ -69,6 +71,24 @@ export default function AppFlixLandingIntro() {
 
   if (!shouldPlay) return null
 
+  const canvasContent = (
+    <canvas
+      id="appflix-intro-canvas"
+      style={{
+        display: 'block',
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100vw',
+        height: '100vh',
+        zIndex: 9999999,
+        background: '#000000',
+        opacity: 1,
+        pointerEvents: 'all',
+      }}
+    />
+  )
+
   return (
     <>
       <Script
@@ -81,20 +101,7 @@ export default function AppFlixLandingIntro() {
         strategy="afterInteractive"
         onLoad={() => setEngineLoaded(true)}
       />
-      <canvas
-        id="appflix-intro-canvas"
-        style={{
-          display: 'block',
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          width: '100vw',
-          height: '100vh',
-          zIndex: 999999,
-          background: '#000000',
-          opacity: 1,
-        }}
-      />
+      {typeof document !== 'undefined' ? createPortal(canvasContent, document.body) : canvasContent}
     </>
   )
 }

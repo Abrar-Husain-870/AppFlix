@@ -226,7 +226,7 @@ export default function BrowsePage() {
   }, [fetchProjects, categories])
 
   return (
-    <div style={{ minHeight: '100vh', background: '#080808' }}>
+    <div style={{ minHeight: '100vh', background: 'transparent' }}>
 
       {/* ── Netflix-style Hero ────────────────────────────────── */}
       <section style={{
@@ -239,21 +239,6 @@ export default function BrowsePage() {
         alignItems: 'center',
         justifyContent: 'center',
       }}>
-        {/* 3D Poster Wall Background from bg-standalone.html */}
-        <iframe
-          src="/bg-standalone.html"
-          title="AppFlix 3D Wall Background"
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            border: 'none',
-            zIndex: 0,
-            pointerEvents: 'none',
-          }}
-        />
 
         {/* Multi-layer dark overlay — Netflix style */}
         <div style={{
