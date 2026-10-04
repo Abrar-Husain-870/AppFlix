@@ -9,6 +9,7 @@ import NetflixReasonCards from '@/components/ui/NetflixReasonCards'
 import NetflixFAQSection from '@/components/ui/NetflixFAQSection'
 import NetflixFooterCTA from '@/components/ui/NetflixFooterCTA'
 import AppFlixLandingIntro from '@/components/ui/AppFlixLandingIntro'
+import DiscoverDevelopersSection from '@/components/developers/DiscoverDevelopersSection'
 import { applyPublicVisibilityFilter } from '@/lib/supabase/public-queries'
 
 async function getFeaturedProjects() {
@@ -280,6 +281,9 @@ async function HomeContent() {
           </div>
         </section>
       )}
+
+      {/* ── Discover Campus Developers ────────────────────────────────────── */}
+      <DiscoverDevelopersSection />
 
       {/* ── More reasons to join (Netflix visual style cards) ──────────────── */}
       <NetflixReasonCards />

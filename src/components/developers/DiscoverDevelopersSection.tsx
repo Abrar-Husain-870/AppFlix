@@ -25,10 +25,6 @@ interface Developer {
   rank: number
   credibilityBadge: {
     label: string
-    tier: 'gold' | 'silver' | 'bronze'
-    color: string
-    bg: string
-    border: string
     icon: React.ReactNode
   }
 }
@@ -124,29 +120,17 @@ export default function DiscoverDevelopersSection() {
           if (rank <= 3) {
             credibilityBadge = {
               label: `Master Developer`,
-              tier: 'gold',
-              color: '#F59E0B',
-              bg: '#241E14',
-              border: '#3D3019',
-              icon: <Crown size={13} style={{ color: '#F59E0B' }} />,
+              icon: <Crown size={12} style={{ color: '#E50914' }} />,
             }
           } else if (rank <= 10) {
             credibilityBadge = {
               label: `Top Creator`,
-              tier: 'silver',
-              color: '#E2E8F0',
-              bg: '#1E232B',
-              border: '#333D4B',
-              icon: <Medal size={13} style={{ color: '#E2E8F0' }} />,
+              icon: <Trophy size={12} style={{ color: '#E50914' }} />,
             }
           } else {
             credibilityBadge = {
-              label: `Campus Contributor`,
-              tier: 'bronze',
-              color: '#CD7F32',
-              bg: '#251C17',
-              border: '#3D2B22',
-              icon: <Award size={13} style={{ color: '#CD7F32' }} />,
+              label: `Campus Builder`,
+              icon: <Award size={12} style={{ color: '#E50914' }} />,
             }
           }
 
@@ -363,54 +347,73 @@ export default function DiscoverDevelopersSection() {
                   href={`/developer/${dev.username}`}
                   style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}
                 >
-                  <div style={{
-                    background: '#1A1A1A',
-                    border: '1px solid #2B2B2B',
-                    borderRadius: '0.85rem',
-                    padding: '1.35rem',
-                    height: '100%',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'space-between',
-                    transition: 'transform 0.2s, border-color 0.2s, box-shadow 0.2s',
-                    boxSizing: 'border-box',
-                    cursor: 'pointer',
-                    position: 'relative',
-                  }}
-                  onMouseEnter={e => {
-                    e.currentTarget.style.transform = 'translateY(-3px)'
-                    e.currentTarget.style.borderColor = '#E50914'
-                    e.currentTarget.style.boxShadow = '0 8px 24px rgba(229, 9, 20, 0.2)'
-                  }}
-                  onMouseLeave={e => {
-                    e.currentTarget.style.transform = 'translateY(0)'
-                    e.currentTarget.style.borderColor = '#2B2B2B'
-                    e.currentTarget.style.boxShadow = 'none'
-                  }}
+                  <div
+                    className="dev-card"
+                    style={{
+                      background: 'linear-gradient(145deg, #141414 0%, #0d0d0d 100%)',
+                      border: '1px solid #242424',
+                      borderRadius: '0.75rem',
+                      padding: '1.25rem',
+                      height: '100%',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                      transition: 'border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease',
+                      boxSizing: 'border-box',
+                      cursor: 'pointer',
+                      position: 'relative',
+                    }}
+                    onMouseEnter={e => {
+                      e.currentTarget.style.transform = 'translateY(-3px)'
+                      e.currentTarget.style.borderColor = '#E50914'
+                      e.currentTarget.style.boxShadow = '0 12px 28px rgba(0, 0, 0, 0.75), 0 0 16px rgba(229, 9, 20, 0.2)'
+                      const arrow = e.currentTarget.querySelector('.dev-card-arrow') as HTMLElement
+                      if (arrow) {
+                        arrow.style.color = '#E50914'
+                        arrow.style.transform = 'translate(2px, -2px)'
+                      }
+                    }}
+                    onMouseLeave={e => {
+                      e.currentTarget.style.transform = 'translateY(0)'
+                      e.currentTarget.style.borderColor = '#242424'
+                      e.currentTarget.style.boxShadow = 'none'
+                      const arrow = e.currentTarget.querySelector('.dev-card-arrow') as HTMLElement
+                      if (arrow) {
+                        arrow.style.color = '#666666'
+                        arrow.style.transform = 'translate(0, 0)'
+                      }
+                    }}
                   >
                     <div>
                       {/* Top Header Row */}
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.85rem' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                           {/* Avatar */}
                           <div style={{
-                            width: '48px', height: '48px', borderRadius: '50%',
-                            background: 'linear-gradient(135deg, #E50914 0%, #B20710 100%)',
-                            border: '2px solid rgba(229, 9, 20, 0.4)',
+                            width: '44px', height: '44px', borderRadius: '50%',
+                            background: '#1a1a1a',
+                            border: '1px solid rgba(255, 255, 255, 0.12)',
                             overflow: 'hidden',
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            fontSize: '1.2rem', fontWeight: 800, color: '#FFFFFF',
+                            fontSize: '1.15rem', fontWeight: 800, color: '#FFFFFF',
                             flexShrink: 0,
                           }}>
                             {dev.avatar_url ? (
                               <img src={dev.avatar_url} alt={displayName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                             ) : (
-                              displayName[0].toUpperCase()
+                              <div style={{
+                                width: '100%', height: '100%',
+                                background: 'linear-gradient(135deg, #E50914 0%, #B20710 100%)',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                color: '#FFFFFF', fontWeight: 800,
+                              }}>
+                                {displayName[0].toUpperCase()}
+                              </div>
                             )}
                           </div>
 
                           <div>
-                            <h3 style={{ fontSize: '0.95rem', fontWeight: 800, color: '#FFFFFF', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '140px' }}>
+                            <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#FFFFFF', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '145px' }}>
                               {displayName}
                             </h3>
                             <p style={{ fontSize: '0.78rem', color: '#777777', margin: '0.15rem 0 0 0' }}>
@@ -419,22 +422,32 @@ export default function DiscoverDevelopersSection() {
                           </div>
                         </div>
 
-                        <ArrowUpRight size={16} style={{ color: '#666666' }} />
+                        {/* Top-right link arrow */}
+                        <div
+                          className="dev-card-arrow"
+                          style={{
+                            color: '#666666',
+                            transition: 'color 0.2s ease, transform 0.2s ease',
+                            display: 'flex', alignItems: 'center',
+                          }}
+                        >
+                          <ArrowUpRight size={16} />
+                        </div>
                       </div>
 
-                      {/* Hierarchical Rank Badge */}
-                      <div>
+                      {/* Minimalist Theme-Aligned Badge */}
+                      <div style={{ marginTop: '0.2rem' }}>
                         <span style={{
                           display: 'inline-flex',
                           alignItems: 'center',
-                          gap: '0.4rem',
-                          background: dev.credibilityBadge.bg,
-                          color: dev.credibilityBadge.color,
+                          gap: '0.35rem',
+                          background: 'rgba(255, 255, 255, 0.05)',
+                          color: '#CCCCCC',
                           fontSize: '0.75rem',
-                          fontWeight: 700,
-                          padding: '0.25rem 0.7rem',
-                          borderRadius: '0.4rem',
-                          border: `1px solid ${dev.credibilityBadge.border}`,
+                          fontWeight: 600,
+                          padding: '0.25rem 0.65rem',
+                          borderRadius: '0.375rem',
+                          border: '1px solid rgba(255, 255, 255, 0.08)',
                         }}>
                           {dev.credibilityBadge.icon}
                           <span>{dev.credibilityBadge.label}</span>
@@ -445,25 +458,24 @@ export default function DiscoverDevelopersSection() {
                     {/* Footer Stats Row */}
                     <div style={{
                       marginTop: '1.25rem',
-                      paddingTop: '0.85rem',
-                      borderTop: '1px solid #262626',
+                      paddingTop: '0.75rem',
+                      borderTop: '1px solid #1f1f1f',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'space-between',
-                      fontSize: '0.78rem',
-                      color: '#888888',
+                      fontSize: '0.8rem',
                     }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', color: '#FFFFFF', fontWeight: 700 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', color: '#FFFFFF', fontWeight: 600 }}>
                         <Flame size={13} style={{ color: '#E50914' }} />
                         <span>{dev.published_apps_count} {dev.published_apps_count === 1 ? 'App' : 'Apps'}</span>
                       </div>
 
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-                        <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', color: '#E50914', fontWeight: 700 }}>
-                          ▲ {dev.total_upvotes}
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', color: '#E50914', fontWeight: 700 }}>
+                          <ThumbsUp size={11} /> {dev.total_upvotes}
                         </span>
-                        <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                          👁️ {dev.total_views}
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', color: '#777777' }}>
+                          <Eye size={12} /> {dev.total_views}
                         </span>
                       </div>
                     </div>

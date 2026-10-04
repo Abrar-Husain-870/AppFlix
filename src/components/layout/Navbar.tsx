@@ -91,52 +91,61 @@ export default function Navbar() {
   return (
     <nav style={{
       position: 'sticky', top: 0, zIndex: 50,
-      background: scrolled ? 'rgba(20,20,20,0.95)' : '#141414',
+      background: scrolled ? 'rgba(0, 0, 0, 0.96)' : '#000000',
       backdropFilter: scrolled ? 'blur(12px)' : 'none',
-      borderBottom: '1px solid #2B2B2B',
+      borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
       transition: 'background 0.3s, backdrop-filter 0.3s',
     }}>
       <div style={{
-        maxWidth: '1280px', margin: '0 auto',
-        padding: '0 1.5rem', height: '60px',
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        maxWidth: '100%',
+        width: '100%',
+        margin: '0 auto',
+        padding: '0 clamp(1rem, 2.5vw, 2.5rem)',
+        height: '60px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        boxSizing: 'border-box',
       }}>
-        {/* Logo */}
-        <Link href="/?playIntro=true" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', flexShrink: 0 }}>
-          <img
-            src="/assets/app-logos/AppFlix_logo_trimmed.png"
-            alt="AppFlix"
-            className="nav-logo-img"
-            style={{
-              height: '32px',
-              maxHeight: '34px',
-              width: 'auto',
-              maxWidth: '140px',
-              objectFit: 'contain',
-              display: 'block',
-            }}
-          />
-        </Link>
+        {/* Left: Logo & Navigation */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(1rem, 2vw, 2.5rem)' }}>
+          {/* Logo */}
+          <Link href="/?playIntro=true" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+            <img
+              src="/assets/app-logos/AppFlix_logo_trimmed.png"
+              alt="AppFlix"
+              className="nav-logo-img"
+              style={{
+                height: '32px',
+                maxHeight: '34px',
+                width: 'auto',
+                maxWidth: '140px',
+                objectFit: 'contain',
+                display: 'block',
+              }}
+            />
+          </Link>
 
-        {/* Desktop nav links */}
-        <div className="desktop-only" style={{ alignItems: 'center', gap: '0.25rem' }}>
-          {navLinks.map(link => (
-            <Link key={link.href} href={link.href} style={{
-              padding: '0.4rem 0.9rem',
-              color: isActive(link.href) ? '#FFFFFF' : '#AAAAAA',
-              fontWeight: isActive(link.href) ? 600 : 400,
-              textDecoration: 'none', fontSize: '0.9rem',
-              borderRadius: '0.4rem',
-              background: isActive(link.href) ? 'rgba(229,9,20,0.12)' : 'transparent',
-              transition: 'color 0.2s, background 0.2s',
-            }}>
-              {link.label}
-            </Link>
-          ))}
+          {/* Desktop nav links */}
+          <div className="desktop-only" style={{ alignItems: 'center', gap: '0.35rem' }}>
+            {navLinks.map(link => (
+              <Link key={link.href} href={link.href} style={{
+                padding: '0.4rem 0.9rem',
+                color: isActive(link.href) ? '#FFFFFF' : '#AAAAAA',
+                fontWeight: isActive(link.href) ? 600 : 400,
+                textDecoration: 'none', fontSize: '0.9rem',
+                borderRadius: '0.4rem',
+                background: isActive(link.href) ? 'rgba(229,9,20,0.12)' : 'transparent',
+                transition: 'color 0.2s, background 0.2s',
+              }}>
+                {link.label}
+              </Link>
+            ))}
+          </div>
         </div>
 
-        {/* Right: actions */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        {/* Right: actions (Install App, Avatar, Husain) */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
           <InstallPwaButton />
 
           {/* Search */}
@@ -214,13 +223,13 @@ export default function Navbar() {
                   <div style={{
                     position: 'absolute', top: 'calc(100% + 8px)', right: 0,
                     width: '220px',
-                    background: '#1F1F1F', border: '1px solid #2B2B2B',
-                    borderRadius: '0.75rem', boxShadow: '0 16px 40px rgba(0,0,0,0.6)',
+                    background: '#0d0d0d', border: '1px solid #222222',
+                    borderRadius: '0.75rem', boxShadow: '0 16px 40px rgba(0,0,0,0.85)',
                     overflow: 'hidden', zIndex: 100,
                     animation: 'dropdownIn 0.15s ease',
                   }}>
                     {/* User info header */}
-                    <div style={{ padding: '0.85rem 1rem', borderBottom: '1px solid #2B2B2B' }}>
+                    <div style={{ padding: '0.85rem 1rem', borderBottom: '1px solid #1f1f1f' }}>
                       <p style={{ fontSize: '0.875rem', fontWeight: 700, color: '#FFFFFF', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {displayName}
                       </p>
@@ -359,10 +368,10 @@ export default function Navbar() {
       {/* Mobile menu */}
       {mobileOpen && (
         <div style={{
-          borderTop: '1px solid #2B2B2B',
-          background: '#161616', padding: '0.85rem 1rem',
+          borderTop: '1px solid #1f1f1f',
+          background: '#080808', padding: '0.85rem 1rem',
           display: 'flex', flexDirection: 'column', gap: '0.25rem',
-          boxShadow: '0 12px 30px rgba(0,0,0,0.8)',
+          boxShadow: '0 12px 30px rgba(0,0,0,0.95)',
         }}>
           {/* User info header on mobile */}
           {user && (
