@@ -315,6 +315,15 @@ body {
   }
 }
 
+.trending-card-item:hover .trending-poster-card {
+  border-color: #E50914 !important;
+  box-shadow: 
+    0 0 16px rgba(229, 9, 20, 0.6), 
+    0 0 32px rgba(229, 9, 20, 0.32), 
+    0 0 48px rgba(229, 9, 20, 0.12), 
+    0 12px 28px rgba(0, 0, 0, 0.85) !important;
+}
+
 @media (max-width: 768px) {
   .desktop-only {
     display: none !important;
@@ -361,6 +370,10 @@ body {
   .trending-poster-card {
     width: 82% !important;
     right: 0 !important;
+  }
+  .trending-card-item:hover .trending-poster-card {
+    border-color: #E50914 !important;
+    box-shadow: 0 0 16px rgba(229, 9, 20, 0.6), 0 0 32px rgba(229, 9, 20, 0.32), 0 0 48px rgba(229, 9, 20, 0.12), 0 12px 28px rgba(0, 0, 0, 0.85) !important;
   }
   .trending-rank-num {
     left: 8px !important;

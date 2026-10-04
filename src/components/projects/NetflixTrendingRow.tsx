@@ -91,7 +91,7 @@ export default function NetflixTrendingRow({ projects, title = 'Trending Now' }:
                 left: '0.25rem',
                 top: '50%',
                 transform: 'translateY(-50%)',
-                zIndex: 30,
+                zIndex: 40,
                 width: '32px',
                 height: '65px',
                 background: 'rgba(20, 20, 20, 0.85)',
@@ -123,7 +123,7 @@ export default function NetflixTrendingRow({ projects, title = 'Trending Now' }:
                 right: '0.25rem',
                 top: '50%',
                 transform: 'translateY(-50%)',
-                zIndex: 30,
+                zIndex: 40,
                 width: '32px',
                 height: '65px',
                 background: 'rgba(20, 20, 20, 0.85)',
@@ -155,9 +155,11 @@ export default function NetflixTrendingRow({ projects, title = 'Trending Now' }:
               overflowY: 'hidden',
               scrollbarWidth: 'none',
               msOverflowStyle: 'none',
-              padding: '0.75rem 32px 1.75rem 32px',
-              scrollPaddingLeft: '32px',
-              scrollPaddingRight: '32px',
+              padding: '3.5rem 40px 3.5rem 40px',
+              marginTop: '-2.25rem',
+              marginBottom: '-2.25rem',
+              scrollPaddingLeft: '40px',
+              scrollPaddingRight: '40px',
               scrollSnapType: 'x mandatory',
               boxSizing: 'border-box',
             }}
@@ -184,18 +186,21 @@ export default function NetflixTrendingRow({ projects, title = 'Trending Now' }:
                     height: 'clamp(185px, 52vw, 260px)',
                     scrollSnapAlign: 'start',
                     alignItems: 'flex-end',
-                    transition: 'transform 0.25s cubic-bezier(0.2, 0, 0, 1)',
+                    zIndex: 1,
+                    transition: 'transform 0.25s cubic-bezier(0.2, 0, 0, 1), z-index 0.25s ease',
                   }}
                   onMouseEnter={e => {
                     e.currentTarget.style.transform = 'scale(1.04) translateY(-4px)'
+                    e.currentTarget.style.zIndex = '25'
                     const card = e.currentTarget.querySelector('.trending-poster-card') as HTMLElement
                     if (card) {
                       card.style.borderColor = '#E50914'
-                      card.style.boxShadow = '0 16px 40px rgba(229, 9, 20, 0.45)'
+                      card.style.boxShadow = '0 0 16px rgba(229, 9, 20, 0.6), 0 0 32px rgba(229, 9, 20, 0.32), 0 0 48px rgba(229, 9, 20, 0.12), 0 12px 28px rgba(0, 0, 0, 0.85)'
                     }
                   }}
                   onMouseLeave={e => {
                     e.currentTarget.style.transform = 'scale(1) translateY(0)'
+                    e.currentTarget.style.zIndex = '1'
                     const card = e.currentTarget.querySelector('.trending-poster-card') as HTMLElement
                     if (card) {
                       card.style.borderColor = 'rgba(255, 255, 255, 0.12)'
