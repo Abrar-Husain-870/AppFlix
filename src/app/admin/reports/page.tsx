@@ -3,6 +3,7 @@
 import { useEffect, useState, useTransition } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
+import AppIcon from '@/components/ui/AppIcon'
 import { getAdminReportsQueue, adminResolveReport, adminDismissReport, ReportItem } from '@/app/actions/reports'
 import AdminDeleteButton from '@/components/admin/AdminDeleteButton'
 import { ShieldAlert, CheckCircle, XCircle, ExternalLink, Globe, Loader2, MessageSquare } from 'lucide-react'
@@ -81,16 +82,12 @@ function ReportRow({ report, onAction }: { report: ReportItem; onAction: () => v
         {/* Project Icon */}
         {report.projects?.slug && (
           <Link href={`/browse/${report.projects.slug}`} target="_blank" style={{ textDecoration: 'none' }}>
-            <div style={{
-              width: '52px', height: '52px', borderRadius: '0.6rem',
-              background: '#161616', border: '1px solid rgba(255, 255, 255, 0.1)',
-              overflow: 'hidden', flexShrink: 0,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}>
-              {report.projects.icon_url
-                ? <img src={report.projects.icon_url} alt={report.projects.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                : <Globe size={20} style={{ color: '#555' }} />}
-            </div>
+            <AppIcon
+              src={report.projects.icon_url}
+              alt={report.projects.name}
+              size={52}
+              fallbackText={report.projects.name}
+            />
           </Link>
         )}
 
@@ -214,7 +211,7 @@ export default function AdminReportsPage() {
 
   if (isAdmin === false) {
     return (
-      <div style={{ minHeight: '100vh', background: '#141414', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ minHeight: '100vh', background: '#080808', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ textAlign: 'center' }}>
           <p style={{ fontSize: '3rem', marginBottom: '1rem' }}>🔒</p>
           <h2 style={{ color: '#FFFFFF', fontSize: '1.25rem', fontWeight: 700 }}>Admin access required</h2>
@@ -236,7 +233,7 @@ export default function AdminReportsPage() {
   })
 
   return (
-    <div style={{ minHeight: '100vh', background: '#141414', padding: '2rem 1.5rem' }}>
+    <div style={{ minHeight: '100vh', background: '#080808', padding: '2rem 1.5rem' }}>
       <div style={{ maxWidth: '950px', margin: '0 auto' }}>
         {/* Navigation Tabs between Queue and Reports */}
         <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.5rem', borderBottom: '1px solid #2B2B2B', paddingBottom: '0.75rem' }}>

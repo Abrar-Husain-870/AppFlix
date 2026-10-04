@@ -4,6 +4,7 @@ import { createServerClient } from '@/lib/supabase/server'
 import { Flame, ArrowRight, Zap, Shield, BarChart3, Users, ArrowUp } from 'lucide-react'
 import NetflixHorizonDivider from '@/components/ui/NetflixHorizonDivider'
 import NetflixTrendingRow from '@/components/projects/NetflixTrendingRow'
+import AppIcon from '@/components/ui/AppIcon'
 import HeroGetStartedButton from '@/components/ui/HeroGetStartedButton'
 import NetflixReasonCards from '@/components/ui/NetflixReasonCards'
 import NetflixFAQSection from '@/components/ui/NetflixFAQSection'
@@ -66,14 +67,14 @@ async function HomeContent() {
   ])
 
   return (
-    <main style={{ minHeight: '100vh', background: '#141414' }}>
+    <main style={{ minHeight: '100vh', background: '#080808' }}>
       <Suspense fallback={null}>
         <AppFlixLandingIntro />
       </Suspense>
       {/* ── Hero ─────────────────────────────────────────────────────── */}
       <section style={{
         position: 'relative', overflow: 'hidden',
-        background: 'radial-gradient(ellipse at 50% -20%, rgba(229,9,20,0.18) 0%, transparent 60%), #141414',
+        background: 'radial-gradient(ellipse at 50% -20%, rgba(229,9,20,0.18) 0%, transparent 60%), #080808',
         padding: 'clamp(4rem, 10vw, 7rem) 1.5rem clamp(3rem, 8vw, 5rem)',
         textAlign: 'center',
       }}>
@@ -96,7 +97,7 @@ async function HomeContent() {
         {/* Multi-layer dark overlay — Netflix style */}
         <div style={{
           position: 'absolute', inset: 0,
-          background: 'linear-gradient(to bottom, rgba(20,20,20,0.15) 0%, rgba(20,20,20,0.35) 50%, rgba(20,20,20,0.92) 100%)',
+          background: 'linear-gradient(to bottom, rgba(8,8,8,0.15) 0%, rgba(8,8,8,0.45) 50%, rgba(8,8,8,0.96) 100%)',
           pointerEvents: 'none',
           zIndex: 1,
         }} />
@@ -205,9 +206,9 @@ async function HomeContent() {
       {/* ── Content Section (Overlaying Hero) ────────────────────── */}
       <div style={{ position: 'relative', zIndex: 10 }}>
         {/* Netflix Horizon Arc Divider Overlay */}
-        <NetflixHorizonDivider fillColor="#141414" />
+        <NetflixHorizonDivider fillColor="#080808" />
 
-        <div style={{ background: '#141414', minHeight: '60vh' }}>
+        <div style={{ background: '#080808', minHeight: '60vh' }}>
           {/* Netflix Trending Top 10 Row */}
           <NetflixTrendingRow projects={featured} title="Trending Now" />
 
@@ -243,16 +244,12 @@ async function HomeContent() {
                   width: '100%',
                   maxWidth: '100%',
                 }}>
-                  <div style={{
-                    width: '44px', height: '44px', borderRadius: '0.65rem',
-                    background: '#161616', border: '1px solid rgba(255, 255, 255, 0.1)',
-                    flexShrink: 0, overflow: 'hidden',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  }}>
-                    {project.icon_url
-                      ? <img src={project.icon_url} alt={project.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                      : <Flame size={20} style={{ color: '#444' }} />}
-                  </div>
+                  <AppIcon
+                    src={project.icon_url}
+                    alt={project.name}
+                    size={44}
+                    fallbackText={project.name}
+                  />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <h3 style={{
                       fontSize: '0.92rem', fontWeight: 700, color: '#FFFFFF', marginBottom: '0.15rem',

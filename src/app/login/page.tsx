@@ -371,7 +371,7 @@ export default function LoginPage() {
               display: 'inline-flex',
               alignItems: 'center',
               gap: '0.4rem',
-              background: '#141414',
+              background: '#080808',
               border: '1px solid #333333',
               borderRadius: '4px',
               padding: '0.45rem 0.9rem',

@@ -167,7 +167,7 @@ export default function ViewsLineChart({ data, period }: Props) {
               stroke="#5B8DEF"
               strokeWidth={2.5}
               dot={false}
-              activeDot={{ r: 4, fill: '#5B8DEF', stroke: '#141414', strokeWidth: 2 }}
+              activeDot={{ r: 4, fill: '#5B8DEF', stroke: '#080808', strokeWidth: 2 }}
             />
           </LineChart>
         </ResponsiveContainer>

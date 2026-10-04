@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import UpvoteButton from './UpvoteButton'
 import { Globe, ArrowUpRight, Flame, Pencil } from 'lucide-react'
 import { useState } from 'react'
+import AppIcon from '@/components/ui/AppIcon'
 
 interface ProjectCardProps {
   project: {
@@ -77,32 +78,21 @@ export default function ProjectCard({ project, isUpvoted = false, isAuthenticate
         gap: '0.85rem',
       }}>
         {/* App Icon Squircle */}
-        <Link href={`/browse/${project.slug}`} style={{ textDecoration: 'none' }}>
-          <div style={{
-            width: '54px',
-            height: '54px',
-            borderRadius: '14px',
-            background: '#161616',
-            border: '1px solid rgba(255, 255, 255, 0.12)',
-            overflow: 'hidden',
-            flexShrink: 0,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: '0 6px 16px rgba(0,0,0,0.6)',
+        <Link
+          href={`/browse/${project.slug}`}
+          style={{
+            textDecoration: 'none',
+            display: 'block',
             transition: 'transform 0.2s ease',
             transform: hovered ? 'scale(1.05)' : 'scale(1)',
-          }}>
-            {project.icon_url ? (
-              <img
-                src={project.icon_url}
-                alt={project.name}
-                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-              />
-            ) : (
-              <Globe size={24} style={{ color: '#E50914' }} />
-            )}
-          </div>
+          }}
+        >
+          <AppIcon
+            src={project.icon_url}
+            alt={project.name}
+            size={54}
+            fallbackText={project.name}
+          />
         </Link>
 
         {/* Upvote Action Button */}

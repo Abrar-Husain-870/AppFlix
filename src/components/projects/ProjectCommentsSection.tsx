@@ -317,7 +317,7 @@ export default function ProjectCommentsSection({
         <div style={{
           textAlign: 'center',
           padding: '2.5rem 1rem',
-          background: '#141414',
+          background: '#080808',
           border: '1px dashed #2B2B2B',
           borderRadius: '0.75rem',
         }}>
@@ -348,7 +348,7 @@ export default function ProjectCommentsSection({
 
             return (
               <div key={c.id} style={{
-                background: '#141414',
+                background: '#080808',
                 border: isAuthor ? '1px solid rgba(229, 9, 20, 0.35)' : '1px solid #262626',
                 borderRadius: '0.75rem',
                 padding: '1.25rem',
@@ -613,7 +613,7 @@ export default function ProjectCommentsSection({
                       style={{
                         width: '100%',
                         padding: '0.65rem 0.85rem',
-                        background: '#141414',
+                        background: '#080808',
                         border: '1px solid #333333',
                         borderRadius: '0.5rem',
                         color: '#FFFFFF',

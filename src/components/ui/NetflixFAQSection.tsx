@@ -73,7 +73,7 @@ export default function NetflixFAQSection() {
   return (
     <section style={{
       padding: '4rem 1.5rem 5rem',
-      background: '#141414',
+      background: 'transparent',
       position: 'relative',
       boxSizing: 'border-box',
     }}>
@@ -142,7 +142,7 @@ export default function NetflixFAQSection() {
                   <div style={{
                     background: '#2D2D2D',
                     padding: '1.5rem 1.75rem',
-                    borderTop: '1px solid #141414',
+                    borderTop: '1px solid #080808',
                     color: '#FFFFFF',
                     fontSize: 'clamp(0.95rem, 2vw, 1.2rem)',
                     lineHeight: 1.65,

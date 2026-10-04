@@ -75,7 +75,7 @@ export default function BookmarksPage() {
   }, [])
 
   return (
-    <div style={{ minHeight: '100vh', background: '#141414', padding: '3rem 1.5rem' }}>
+    <div style={{ minHeight: '100vh', background: '#080808', padding: '3rem 1.5rem' }}>
       <div style={{ maxWidth: '1360px', margin: '0 auto' }}>
 
         {/* Page Header */}

@@ -3,6 +3,7 @@ import { applyPublicVisibilityFilter } from '@/lib/supabase/public-queries'
 import { notFound } from 'next/navigation'
 
 import Link from 'next/link'
+import AppIcon from '@/components/ui/AppIcon'
 import {
   Globe, GitBranch, Link2, AtSign, MapPin, Calendar, ArrowUpRight,
   BarChart2, Flame, ThumbsUp, Mail, Code2, Sparkles, ExternalLink
@@ -83,10 +84,10 @@ export default async function DeveloperProfilePage({ params }: Props) {
   ].filter(Boolean)
 
   return (
-    <div style={{ minHeight: '100vh', background: '#141414', color: '#FFFFFF' }}>
+    <div style={{ minHeight: '100vh', background: '#080808', color: '#FFFFFF' }}>
       {/* ── 1. Hero Developer Card Header ── */}
       <div style={{
-        background: 'radial-gradient(ellipse at top, rgba(229, 9, 20, 0.15) 0%, rgba(20, 20, 20, 0.98) 70%)',
+        background: 'radial-gradient(ellipse at top, rgba(229, 9, 20, 0.15) 0%, rgba(8, 8, 8, 0.98) 70%)',
         borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
         padding: '3.5rem 1.5rem 2.5rem',
         position: 'relative',
@@ -124,7 +125,7 @@ export default async function DeveloperProfilePage({ params }: Props) {
                 height: '18px',
                 borderRadius: '50%',
                 background: '#2ECC71',
-                border: '3px solid #141414',
+                border: '3px solid #080808',
                 boxShadow: '0 0 10px #2ECC71',
               }} title="Verified Developer" />
             </div>
@@ -324,18 +325,12 @@ export default async function DeveloperProfilePage({ params }: Props) {
                     <div>
                       <div style={{ display: 'flex', gap: '0.85rem', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
                         {/* Icon */}
-                        <div style={{
-                          width: '52px', height: '52px', borderRadius: '0.75rem',
-                          background: '#242424', border: '1px solid #333333',
-                          overflow: 'hidden', flexShrink: 0,
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        }}>
-                          {project.icon_url ? (
-                            <img src={project.icon_url} alt={project.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                          ) : (
-                            <Globe size={22} style={{ color: '#666' }} />
-                          )}
-                        </div>
+                        <AppIcon
+                          src={project.icon_url}
+                          alt={project.name}
+                          size={52}
+                          fallbackText={project.name}
+                        />
 
                         {/* Title & Arrow */}
                         <div style={{ flex: 1, minWidth: 0 }}>

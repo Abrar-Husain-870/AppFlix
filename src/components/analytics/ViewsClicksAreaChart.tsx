@@ -147,7 +147,7 @@ export default function ViewsClicksAreaChart({ data, period }: Props) {
             strokeWidth={2}
             fill="url(#gradViews)"
             dot={false}
-            activeDot={{ r: 4, fill: '#5B8DEF', stroke: '#141414', strokeWidth: 2 }}
+            activeDot={{ r: 4, fill: '#5B8DEF', stroke: '#080808', strokeWidth: 2 }}
           />
 
           {/* Clicks area — on top */}
@@ -159,7 +159,7 @@ export default function ViewsClicksAreaChart({ data, period }: Props) {
             strokeWidth={2}
             fill="url(#gradClicks)"
             dot={false}
-            activeDot={{ r: 4, fill: '#E50914', stroke: '#141414', strokeWidth: 2 }}
+            activeDot={{ r: 4, fill: '#E50914', stroke: '#080808', strokeWidth: 2 }}
           />
         </AreaChart>
       </ResponsiveContainer>

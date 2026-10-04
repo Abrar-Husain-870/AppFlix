@@ -197,7 +197,7 @@ export default function NetflixReasonCards() {
   return (
     <section style={{
       padding: '3.5rem 1.5rem 4.5rem',
-      background: '#141414',
+      background: 'transparent',
       position: 'relative',
       boxSizing: 'border-box',
     }}>

@@ -217,7 +217,7 @@ export default function ReviewModal({
               style={{
                 width: '100%',
                 padding: '0.75rem 1rem',
-                background: '#141414',
+                background: '#080808',
                 border: '1px solid #333333',
                 borderRadius: '0.6rem',
                 color: '#FFFFFF',
@@ -243,7 +243,7 @@ export default function ReviewModal({
               style={{
                 width: '100%',
                 padding: '0.75rem 1rem',
-                background: '#141414',
+                background: '#080808',
                 border: '1px solid #333333',
                 borderRadius: '0.6rem',
                 color: '#FFFFFF',

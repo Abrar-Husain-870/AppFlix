@@ -164,7 +164,7 @@ export default function AnalyticsLineChart({ data, period, dataKey, strokeColor,
               stroke={strokeColor}
               strokeWidth={2.5}
               dot={false}
-              activeDot={{ r: 4, fill: strokeColor, stroke: '#141414', strokeWidth: 2 }}
+              activeDot={{ r: 4, fill: strokeColor, stroke: '#080808', strokeWidth: 2 }}
             />
           </LineChart>
         </ResponsiveContainer>

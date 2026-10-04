@@ -9,6 +9,7 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import IconUploadCropper from '@/components/projects/IconUploadCropper'
 
 const PLATFORMS = ['web', 'ios', 'android', 'windows', 'macos', 'linux', 'browser_extension']
 const STAGES = [
@@ -149,7 +150,7 @@ export default function EditProjectClient({ project }: { project: Project }) {
   })
 
   return (
-    <div style={{ minHeight: '100vh', background: '#141414', padding: '2rem 1.5rem' }}>
+    <div style={{ minHeight: '100vh', background: '#080808', padding: '2rem 1.5rem' }}>
       <div style={{ maxWidth: '720px', margin: '0 auto' }}>
 
         {/* Header */}
@@ -416,32 +417,13 @@ export default function EditProjectClient({ project }: { project: Project }) {
               {/* App Icon */}
               <div style={{ background: '#1F1F1F', border: '1px solid #2B2B2B', borderRadius: '0.75rem', padding: '1.25rem' }}>
                 <Label>App Icon</Label>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                  <div style={{
-                    width: '72px', height: '72px', borderRadius: '0.75rem',
-                    background: '#262626', border: '1px solid #2B2B2B',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    overflow: 'hidden', flexShrink: 0,
-                  }}>
-                    {iconUrl
-                      ? <img src={iconUrl} alt="Icon" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                      : <ImageIcon size={24} style={{ color: '#444' }} />}
-                  </div>
-                  <div>
-                    <label htmlFor="icon-upload" style={{
-                      display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
-                      padding: '0.5rem 1rem', background: '#262626',
-                      border: '1px solid #2B2B2B', borderRadius: '0.4rem',
-                      color: '#FFFFFF', fontSize: '0.85rem', fontWeight: 500,
-                      cursor: 'pointer', transition: 'border-color 0.2s',
-                    }}>
-                      {uploadingIcon ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
-                      {uploadingIcon ? 'Uploading…' : 'Change Icon'}
-                    </label>
-                    <input id="icon-upload" type="file" accept="image/*" onChange={handleIconUpload} style={{ display: 'none' }} />
-                    <p style={{ color: '#555', fontSize: '0.75rem', marginTop: '0.4rem' }}>PNG/JPG, 512×512px recommended</p>
-                  </div>
-                </div>
+                <IconUploadCropper
+                  currentIconUrl={iconUrl}
+                  appName={project.name}
+                  tagline={project.tagline}
+                  userId={userId || undefined}
+                  onIconChange={(url) => setIconUrl(url)}
+                />
               </div>
 
               {/* Screenshots */}

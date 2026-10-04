@@ -2,6 +2,7 @@ import { createServerClient, createServiceRoleClient } from '@/lib/supabase/serv
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { CheckCircle, Clock, XCircle, FileText, Edit3, Eye, Trash2, ArrowUp } from 'lucide-react'
+import AppIcon from '@/components/ui/AppIcon'
 import DeleteProjectButton from '@/components/projects/DeleteProjectButton'
 import { getDeveloperProjectReports } from '@/app/actions/reports'
 import DeveloperReportManager from '@/components/dashboard/DeveloperReportManager'
@@ -54,7 +55,7 @@ export default async function DashboardProjectsPage({
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#141414', padding: '2rem 1.5rem' }}>
+    <div style={{ minHeight: '100vh', background: '#080808', padding: '2rem 1.5rem' }}>
       <BannerUrlCleaner />
       <div style={{ maxWidth: '900px', margin: '0 auto' }}>
         {/* Header */}
@@ -153,16 +154,12 @@ export default async function DashboardProjectsPage({
                     transition: 'border-color 0.2s', boxSizing: 'border-box', width: '100%',
                   }}>
                     {/* Icon */}
-                    <div style={{
-                      width: '44px', height: '44px', borderRadius: '0.6rem',
-                      background: '#262626', border: '1px solid #2B2B2B',
-                      overflow: 'hidden', flexShrink: 0,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    }}>
-                      {project.icon_url
-                        ? <img src={project.icon_url} alt={project.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                        : <FileText size={18} style={{ color: '#444' }} />}
-                    </div>
+                    <AppIcon
+                      src={project.icon_url}
+                      alt={project.name}
+                      size={44}
+                      fallbackText={project.name}
+                    />
 
                     {/* Info */}
                     <div style={{ flex: '1 1 200px', minWidth: 0 }}>

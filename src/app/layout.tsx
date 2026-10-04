@@ -69,7 +69,7 @@ export default function RootLayout({
     <html lang="en" className={cn("h-full", "antialiased", "font-sans", geist.variable)} suppressHydrationWarning data-scroll-behavior="smooth">
       <body
         className="min-h-full flex flex-col"
-        style={{ backgroundColor: "#141414", color: "#FFFFFF" }}
+        style={{ backgroundColor: "#080808", color: "#FFFFFF" }}
         suppressHydrationWarning
       >
         <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />

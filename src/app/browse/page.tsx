@@ -226,7 +226,7 @@ export default function BrowsePage() {
   }, [fetchProjects, categories])
 
   return (
-    <div style={{ minHeight: '100vh', background: '#141414' }}>
+    <div style={{ minHeight: '100vh', background: '#080808' }}>
 
       {/* ── Netflix-style Hero ────────────────────────────────── */}
       <section style={{
@@ -258,7 +258,7 @@ export default function BrowsePage() {
         {/* Multi-layer dark overlay — Netflix style */}
         <div style={{
           position: 'absolute', inset: 0,
-          background: 'linear-gradient(to bottom, rgba(20,20,20,0.15) 0%, rgba(20,20,20,0.35) 50%, rgba(20,20,20,0.92) 100%)',
+          background: 'linear-gradient(to bottom, rgba(8,8,8,0.15) 0%, rgba(8,8,8,0.45) 50%, rgba(8,8,8,0.96) 100%)',
           pointerEvents: 'none',
           zIndex: 1,
         }} />
@@ -384,9 +384,9 @@ export default function BrowsePage() {
       {/* ── Filter + Browse Content Section (Overlaying Hero) ────── */}
       <div style={{ position: 'relative', zIndex: 10 }}>
         {/* Netflix Horizon Arc Divider Overlay */}
-        <NetflixHorizonDivider fillColor="#141414" />
+        <NetflixHorizonDivider fillColor="#080808" />
 
-        <div style={{ background: '#141414', minHeight: '60vh' }}>
+        <div style={{ background: '#080808', minHeight: '60vh' }}>
           {/* Netflix Trending Top 10 Row (Hidden when searching or filtering) */}
           {!debouncedSearch.trim() && selectedCategory === 'all' && (
             <NetflixTrendingRow projects={projects} title="Trending Now" />
@@ -470,7 +470,7 @@ export default function BrowsePage() {
                   bottom: 0,
                   width: '24px',
                   zIndex: 5,
-                  background: 'linear-gradient(to right, #141414 0%, transparent 100%)',
+                  background: 'linear-gradient(to right, #080808 0%, transparent 100%)',
                   pointerEvents: 'none',
                 }} />
 
@@ -482,7 +482,7 @@ export default function BrowsePage() {
                   bottom: 0,
                   width: '28px',
                   zIndex: 5,
-                  background: 'linear-gradient(to left, #141414 0%, transparent 100%)',
+                  background: 'linear-gradient(to left, #080808 0%, transparent 100%)',
                   pointerEvents: 'none',
                 }} />
 

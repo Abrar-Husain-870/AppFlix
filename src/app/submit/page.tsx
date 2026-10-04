@@ -6,6 +6,7 @@ import { submitProject } from '@/app/actions/submit'
 import { Upload, X, Loader2, CheckCircle, Globe, GitBranch, Smartphone, Image as ImageIcon } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import IconUploadCropper from '@/components/projects/IconUploadCropper'
 
 const PLATFORMS = ['web', 'ios', 'android', 'windows', 'macos', 'linux', 'browser_extension']
 const STAGES    = [
@@ -49,9 +50,10 @@ export default function SubmitPage() {
   const [categories, setCategories] = useState<Category[]>([])
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([])
   const [selectedTags, setSelectedTags] = useState<string[]>([])
+  const [appName, setAppName] = useState('')
+  const [tagline, setTagline] = useState('')
   const [iconUrl, setIconUrl] = useState('')
   const [screenshotUrls, setScreenshotUrls] = useState<string[]>([])
-  const [uploadingIcon, setUploadingIcon] = useState(false)
   const [uploadingScreenshot, setUploadingScreenshot] = useState(false)
   const router = useRouter()
   const [userId, setUserId] = useState<string | null>(null)
@@ -73,7 +75,7 @@ export default function SubmitPage() {
   if (checkingAuth) {
     return (
       <div style={{
-        minHeight: '100vh', background: '#141414',
+        minHeight: '100vh', background: '#080808',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         color: '#FFFFFF',
       }}>
@@ -105,13 +107,6 @@ export default function SubmitPage() {
     onDone(data.publicUrl)
   }
 
-  async function handleIconUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file) return
-    setUploadingIcon(true)
-    await uploadFile(file, 'icons', (url) => setIconUrl(url))
-    setUploadingIcon(false)
-  }
 
   async function handleScreenshotUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const files = Array.from(e.target.files ?? [])
@@ -126,7 +121,7 @@ export default function SubmitPage() {
   const fe = state?.fieldErrors ?? {}
 
   return (
-    <div style={{ minHeight: '100vh', background: '#141414', padding: '2rem 1.5rem' }}>
+    <div style={{ minHeight: '100vh', background: '#080808', padding: '2rem 1.5rem' }}>
       <div style={{ maxWidth: '680px', margin: '0 auto' }}>
         {/* Header */}
         <div style={{ marginBottom: '2rem' }}>
@@ -165,33 +160,14 @@ export default function SubmitPage() {
 
           {/* ── App Icon ── */}
           <div style={{ background: '#1F1F1F', border: '1px solid #2B2B2B', borderRadius: '0.75rem', padding: '1.25rem' }}>
-            <Label>App Icon</Label>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <div style={{
-                width: '64px', height: '64px', borderRadius: '0.75rem',
-                background: '#262626', border: '1px solid #2B2B2B',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                overflow: 'hidden', flexShrink: 0,
-              }}>
-                {iconUrl
-                  ? <img src={iconUrl} alt="Icon preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  : <ImageIcon size={24} style={{ color: '#444' }} />}
-              </div>
-              <div>
-                <label htmlFor="icon-upload" style={{
-                  display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
-                  padding: '0.5rem 1rem', background: '#262626',
-                  border: '1px solid #2B2B2B', borderRadius: '0.4rem',
-                  color: '#FFFFFF', fontSize: '0.85rem', fontWeight: 500,
-                  cursor: 'pointer', transition: 'border-color 0.2s',
-                }}>
-                  {uploadingIcon ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
-                  {uploadingIcon ? 'Uploading…' : 'Upload icon'}
-                </label>
-                <input id="icon-upload" type="file" accept="image/*" onChange={handleIconUpload} style={{ display: 'none' }} />
-                <p style={{ color: '#555', fontSize: '0.75rem', marginTop: '0.4rem' }}>PNG/JPG, 512×512px recommended</p>
-              </div>
-            </div>
+            <Label required>App Icon</Label>
+            <IconUploadCropper
+              currentIconUrl={iconUrl}
+              appName={appName || 'Your App Name'}
+              tagline={tagline || 'A maps app built for students, by students.'}
+              userId={userId || undefined}
+              onIconChange={(url) => setIconUrl(url)}
+            />
           </div>
 
           {/* ── Basic Info ── */}
@@ -201,6 +177,8 @@ export default function SubmitPage() {
             <div>
               <Label required>App Name</Label>
               <input id="project-name" name="name" type="text" placeholder="e.g. CampusMap" required maxLength={60} style={inputStyle}
+                value={appName}
+                onChange={e => setAppName(e.target.value)}
                 onFocus={e => e.currentTarget.style.borderColor = '#E50914'}
                 onBlur={e => e.currentTarget.style.borderColor = '#2B2B2B'} />
               <FieldError msg={fe.name} />
@@ -209,6 +187,8 @@ export default function SubmitPage() {
             <div>
               <Label required>Tagline <span style={{ color: '#555', fontWeight: 400 }}>(one sentence)</span></Label>
               <input id="project-tagline" name="tagline" type="text" placeholder="A maps app built for students, by students." required maxLength={100} style={inputStyle}
+                value={tagline}
+                onChange={e => setTagline(e.target.value)}
                 onFocus={e => e.currentTarget.style.borderColor = '#E50914'}
                 onBlur={e => e.currentTarget.style.borderColor = '#2B2B2B'} />
               <FieldError msg={fe.tagline} />
@@ -414,13 +394,13 @@ export default function SubmitPage() {
           <button
             id="submit-project-btn"
             type="submit"
-            disabled={pending || uploadingIcon || uploadingScreenshot}
+            disabled={pending || uploadingScreenshot}
             style={{
               width: '100%', padding: '0.9rem',
-              background: (pending || uploadingIcon || uploadingScreenshot) ? '#8B0000' : '#E50914',
+              background: (pending || uploadingScreenshot) ? '#8B0000' : '#E50914',
               color: '#FFFFFF', fontWeight: 700, fontSize: '1rem',
               border: 'none', borderRadius: '0.6rem',
-              cursor: (pending || uploadingIcon || uploadingScreenshot) ? 'not-allowed' : 'pointer',
+              cursor: (pending || uploadingScreenshot) ? 'not-allowed' : 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
               transition: 'background 0.2s', boxShadow: '0 4px 20px rgba(229,9,20,0.25)',
             }}

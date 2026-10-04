@@ -7,7 +7,7 @@ export default function manifest(): MetadataRoute.Manifest {
     description: 'The premier showcase platform for university student-built apps.',
     start_url: '/',
     display: 'standalone',
-    background_color: '#141414',
+    background_color: '#080808',
     theme_color: '#E50914',
     orientation: 'portrait-primary',
     icons: [

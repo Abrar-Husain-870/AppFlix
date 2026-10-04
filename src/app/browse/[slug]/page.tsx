@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import { headers } from 'next/headers'
 import Link from 'next/link'
 import UpvoteButton from '@/components/projects/UpvoteButton'
+import AppIcon from '@/components/ui/AppIcon'
 import BookmarkButton from '@/components/projects/BookmarkButton'
 import ExternalLinkButton from '@/components/projects/ExternalLinkButton'
 import ViewTracker from '@/components/projects/ViewTracker'
@@ -134,12 +135,12 @@ export default async function ProjectDetailPage({ params }: Props) {
   })
 
   return (
-    <div style={{ minHeight: '100vh', background: '#141414' }}>
+    <div style={{ minHeight: '100vh', background: '#080808' }}>
       {/* View event tracker — fires client-side with proper visitor_id */}
       <ViewTracker projectId={project.id} deviceType={deviceType} />
       {/* Hero banner */}
       <div style={{
-        background: 'linear-gradient(180deg, rgba(229,9,20,0.06) 0%, #141414 100%)',
+        background: 'linear-gradient(180deg, rgba(229,9,20,0.06) 0%, #080808 100%)',
         borderBottom: '1px solid #2B2B2B',
         padding: '2.5rem 1.5rem',
       }}>
@@ -214,16 +215,12 @@ export default async function ProjectDetailPage({ params }: Props) {
           </div>
 
           {/* Icon */}
-          <div style={{
-            width: '80px', height: '80px', borderRadius: '1.1rem',
-            background: '#1F1F1F', border: '1px solid #2B2B2B',
-            overflow: 'hidden', flexShrink: 0,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
-            {project.icon_url
-              ? <img src={project.icon_url} alt={project.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-              : <Globe size={32} style={{ color: '#444' }} />}
-          </div>
+          <AppIcon
+            src={project.icon_url}
+            alt={project.name}
+            size={80}
+            fallbackText={project.name}
+          />
 
           {/* Title block */}
           <div style={{ flex: 1, minWidth: '200px' }}>

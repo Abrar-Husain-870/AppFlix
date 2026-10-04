@@ -9,7 +9,7 @@
 /* are set once here and override shadcn's neutral defaults.           */
 :root {
   /* ── AppFlix Netflix palette ── */
-  --background:       #141414;  /* Deep black page background */
+  --background:       #080808;  /* Deep off-black page background */
   --background-card:  #1F1F1F;  /* Charcoal card/container bg */
   --background-input: #262626;  /* Input field bg */
   --background-hover: #2A2A2A;  /* Hover state bg */
@@ -272,7 +272,7 @@ body {
 /* .dark class intentionally mirrors :root — AppFlix is always dark. */
 /* shadcn components that add class="dark" will still render correctly. */
 .dark {
-  --background:       #141414;
+  --background:       #080808;
   --card:             #1F1F1F;
   --card-foreground:  #FFFFFF;
   --popover:          #1F1F1F;

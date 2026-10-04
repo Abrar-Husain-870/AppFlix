@@ -366,7 +366,7 @@ export default function AnalyticsPage() {
   const hasData = !loading && (events.length > 0 || totalBookmarks > 0)
 
   return (
-    <div style={{ minHeight: '100vh', background: '#141414', padding: '2rem 1.5rem' }}>
+    <div style={{ minHeight: '100vh', background: '#080808', padding: '2rem 1.5rem' }}>
       <div style={{ maxWidth: '960px', margin: '0 auto' }}>
 
         {/* ── Header ── */}

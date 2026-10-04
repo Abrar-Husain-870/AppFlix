@@ -3,6 +3,7 @@
 import { useRef, useState, useEffect } from 'react'
 import Link from 'next/link'
 import { ChevronLeft, ChevronRight, ArrowUpRight, Flame } from 'lucide-react'
+import AppIcon from '@/components/ui/AppIcon'
 
 interface Project {
   id: string
@@ -268,31 +269,28 @@ export default function NetflixTrendingRow({ projects, title = 'Trending Now' }:
                           top: '42%',
                           left: '50%',
                           transform: 'translate(-50%, -50%)',
-                          width: '62%',
-                          height: 'auto',
+                          width: '64%',
+                          maxWidth: '92px',
                           aspectRatio: '1/1',
-                          borderRadius: '18px',
-                          overflow: 'hidden',
-                          border: '1px solid rgba(255, 255, 255, 0.3)',
-                          boxShadow: '0 8px 24px rgba(0, 0, 0, 0.85)',
-                          background: 'rgba(255, 255, 255, 0.15)',
-                          backdropFilter: 'blur(10px)',
                           zIndex: 2,
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          padding: '6px',
-                          boxSizing: 'border-box',
                         }}>
-                          <img
+                          <AppIcon
                             src={iconSrc}
                             alt={project.name}
+                            size={84}
                             style={{
                               width: '100%',
                               height: '100%',
-                              objectFit: 'contain',
-                              borderRadius: '10px',
+                              minWidth: 'unset',
+                              minHeight: 'unset',
+                              boxShadow: '0 12px 30px rgba(0, 0, 0, 0.9)',
+                              border: '1px solid rgba(255, 255, 255, 0.16)',
+                              background: '#161616',
                             }}
+                            fallbackText={project.name}
                           />
                         </div>
                       </div>

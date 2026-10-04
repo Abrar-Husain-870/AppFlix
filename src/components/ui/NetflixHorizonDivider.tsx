@@ -4,7 +4,7 @@ interface NetflixHorizonDividerProps {
   fillColor?: string
 }
 
-export default function NetflixHorizonDivider({ fillColor = '#141414' }: NetflixHorizonDividerProps) {
+export default function NetflixHorizonDivider({ fillColor = '#080808' }: NetflixHorizonDividerProps) {
   return (
     <>
       {/* Desktop Divider (Unchanged for screens > 768px) */}

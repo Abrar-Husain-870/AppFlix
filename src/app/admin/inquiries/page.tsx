@@ -83,7 +83,7 @@ export default function AdminInquiriesPage() {
   const resolvedCount = inquiries.filter(i => i.status === 'resolved').length
 
   return (
-    <main style={{ minHeight: '100vh', background: '#141414', padding: '2.5rem 1.5rem 5rem' }}>
+    <main style={{ minHeight: '100vh', background: '#080808', padding: '2.5rem 1.5rem 5rem' }}>
       <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
         
         {/* Admin Navigation Bar Tabs */}

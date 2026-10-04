@@ -107,14 +107,14 @@ export default function AccountPage() {
 
   if (!profile) {
     return (
-      <div style={{ minHeight: '100vh', background: '#141414', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ minHeight: '100vh', background: '#080808', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <Loader2 size={28} className="animate-spin" style={{ color: '#E50914' }} />
       </div>
     )
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#141414', padding: '2rem 1rem', boxSizing: 'border-box' }}>
+    <div style={{ minHeight: '100vh', background: '#080808', padding: '2rem 1rem', boxSizing: 'border-box' }}>
       <div style={{ maxWidth: '760px', margin: '0 auto' }}>
 
         {/* Header */}
@@ -169,7 +169,7 @@ export default function AccountPage() {
                 <label htmlFor="avatar-upload" style={{
                   position: 'absolute', bottom: '-2px', right: '-2px',
                   width: '26px', height: '26px', borderRadius: '50%',
-                  background: '#E50914', border: '2px solid #141414',
+                  background: '#E50914', border: '2px solid #080808',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   cursor: 'pointer',
                 }}>
