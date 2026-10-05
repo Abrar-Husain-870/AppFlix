@@ -123,9 +123,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: 'Payment ID already processed' }, { status: 200 })
     }
 
-    // Activate Entitlement: Calculate 90 days from NOW
+    // Activate Entitlement: Calculate 2 days from NOW (dev testing)
     const now = new Date()
-    const expiresAt = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000).toISOString()
+    const expiresAt = new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000).toISOString()
 
     // Update listing_slots
     const { error: slotUpdateErr } = await supabaseService

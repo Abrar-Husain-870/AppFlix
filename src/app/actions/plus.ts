@@ -177,7 +177,7 @@ export async function devSimulatePaymentSuccess(orderId: string) {
 
   const supabaseService = await createServiceRoleClient()
   const now = new Date()
-  const expiresAt = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000).toISOString()
+  const expiresAt = new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000).toISOString()
 
   // Find slot
   const { data: slot } = await supabaseService

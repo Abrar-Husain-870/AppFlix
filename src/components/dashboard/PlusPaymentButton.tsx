@@ -37,7 +37,7 @@ export default function PlusPaymentButton({
           amount: order.amount,
           currency: order.currency,
           name: 'AppFlix Plus',
-          description: `90-day Public Listing for ${projectName}`,
+          description: `2-day Public Listing for ${projectName}`,
           order_id: order.order_id,
           handler: function (response: any) {
             startTransition(async () => {
@@ -68,7 +68,7 @@ export default function PlusPaymentButton({
       if (process.env.NODE_ENV === 'development') {
         const result = await devSimulatePaymentSuccess(order.order_id)
         if (result.success) {
-          setMessage('Payment successful! 90-day listing activated.')
+          setMessage('Payment successful! 2-day listing activated.')
           startTransition(() => {
             window.location.reload()
           })
@@ -108,7 +108,7 @@ export default function PlusPaymentButton({
         ) : (
           <CreditCard size={13} />
         )}
-        {isExpired ? 'Renew ₹1 (90 days)' : 'Pay ₹1 to Publish'}
+        {isExpired ? 'Renew ₹1 (2 days)' : 'Pay ₹1 to Publish'}
       </button>
       {message && (
         <span style={{ fontSize: '0.7rem', color: '#2ECC71', fontWeight: 600 }}>

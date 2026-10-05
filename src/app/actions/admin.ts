@@ -55,7 +55,7 @@ export async function approveProject(projectId: string) {
         type: 'project_approved',
         title: 'Project Approved — Payment Required',
         project_id: projectId,
-        message: 'Your project has been approved! Pay ₹79 for a 90-day listing to make it publicly visible.',
+        message: 'Your project has been approved! Pay ₹1 for a 2-day listing to make it publicly visible.',
       })
     }
 
@@ -170,7 +170,7 @@ export async function approveProject(projectId: string) {
         type: 'project_approved',
         title: 'Project Approved — Payment Required',
         project_id: projectId,
-        message: 'Your project has been approved! Pay ₹79 for a 90-day listing to make it publicly visible.',
+        message: 'Your project has been approved! Pay ₹1 for a 2-day listing to make it publicly visible.',
       })
     }
   }
