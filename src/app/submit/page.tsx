@@ -163,7 +163,7 @@ export default function SubmitPage() {
             <Label required>App Icon</Label>
             <IconUploadCropper
               currentIconUrl={iconUrl}
-              appName={appName || 'Your App Name'}
+              appName={appName}
               tagline={tagline || 'A maps app built for students, by students.'}
               userId={userId || undefined}
               onIconChange={(url) => setIconUrl(url)}

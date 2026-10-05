@@ -42,6 +42,15 @@ export default function AppIcon({
 
   // Standard squircle curvature: ~22% of dimension
   const borderRadius = Math.max(6, Math.round(size * 0.22))
+
+  const isSamplePlaceholder =
+    !fallbackText ||
+    fallbackText.trim() === '' ||
+    fallbackText === 'Your App Name' ||
+    fallbackText.toLowerCase() === 'app icon' ||
+    fallbackText.toLowerCase().includes('sample') ||
+    fallbackText.toLowerCase().includes('choose')
+
   const initial = (fallbackText || alt || '?').trim().charAt(0).toUpperCase()
 
   const showImage = Boolean(src) && !imageError
@@ -84,6 +93,54 @@ export default function AppIcon({
           }}
           loading="lazy"
         />
+      ) : isSamplePlaceholder ? (
+        <div
+          style={{
+            width: '100%',
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'linear-gradient(135deg, #222222 0%, #121212 100%)',
+            border: '1.5px dashed rgba(255, 255, 255, 0.25)',
+            borderRadius: `${borderRadius}px`,
+            padding: '2px',
+            boxSizing: 'border-box',
+            userSelect: 'none',
+          }}
+        >
+          <svg
+            width={Math.max(16, Math.round(size * 0.36))}
+            height={Math.max(16, Math.round(size * 0.36))}
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#E50914"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            style={{ marginBottom: size >= 54 ? '2px' : 0 }}
+          >
+            <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
+            <circle cx="9" cy="9" r="2" />
+            <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
+          </svg>
+          {size >= 48 && (
+            <span
+              style={{
+                fontSize: `${Math.max(6.5, Math.round(size * 0.11))}px`,
+                fontWeight: 700,
+                color: '#AAAAAA',
+                letterSpacing: '0.02em',
+                lineHeight: 1.1,
+                textAlign: 'center',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {size >= 58 ? 'Choose Icon' : 'Choose'}
+            </span>
+          )}
+        </div>
       ) : (
         <div
           style={{

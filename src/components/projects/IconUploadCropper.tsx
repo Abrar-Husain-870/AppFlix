@@ -36,7 +36,7 @@ const OUTPUT_SIZE = 512
 
 export default function IconUploadCropper({
   currentIconUrl,
-  appName = 'Your App Name',
+  appName = '',
   tagline = 'A fast, reliable app built for the community.',
   categoryName = 'Productivity',
   userId,
@@ -331,7 +331,7 @@ export default function IconUploadCropper({
         <div style={{ position: 'relative' }}>
           <AppIcon
             src={livePreviewUrl || currentIconUrl}
-            alt={appName || 'App Icon'}
+            alt={appName || 'Choose Icon'}
             size={64}
             fallbackText={appName}
           />
@@ -874,7 +874,7 @@ export default function IconUploadCropper({
                     <div style={{ flexShrink: 0 }}>
                       <AppIcon
                         src={livePreviewUrl}
-                        alt={appName}
+                        alt={appName || 'Choose Icon'}
                         size={54}
                         fallbackText={appName}
                         style={{
@@ -964,39 +964,209 @@ export default function IconUploadCropper({
                   </div>
                 </div>
 
-                {/* Trending Now Banner Preview */}
+                {/* Trending Now Poster Card Preview */}
                 <div style={{ marginTop: '1.25rem' }}>
-                  <span style={{ fontSize: '0.78rem', color: '#888888', display: 'block', marginBottom: '0.4rem' }}>
-                    Trending Now Centerpiece Preview:
+                  <span style={{ fontSize: '0.78rem', color: '#888888', display: 'block', marginBottom: '0.6rem' }}>
+                    Trending Now Card Preview:
                   </span>
-                  <div
-                    style={{
-                      height: '90px',
-                      borderRadius: '8px',
-                      position: 'relative',
-                      overflow: 'hidden',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      border: '1px solid rgba(255, 255, 255, 0.1)',
-                    }}
-                  >
-                    <img
-                      src="/assets/poster backgronds for apps.jpg"
-                      alt=""
-                      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
-                    />
-                    <div style={{ position: 'absolute', inset: 0, background: 'rgba(0, 0, 0, 0.55)' }} />
-                    <div style={{ position: 'relative', zIndex: 2 }}>
-                      <AppIcon
-                        src={livePreviewUrl}
-                        alt={appName}
-                        size={52}
-                        fallbackText={appName}
+                  <div style={{ display: 'flex', justifyContent: 'center', padding: '0.5rem 0' }}>
+                    <div
+                      className="trending-card-item"
+                      style={{
+                        position: 'relative',
+                        display: 'flex',
+                        flexShrink: 0,
+                        width: 'clamp(135px, 40vw, 195px)',
+                        height: 'clamp(185px, 52vw, 260px)',
+                        alignItems: 'flex-end',
+                        zIndex: 1,
+                      }}
+                    >
+                      {/* Poster Card Container */}
+                      <div
+                        className="trending-poster-card"
                         style={{
-                          background: fillColor === 'transparent' ? '#161616' : fillColor,
+                          position: 'absolute',
+                          right: 0,
+                          top: 0,
+                          bottom: 0,
+                          width: '82%',
+                          borderRadius: '8px',
+                          overflow: 'hidden',
+                          background: 'linear-gradient(145deg, #0F0F0F 0%, #080808 100%)',
+                          border: '1px solid rgba(255, 255, 255, 0.07)',
+                          boxShadow: '0 10px 30px rgba(0, 0, 0, 0.8)',
+                          zIndex: 1,
                         }}
-                      />
+                      >
+                        {/* Background Poster Image */}
+                        <img
+                          src="/assets/poster backgronds for apps.jpg"
+                          alt=""
+                          style={{
+                            position: 'absolute',
+                            inset: 0,
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover',
+                          }}
+                        />
+                        <div
+                          style={{
+                            position: 'absolute',
+                            inset: 0,
+                            background: 'linear-gradient(to bottom, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.65) 100%)',
+                          }}
+                        />
+
+                        {/* Floating Centerpiece Badge */}
+                        <div
+                          style={{
+                            position: 'absolute',
+                            top: '42%',
+                            left: '50%',
+                            transform: 'translate(-50%, -50%)',
+                            width: '64%',
+                            maxWidth: '92px',
+                            aspectRatio: '1/1',
+                            zIndex: 2,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}
+                        >
+                          <AppIcon
+                            src={livePreviewUrl}
+                            alt={appName || 'Choose Icon'}
+                            size={84}
+                            style={{
+                              width: '100%',
+                              height: '100%',
+                              minWidth: 'unset',
+                              minHeight: 'unset',
+                              boxShadow: '0 12px 30px rgba(0, 0, 0, 0.9)',
+                              border: '1px solid rgba(255, 255, 255, 0.16)',
+                              background: fillColor === 'transparent' ? '#161616' : fillColor,
+                            }}
+                            fallbackText={appName}
+                          />
+                        </div>
+
+                        {/* AppFlix Icon Stamp at Top-Left */}
+                        <img
+                          src="/assets/app-logos/AppFlix_circular_Icon__light_-removebg-preview.png"
+                          alt="AppFlix"
+                          style={{
+                            position: 'absolute',
+                            top: '10px',
+                            left: '10px',
+                            width: '24px',
+                            height: '24px',
+                            objectFit: 'contain',
+                            filter: 'drop-shadow(0 2px 6px rgba(0, 0, 0, 0.85))',
+                            zIndex: 5,
+                            pointerEvents: 'none',
+                          }}
+                        />
+
+                        {/* Bottom Content Gradient Overlay */}
+                        <div
+                          style={{
+                            position: 'absolute',
+                            inset: 0,
+                            background: 'linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.4) 45%, transparent 75%)',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            justifyContent: 'flex-end',
+                            padding: '0.65rem 0.5rem 0.65rem 1.6rem',
+                            boxSizing: 'border-box',
+                            zIndex: 3,
+                          }}
+                        >
+                          <h3
+                            style={{
+                              color: '#FFFFFF',
+                              fontSize: '0.8rem',
+                              fontWeight: 700,
+                              margin: 0,
+                              lineHeight: 1.2,
+                              whiteSpace: 'nowrap',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                            }}
+                          >
+                            {appName || 'App Name'}
+                          </h3>
+
+                          <div
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              marginTop: '0.25rem',
+                            }}
+                          >
+                            <span
+                              style={{
+                                color: '#E50914',
+                                fontSize: '0.7rem',
+                                fontWeight: 700,
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.2rem',
+                              }}
+                            >
+                              <Flame size={10} /> 24
+                            </span>
+                            <ArrowUpRight size={12} style={{ color: 'rgba(255,255,255,0.7)' }} />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Netflix Rank Outline Number (Dual-Layered for 100% Solid Black Fill + Crisp White Outline on all devices) */}
+                      <div
+                        className="trending-rank-num"
+                        style={{
+                          position: 'absolute',
+                          left: '-10px',
+                          bottom: '-12px',
+                          fontSize: 'clamp(5.5rem, 16vw, 7.5rem)',
+                          fontWeight: 900,
+                          fontFamily: 'Impact, -apple-system, sans-serif',
+                          lineHeight: 0.8,
+                          filter: 'drop-shadow(3px 5px 10px rgba(0,0,0,0.95))',
+                          zIndex: 10,
+                          userSelect: 'none',
+                          pointerEvents: 'none',
+                          letterSpacing: '-0.06em',
+                        }}
+                      >
+                        {/* Outline stroke layer behind */}
+                        <span
+                          style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            color: '#E5E5E5',
+                            WebkitTextFillColor: '#E5E5E5',
+                            WebkitTextStroke: '4px #E5E5E5',
+                            zIndex: 1,
+                          }}
+                        >
+                          1
+                        </span>
+                        {/* Solid black fill layer in front */}
+                        <span
+                          style={{
+                            position: 'relative',
+                            color: '#000000',
+                            WebkitTextFillColor: '#000000',
+                            zIndex: 2,
+                          }}
+                        >
+                          1
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
