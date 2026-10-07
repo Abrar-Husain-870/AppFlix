@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import crypto from 'crypto'
 import { createServiceRoleClient } from '@/lib/supabase/server'
+import { createNotification } from '@/app/actions/notifications'
 
 export async function POST(req: NextRequest) {
   try {
@@ -156,6 +157,21 @@ export async function POST(req: NextRequest) {
 
       if (projUpdateErr) {
         console.error('[Razorpay Webhook] Failed to update project listing state:', projUpdateErr)
+      } else {
+        try {
+          const { data: proj } = await supabaseService.from('projects').select('name').eq('id', slot.project_id).single()
+          const expiryDateStr = new Date(expiresAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+          await createNotification({
+            userId: slot.user_id,
+            type: 'project_approved',
+            title: `✨ Listing Activated: "${proj?.name || 'Your App'}"`,
+            message: `Payment successful! Your app is live on AppFlix and publicly listed till ${expiryDateStr}.`,
+            link: '/dashboard/projects',
+            projectId: slot.project_id,
+          })
+        } catch (notifErr) {
+          console.error('[Razorpay Webhook notification error]:', notifErr)
+        }
       }
     }
 

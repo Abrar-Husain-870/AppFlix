@@ -2,6 +2,7 @@
 
 import { createServerClient, createServiceRoleClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { createNotification } from './notifications'
 
 export interface ListingStatus {
   free_listing_used: boolean
@@ -224,6 +225,21 @@ export async function devSimulatePaymentSuccess(orderId: string) {
         listing_expires_at: expiresAt,
       })
       .eq('id', slot.project_id)
+
+    try {
+      const { data: proj } = await supabaseService.from('projects').select('name').eq('id', slot.project_id).single()
+      const expiryDateStr = new Date(expiresAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+      await createNotification({
+        userId: slot.user_id,
+        type: 'project_approved',
+        title: `✨ Listing Activated: "${proj?.name || 'Your App'}"`,
+        message: `Payment successful! Your app is live on AppFlix and publicly listed till ${expiryDateStr}.`,
+        link: '/dashboard/projects',
+        projectId: slot.project_id,
+      })
+    } catch (notifErr) {
+      console.error('[devSimulatePaymentSuccess notification error]:', notifErr)
+    }
   }
 
   revalidatePath('/browse')

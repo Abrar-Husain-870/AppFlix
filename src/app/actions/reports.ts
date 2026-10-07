@@ -3,6 +3,7 @@
 import { createServerClient, createServiceRoleClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { assertAdmin } from './admin'
+import { createNotification } from './notifications'
 
 export interface ReportItem {
   id: string
@@ -105,6 +106,28 @@ export async function submitReport(projectId: string, reasonInput: string, custo
   if (error) {
     console.error('[submitReport Error]:', error)
     throw new Error(error.message || 'Failed to submit report.')
+  }
+
+  // Notify app developer about the new report
+  try {
+    const { data: project } = await supabaseService
+      .from('projects')
+      .select('name, user_id')
+      .eq('id', projectId)
+      .single()
+
+    if (project && project.user_id !== user.id) {
+      await createNotification({
+        userId: project.user_id,
+        type: 'system_notice',
+        title: `🛡️ App Reported: "${project.name}"`,
+        message: `A user reported an issue (${enumReason}) with your app. Check your dashboard to view the report and provide context for admin review.`,
+        link: '/dashboard/projects',
+        projectId: projectId,
+      })
+    }
+  } catch (notifErr) {
+    console.error('[submitReport notification error]:', notifErr)
   }
 
   revalidatePath(`/browse`)
@@ -268,6 +291,13 @@ export async function adminResolveReport(reportId: string) {
   await assertAdmin()
   const supabaseService = await createServiceRoleClient()
 
+  // Fetch report details before update
+  const { data: report } = await supabaseService
+    .from('reports')
+    .select('id, project_id, reporter_id, projects(name, slug, user_id)')
+    .eq('id', reportId)
+    .single()
+
   const { error } = await supabaseService
     .from('reports')
     .update({
@@ -279,6 +309,37 @@ export async function adminResolveReport(reportId: string) {
 
   if (error) throw new Error(error.message)
 
+  // Notify reporter & developer
+  try {
+    const appName = (report?.projects as any)?.name || 'the app'
+    const appSlug = (report?.projects as any)?.slug || ''
+    const devUserId = (report?.projects as any)?.user_id
+
+    if (report?.reporter_id) {
+      await createNotification({
+        userId: report.reporter_id,
+        type: 'system_notice',
+        title: `✅ Report Resolved: "${appName}"`,
+        message: `Your report regarding "${appName}" has been reviewed and resolved by platform moderation.`,
+        link: appSlug ? `/browse/${appSlug}` : '/browse',
+        projectId: report?.project_id,
+      })
+    }
+
+    if (devUserId) {
+      await createNotification({
+        userId: devUserId,
+        type: 'system_notice',
+        title: `✅ Report Resolved: "${appName}"`,
+        message: `The report on "${appName}" has been marked as resolved by the platform admin.`,
+        link: '/dashboard/projects',
+        projectId: report?.project_id,
+      })
+    }
+  } catch (notifErr) {
+    console.error('[adminResolveReport notification error]:', notifErr)
+  }
+
   revalidatePath('/admin/reports')
   revalidatePath('/dashboard/projects')
   return { success: true }
@@ -287,6 +348,13 @@ export async function adminResolveReport(reportId: string) {
 export async function adminDismissReport(reportId: string) {
   await assertAdmin()
   const supabaseService = await createServiceRoleClient()
+
+  // Fetch report details before update
+  const { data: report } = await supabaseService
+    .from('reports')
+    .select('id, project_id, reporter_id, projects(name, slug, user_id)')
+    .eq('id', reportId)
+    .single()
 
   const { error } = await supabaseService
     .from('reports')
@@ -298,6 +366,37 @@ export async function adminDismissReport(reportId: string) {
     .eq('id', reportId)
 
   if (error) throw new Error(error.message)
+
+  // Notify reporter & developer
+  try {
+    const appName = (report?.projects as any)?.name || 'the app'
+    const appSlug = (report?.projects as any)?.slug || ''
+    const devUserId = (report?.projects as any)?.user_id
+
+    if (report?.reporter_id) {
+      await createNotification({
+        userId: report.reporter_id,
+        type: 'system_notice',
+        title: `ℹ️ Report Dismissed: "${appName}"`,
+        message: `Your report regarding "${appName}" was reviewed and dismissed by platform moderation.`,
+        link: appSlug ? `/browse/${appSlug}` : '/browse',
+        projectId: report?.project_id,
+      })
+    }
+
+    if (devUserId) {
+      await createNotification({
+        userId: devUserId,
+        type: 'system_notice',
+        title: `ℹ️ Report Dismissed: "${appName}"`,
+        message: `The report on "${appName}" was reviewed and dismissed by the admin. No action is required.`,
+        link: '/dashboard/projects',
+        projectId: report?.project_id,
+      })
+    }
+  } catch (notifErr) {
+    console.error('[adminDismissReport notification error]:', notifErr)
+  }
 
   revalidatePath('/admin/reports')
   revalidatePath('/dashboard/projects')

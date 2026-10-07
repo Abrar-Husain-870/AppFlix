@@ -2,6 +2,7 @@
 
 import { createServerClient, createServiceRoleClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { createNotification } from '@/app/actions/notifications'
 
 export interface ProjectComment {
   id: string
@@ -92,6 +93,35 @@ export async function submitComment(
       throw new Error('The comments table is currently being setup in database.')
     }
     throw new Error(error.message || 'Failed to submit comment.')
+  }
+
+  // 6. Notify the app developer if it's not their own comment
+  try {
+    const { data: project } = await supabaseService
+      .from('projects')
+      .select('name, user_id')
+      .eq('id', projectId)
+      .single()
+
+    if (project && project.user_id !== user.id) {
+      const { data: profile } = await supabaseService
+        .from('profiles')
+        .select('username')
+        .eq('id', user.id)
+        .single()
+
+      const reviewerName = profile?.username || 'A user'
+      await createNotification({
+        userId: project.user_id,
+        type: 'system_notice',
+        title: `💬 New Review: "${project.name}"`,
+        message: `@${reviewerName} left a ${validRating}★ review: "${cleanHeadline}"`,
+        link: `/browse/${slug}#comments-section`,
+        projectId: projectId,
+      })
+    }
+  } catch (notifErr) {
+    console.error('[submitComment notification error]:', notifErr)
   }
 
   revalidatePath(`/browse/${slug}`)
@@ -222,6 +252,37 @@ export async function replyToComment(
 
   if (error) {
     throw new Error(error.message || 'Failed to post reply.')
+  }
+
+  // Notify comment author about developer reply
+  try {
+    const { data: originalComment } = await supabaseService
+      .from('project_comments')
+      .select('user_id')
+      .eq('id', commentId)
+      .single()
+
+    if (originalComment && originalComment.user_id !== user.id) {
+      const { data: projData } = await supabaseService
+        .from('projects')
+        .select('name')
+        .eq('id', projectId)
+        .single()
+
+      const appName = projData?.name || 'the app'
+      const replySnippet = cleanReply.length > 70 ? cleanReply.slice(0, 70) + '...' : cleanReply
+
+      await createNotification({
+        userId: originalComment.user_id,
+        type: 'system_notice',
+        title: `💬 Developer Replied to Your Review`,
+        message: `The developer of "${appName}" replied: "${replySnippet}"`,
+        link: `/browse/${slug}#comments-section`,
+        projectId: projectId,
+      })
+    }
+  } catch (notifErr) {
+    console.error('[replyToComment notification error]:', notifErr)
   }
 
   revalidatePath(`/browse/${slug}`)

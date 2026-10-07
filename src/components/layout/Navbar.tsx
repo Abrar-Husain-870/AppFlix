@@ -13,6 +13,7 @@ import type { User as SupabaseUser } from '@supabase/supabase-js'
 
 import InstallPwaButton from '@/components/pwa/InstallPwaButton'
 import ContactUsModal from '@/components/ui/ContactUsModal'
+import NotificationBell from '@/components/notifications/NotificationBell'
 
 interface Profile {
   display_name: string | null
@@ -186,6 +187,9 @@ export default function Navbar() {
                   </Link>
                 </div>
               )}
+
+              {/* In-App Notifications Bell */}
+              <NotificationBell />
 
               {/* Avatar dropdown (Desktop) */}
               <div ref={dropdownRef} style={{ position: 'relative' }} className="desktop-only">
