@@ -11,6 +11,7 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import AvatarUploadCropper from '@/components/account/AvatarUploadCropper'
 
 interface Profile {
   id: string
@@ -58,7 +59,6 @@ export default function AccountPage() {
   const router = useRouter()
   const [profile, setProfile] = useState<Profile | null>(null)
   const [avatarUrl, setAvatarUrl] = useState('')
-  const [uploadingAvatar, setUploadingAvatar] = useState(false)
   const [userId, setUserId] = useState<string | null>(null)
   const [authEmail, setAuthEmail] = useState<string>('')
   const [bioLen, setBioLen] = useState(0)
@@ -88,31 +88,6 @@ export default function AccountPage() {
       }
     })
   }, [profileState])
-
-  async function handleAvatarUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file || !userId) return
-    setUploadingAvatar(true)
-    try {
-      const formData = new FormData()
-      formData.append('file', file)
-      const res = await fetch('/api/upload/avatar', {
-        method: 'POST',
-        body: formData,
-      })
-      const data = await res.json()
-      if (!res.ok || !data.success) {
-        throw new Error(data.error || 'Failed to upload profile picture')
-      }
-      setAvatarUrl(data.url + `?t=${Date.now()}`)
-      setProfile((prev) => prev ? { ...prev, avatar_url: data.url } : null)
-      router.refresh()
-    } catch (err: any) {
-      alert('Upload failed: ' + err.message)
-    } finally {
-      setUploadingAvatar(false)
-    }
-  }
 
   const joinDate = profile ? new Date(profile.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long' }) : ''
 
@@ -165,29 +140,18 @@ export default function AccountPage() {
 
           {/* Avatar + identity */}
           <Section title="Profile">
-            {/* Avatar */}
+            {/* Avatar with Interactive Crop & Zoom Modal */}
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1.25rem', marginBottom: '1.25rem' }}>
-              <div style={{ position: 'relative', flexShrink: 0 }}>
-                <div style={{
-                  width: '80px', height: '80px', borderRadius: '50%',
-                  background: '#262626', border: '2px solid #2B2B2B',
-                  overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                }}>
-                  {avatarUrl
-                    ? <img src={avatarUrl} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    : <User size={32} style={{ color: '#444' }} />}
-                </div>
-                <label htmlFor="avatar-upload" style={{
-                  position: 'absolute', bottom: '-2px', right: '-2px',
-                  width: '26px', height: '26px', borderRadius: '50%',
-                  background: '#E50914', border: '2px solid #080808',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  cursor: 'pointer',
-                }}>
-                  {uploadingAvatar ? <Loader2 size={12} className="animate-spin" style={{ color: '#fff' }} /> : <Camera size={12} style={{ color: '#fff' }} />}
-                </label>
-                <input id="avatar-upload" type="file" accept="image/*" onChange={handleAvatarUpload} style={{ display: 'none' }} />
-              </div>
+              <AvatarUploadCropper
+                currentAvatarUrl={avatarUrl}
+                username={profile.username}
+                displayName={profile.display_name ?? ''}
+                onAvatarChange={(newUrl) => {
+                  setAvatarUrl(newUrl)
+                  setProfile((prev) => (prev ? { ...prev, avatar_url: newUrl } : null))
+                  router.refresh()
+                }}
+              />
               <div style={{ flex: 1 }}>
                 <p style={{ color: '#FFFFFF', fontWeight: 700, fontSize: '1rem' }}>{profile.display_name || profile.username}</p>
                 <p style={{ color: '#666', fontSize: '0.82rem' }}>@{profile.username}</p>
