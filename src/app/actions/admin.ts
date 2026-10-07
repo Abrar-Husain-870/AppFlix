@@ -55,7 +55,7 @@ export async function approveProject(projectId: string) {
         type: 'project_approved',
         title: 'Project Approved — Payment Required',
         project_id: projectId,
-        message: 'Your project has been approved! Pay ₹1 for a 2-day listing to make it publicly visible.',
+        message: 'Your project has been approved! Pay ₹79 for a 90-day listing to make it publicly visible.',
       })
     }
 
@@ -170,7 +170,7 @@ export async function approveProject(projectId: string) {
         type: 'project_approved',
         title: 'Project Approved — Payment Required',
         project_id: projectId,
-        message: 'Your project has been approved! Pay ₹1 for a 2-day listing to make it publicly visible.',
+        message: 'Your project has been approved! Pay ₹79 for a 90-day listing to make it publicly visible.',
       })
     }
   }
@@ -274,9 +274,21 @@ export async function adminDeleteProject(projectId: string, reason?: string) {
     message: `Your app "${project.name}" was removed by an admin. Reason: ${reason || 'Violation of platform guidelines'}`,
   })
 
+  // Close/action any active reports for the deleted app
+  await supabase
+    .from('reports')
+    .update({
+      status: 'actioned',
+      reviewed_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    })
+    .eq('project_id', projectId)
+    .neq('status', 'dismissed')
+
   revalidatePath('/browse')
   revalidatePath('/dashboard/projects')
   revalidatePath('/admin/queue')
+  revalidatePath('/admin/reports')
 }
 
 

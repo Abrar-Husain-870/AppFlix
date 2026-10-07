@@ -9,43 +9,59 @@ interface Props {
 }
 
 export default function DeveloperReportManager({ reports }: Props) {
+  const activeReports = (reports || []).filter(
+    (r) => r.status !== 'actioned' && r.status !== 'resolved' && r.status !== 'dismissed'
+  )
   const [responseTexts, setResponseTexts] = useState<Record<string, string>>({})
   const [activeReportId, setActiveReportId] = useState<string | null>(null)
   const [pendingReportId, setPendingReportId] = useState<string | null>(null)
-  const [isExpanded, setIsExpanded] = useState(true)
+  const [isExpanded, setIsExpanded] = useState(false)
+  const [hasNewReport, setHasNewReport] = useState(false)
   const [isPending, startTransition] = useTransition()
   const [successId, setSuccessId] = useState<string | null>(null)
 
-  const topReportId = reports?.[0]?.id || ''
-
   useEffect(() => {
-    if (!topReportId) return
+    if (activeReports.length === 0) return
+
     try {
-      const stored = localStorage.getItem('appflix_reports_expanded')
-      const storedTopId = localStorage.getItem('appflix_reports_top_id')
-      
-      // If a new report has arrived, force expand view
-      if (storedTopId && storedTopId !== topReportId) {
-        setIsExpanded(true)
-        localStorage.setItem('appflix_reports_expanded', 'true')
-        localStorage.setItem('appflix_reports_top_id', topReportId)
+      // Remove legacy keys
+      localStorage.removeItem('appflix_reports_expanded')
+      localStorage.removeItem('appflix_reports_top_id')
+
+      const seenIdsJson = localStorage.getItem('appflix_seen_report_ids')
+      const currentIds = activeReports.map(r => r.id)
+
+      if (!seenIdsJson) {
+        // Initial baseline with current reports: keep collapsed by default
+        localStorage.setItem('appflix_seen_report_ids', JSON.stringify(currentIds))
+        setIsExpanded(false)
+        setHasNewReport(false)
       } else {
-        if (stored !== null) setIsExpanded(stored === 'true')
-        localStorage.setItem('appflix_reports_top_id', topReportId)
+        const seenIds: string[] = JSON.parse(seenIdsJson)
+        // Detect if any newly arrived report exists that wasn't seen previously
+        const unreadReportsExist = activeReports.some(r => !seenIds.includes(r.id))
+
+        if (unreadReportsExist) {
+          // A new report has arrived! Auto-expand and update seen list
+          setIsExpanded(true)
+          setHasNewReport(true)
+          localStorage.setItem('appflix_seen_report_ids', JSON.stringify(currentIds))
+        } else {
+          // No new reports: keep collapsed as default state
+          setIsExpanded(false)
+          setHasNewReport(false)
+        }
       }
-    } catch (e) {}
-  }, [topReportId])
+    } catch (e) {
+      setIsExpanded(false)
+    }
+  }, [activeReports])
 
   function toggleExpanded() {
-    const newState = !isExpanded
-    setIsExpanded(newState)
-    try {
-      localStorage.setItem('appflix_reports_expanded', String(newState))
-      localStorage.setItem('appflix_reports_top_id', topReportId)
-    } catch (e) {}
+    setIsExpanded(prev => !prev)
   }
 
-  if (!reports || reports.length === 0) return null
+  if (activeReports.length === 0) return null
 
   function handleSaveResponse(reportId: string) {
     const text = responseTexts[reportId]
@@ -86,9 +102,25 @@ export default function DeveloperReportManager({ reports }: Props) {
             <ShieldAlert size={18} />
           </div>
           <div>
-            <h2 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#FFFFFF', margin: 0, letterSpacing: '-0.02em' }}>
-              Active Project Reports ({reports.length})
-            </h2>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <h2 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#FFFFFF', margin: 0, letterSpacing: '-0.02em' }}>
+                Active Project Reports ({activeReports.length})
+              </h2>
+              {hasNewReport && (
+                <span style={{
+                  fontSize: '0.65rem',
+                  fontWeight: 800,
+                  textTransform: 'uppercase',
+                  padding: '0.15rem 0.45rem',
+                  borderRadius: '999px',
+                  background: '#E50914',
+                  color: '#FFFFFF',
+                  letterSpacing: '0.04em',
+                }}>
+                  New
+                </span>
+              )}
+            </div>
             <p style={{ fontSize: '0.8rem', color: '#AAAAAA', margin: 0 }}>
               Issues flagged by platform users or administrators. Provide an explanation or context for admin review below.
             </p>
@@ -101,7 +133,7 @@ export default function DeveloperReportManager({ reports }: Props) {
 
       {isExpanded && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          {reports.map(report => {
+          {activeReports.map(report => {
           const formattedDate = new Date(report.created_at).toLocaleDateString('en-US', {
             month: 'short', day: 'numeric', year: 'numeric',
           })

@@ -121,37 +121,44 @@ export async function getDeveloperProjectReports(): Promise<ReportItem[]> {
 
   const supabaseService = await createServiceRoleClient()
 
-  // First get all project IDs owned by user
+  // First get all active project IDs owned by user (exclude deleted apps)
   const { data: userProjects } = await supabaseService
     .from('projects')
-    .select('id, name, slug, icon_url, user_id')
+    .select('id, name, slug, icon_url, user_id, status, deleted_at')
     .eq('user_id', user.id)
+    .is('deleted_at', null)
+    .neq('status', 'deleted')
 
   if (!userProjects || userProjects.length === 0) return []
 
   const projectIds = userProjects.map(p => p.id)
   const projectMap = new Map(userProjects.map(p => [p.id, p]))
 
+  // Fetch only active reports (exclude actioned and dismissed reports)
   const { data: reports, error } = await supabaseService
     .from('reports')
     .select('*')
     .in('project_id', projectIds)
+    .neq('status', 'actioned')
+    .neq('status', 'dismissed')
     .order('created_at', { ascending: false })
 
   if (error) {
-    console.error('[getDeveloperProjectReports Error]:', error)
+    console.error('[getDeveloperProjectReports Error]:', error.message || error)
     return []
   }
 
-  return (reports || []).map((r: any) => {
-    const parsed = parseReportDetails(r.details)
-    return {
-      ...r,
-      details: parsed.reportReason,
-      developer_response: parsed.developerResponse || r.developer_response || null,
-      projects: projectMap.get(r.project_id) || null,
-    }
-  })
+  return (reports || [])
+    .filter((r: any) => r.status !== 'actioned' && r.status !== 'resolved' && r.status !== 'dismissed')
+    .map((r: any) => {
+      const parsed = parseReportDetails(r.details)
+      return {
+        ...r,
+        details: parsed.reportReason,
+        developer_response: parsed.developerResponse || r.developer_response || null,
+        projects: projectMap.get(r.project_id) || null,
+      }
+    })
 }
 
 // ─── 3. Developer Actions: Respond / Mark as Fixed ──────────────────────────

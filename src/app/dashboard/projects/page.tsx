@@ -239,13 +239,21 @@ export default async function DashboardProjectsPage({
                                 </span>
                               )
                             }
+                            const formattedDate = project.listing_expires_at
+                              ? new Date(project.listing_expires_at).toLocaleDateString('en-US', {
+                                  month: 'short',
+                                  day: 'numeric',
+                                  year: 'numeric',
+                                })
+                              : 'Active'
+
                             return (
                               <span style={{
                                 fontSize: '0.65rem', fontWeight: 700, padding: '0.15rem 0.5rem',
-                                borderRadius: '9999px', background: 'rgba(168,85,247,0.15)', color: '#C084FC',
-                                letterSpacing: '0.04em', textTransform: 'uppercase', border: '1px solid rgba(168,85,247,0.3)',
+                                borderRadius: '9999px', background: 'rgba(20, 184, 166, 0.15)', color: '#2DD4BF',
+                                letterSpacing: '0.04em', textTransform: 'uppercase', border: '1px solid rgba(20, 184, 166, 0.3)',
                               }}>
-                                🌟 Plus Active (until {new Date(project.listing_expires_at).toLocaleDateString()})
+                                📅 Listed till {formattedDate}
                               </span>
                             )
                           })()

@@ -94,7 +94,7 @@ export async function createListingOrder(projectId: string): Promise<RazorpayOrd
         user_id: user.id,
         project_id: projectId,
         razorpay_order_id: mockOrderId,
-        amount_paise: 100,
+        amount_paise: 7900,
         status: 'pending',
       })
 
@@ -103,7 +103,7 @@ export async function createListingOrder(projectId: string): Promise<RazorpayOrd
     return {
       order_id: mockOrderId,
       key_id: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_test_mock_key',
-      amount: 100,
+      amount: 7900,
       currency: 'INR',
       project_id: projectId,
     }
@@ -119,7 +119,7 @@ export async function createListingOrder(projectId: string): Promise<RazorpayOrd
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      amount: 100, // ₹1 in paise (temporary dev testing)
+      amount: 7900, // ₹79 in paise
       currency: 'INR',
       receipt: `rcpt_${projectId.slice(0, 8)}_${Date.now()}`,
       notes: {
@@ -144,7 +144,7 @@ export async function createListingOrder(projectId: string): Promise<RazorpayOrd
       user_id: user.id,
       project_id: projectId,
       razorpay_order_id: razorpayOrder.id,
-      amount_paise: 100,
+      amount_paise: 7900,
       status: 'pending',
     })
 
@@ -156,7 +156,7 @@ export async function createListingOrder(projectId: string): Promise<RazorpayOrd
   return {
     order_id: razorpayOrder.id,
     key_id: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || keyId,
-    amount: 100,
+    amount: 7900,
     currency: 'INR',
     project_id: projectId,
   }
@@ -177,7 +177,7 @@ export async function devSimulatePaymentSuccess(orderId: string) {
 
   const supabaseService = await createServiceRoleClient()
   const now = new Date()
-  const expiresAt = new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000).toISOString()
+  const expiresAt = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000).toISOString()
 
   // Find slot
   const { data: slot } = await supabaseService

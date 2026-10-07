@@ -75,8 +75,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid currency' }, { status: 400 })
     }
 
-    // 5. Amount Validation (100 paise = ₹1 - temporary dev testing)
-    if (amount !== 100) {
+    // 5. Amount Validation (7900 paise = ₹79)
+    if (amount !== 7900) {
       console.error(`[Razorpay Webhook] Invalid amount: ${amount}`)
       return NextResponse.json({ error: 'Invalid payment amount' }, { status: 400 })
     }
@@ -123,9 +123,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: 'Payment ID already processed' }, { status: 200 })
     }
 
-    // Activate Entitlement: Calculate 2 days from NOW (dev testing)
+    // Activate Entitlement: Calculate 90 days from NOW (3 months)
     const now = new Date()
-    const expiresAt = new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000).toISOString()
+    const expiresAt = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000).toISOString()
 
     // Update listing_slots
     const { error: slotUpdateErr } = await supabaseService
