@@ -93,14 +93,25 @@ export default function AccountPage() {
     const file = e.target.files?.[0]
     if (!file || !userId) return
     setUploadingAvatar(true)
-    const supabase = createClient()
-    const ext = file.name.split('.').pop()
-    const path = `avatars/${userId}/avatar.${ext}`
-    const { error } = await supabase.storage.from('icons').upload(path, file, { upsert: true })
-    if (error) { alert('Upload failed: ' + error.message); setUploadingAvatar(false); return }
-    const { data } = supabase.storage.from('icons').getPublicUrl(path)
-    setAvatarUrl(data.publicUrl + `?t=${Date.now()}`)
-    setUploadingAvatar(false)
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      const res = await fetch('/api/upload/avatar', {
+        method: 'POST',
+        body: formData,
+      })
+      const data = await res.json()
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Failed to upload profile picture')
+      }
+      setAvatarUrl(data.url + `?t=${Date.now()}`)
+      setProfile((prev) => prev ? { ...prev, avatar_url: data.url } : null)
+      router.refresh()
+    } catch (err: any) {
+      alert('Upload failed: ' + err.message)
+    } finally {
+      setUploadingAvatar(false)
+    }
   }
 
   const joinDate = profile ? new Date(profile.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long' }) : ''
