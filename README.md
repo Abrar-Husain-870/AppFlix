@@ -145,9 +145,9 @@ src/
 
 AppFlix includes modular SQL scripts to run in your Supabase SQL Editor:
 - **`schema.sql`**: Core tables (`profiles`, `projects`, `project_metrics`, `project_tags`, `categories`, `upvotes`, `bookmarks`, `project_reports`, `comments`).
-- **`schema-notifications.sql`**: In-app notifications table (`notifications`), RLS policies, indexes, and automated 60-day cleanup triggers.
-- **`schema-project-feedback.sql`**: Confidential user-to-developer feedback table (`project_feedback`), uniqueness constraints, and privacy RLS policies.
-- **`schema-storage-avatar-fix.sql`**: Supabase storage bucket configurations and RLS `UPDATE` policies for avatar and icon uploads.
+- **`supabase/migrations/schema-project-feedback.sql`**: Confidential user-to-developer feedback table (`project_feedback`), uniqueness constraints, and privacy RLS policies.
+- **`supabase/migrations/schema-storage-avatar-fix.sql`**: Supabase storage bucket configurations and RLS `UPDATE` policies for avatar and icon uploads.
+- **`supabase/migrations/schema-fix-edit-reapproval.sql`**: Stored procedure logic preserving active listings during project re-approval.
 
 ---
 
