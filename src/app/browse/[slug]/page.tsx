@@ -11,6 +11,7 @@ import { Globe, GitBranch, Calendar, Tag, Monitor, Smartphone, Pencil, ExternalL
 import ProductGallery from '@/components/projects/ProductGallery'
 import AdminDeleteButton from '@/components/admin/AdminDeleteButton'
 import ReportModal from '@/components/projects/ReportModal'
+import { PrivateFeedbackButton } from '@/components/projects/PrivateFeedbackModal'
 import type { Metadata } from 'next'
 import ShareCard from '@/components/projects/ShareCard'
 import ProjectCommentsSection from '@/components/projects/ProjectCommentsSection'
@@ -295,6 +296,16 @@ export default async function ProjectDetailPage({ params }: Props) {
                 projectId={project.id}
                 appName={project.name}
                 requireAuth={!user}
+              />
+            )}
+            {(!user || user.id !== project.user_id) && (
+              <PrivateFeedbackButton
+                projectId={project.id}
+                projectName={project.name}
+                developerName={(project.profiles as any)?.display_name || (project.profiles as any)?.username}
+                isOwner={false}
+                requireAuth={!user}
+                variant="full"
               />
             )}
             {user && project.user_id === user.id && (

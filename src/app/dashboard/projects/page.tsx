@@ -6,6 +6,8 @@ import AppIcon from '@/components/ui/AppIcon'
 import DeleteProjectButton from '@/components/projects/DeleteProjectButton'
 import { getDeveloperProjectReports } from '@/app/actions/reports'
 import DeveloperReportManager from '@/components/dashboard/DeveloperReportManager'
+import { getDeveloperProjectFeedback } from '@/app/actions/feedback'
+import DeveloperFeedbackManager from '@/components/dashboard/DeveloperFeedbackManager'
 import PlusPaymentButton from '@/components/dashboard/PlusPaymentButton'
 import BannerUrlCleaner from '@/components/dashboard/BannerUrlCleaner'
 
@@ -33,7 +35,7 @@ export default async function DashboardProjectsPage({
   const justUpdated      = params.updated       === 'true'
   const justMediaUpdated = params.media_updated === 'true'
 
-  const [projectsRes, reports] = await Promise.all([
+  const [projectsRes, reports, feedbackItems] = await Promise.all([
 
     supabaseService
       .from('projects')
@@ -41,6 +43,7 @@ export default async function DashboardProjectsPage({
       .eq('user_id', user.id)
       .order('created_at', { ascending: false }),
     getDeveloperProjectReports(),
+    getDeveloperProjectFeedback(),
   ])
 
 
@@ -77,6 +80,9 @@ export default async function DashboardProjectsPage({
 
         {/* Developer Active Reports Manager */}
         <DeveloperReportManager reports={reports} />
+
+        {/* Developer Private Feedback Manager */}
+        <DeveloperFeedbackManager feedbackList={feedbackItems} />
 
         {/* Banners */}
         {justSubmitted && grouped.pending.length > 0 && (
