@@ -15,7 +15,7 @@ const ALLOWED_MIME_TYPES = new Set([
 ])
 
 const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024 // 5 MB
-const TARGET_SIZE = 256 // Square avatar 256x256 px
+const TARGET_SIZE = 512 // High-res square avatar 512x512 px
 
 export async function POST(req: NextRequest) {
   try {

@@ -29,6 +29,8 @@ const MAX_FILE_SIZE_MB = 5
 const MIN_DIMENSION = 48
 const OUTPUT_SIZE = 512
 const VIEWPORT_SIZE = 260
+const CROP_SIZE = 240
+const CROP_OFFSET = (VIEWPORT_SIZE - CROP_SIZE) / 2
 
 export default function AvatarUploadCropper({
   currentAvatarUrl,
@@ -263,29 +265,34 @@ export default function AvatarUploadCropper({
         ctx.clearRect(0, 0, OUTPUT_SIZE, OUTPUT_SIZE)
       }
 
+      // 1. Calculate image dimensions in viewport coordinates (260px base)
       const aspect = img.naturalWidth / img.naturalHeight
-      let drawW = OUTPUT_SIZE
-      let drawH = OUTPUT_SIZE
+      let baseW = VIEWPORT_SIZE
+      let baseH = VIEWPORT_SIZE
 
       if (aspect > 1) {
-        drawH = OUTPUT_SIZE / aspect
+        baseH = VIEWPORT_SIZE / aspect
       } else {
-        drawW = OUTPUT_SIZE * aspect
+        baseW = VIEWPORT_SIZE * aspect
       }
 
-      drawW *= zoom
-      drawH *= zoom
+      const viewportDrawW = baseW * zoom
+      const viewportDrawH = baseH * zoom
 
-      // Scale pan from viewport (260px) to output (512px)
-      const scaleFactor = OUTPUT_SIZE / VIEWPORT_SIZE
-      const centerX = OUTPUT_SIZE / 2 + pan.x * scaleFactor
-      const centerY = OUTPUT_SIZE / 2 + pan.y * scaleFactor
+      // 2. Exact scale factor mapping the 240px circle bounding box to the 512px output canvas
+      const scaleFactor = OUTPUT_SIZE / CROP_SIZE
+      const outputDrawW = viewportDrawW * scaleFactor
+      const outputDrawH = viewportDrawH * scaleFactor
+
+      // 3. Center image relative to the circle (circle center in viewport is VIEWPORT_SIZE / 2)
+      const outputCenterX = OUTPUT_SIZE / 2 + pan.x * scaleFactor
+      const outputCenterY = OUTPUT_SIZE / 2 + pan.y * scaleFactor
 
       ctx.imageSmoothingEnabled = true
       ctx.imageSmoothingQuality = 'high'
-      ctx.drawImage(img, centerX - drawW / 2, centerY - drawH / 2, drawW, drawH)
+      ctx.drawImage(img, outputCenterX - outputDrawW / 2, outputCenterY - outputDrawH / 2, outputDrawW, outputDrawH)
 
-      // 2. Convert to Blob
+      // 4. Convert to Blob
       const blob = await new Promise<Blob | null>((resolve) => {
         canvas.toBlob((b) => resolve(b), 'image/png')
       })
@@ -294,7 +301,7 @@ export default function AvatarUploadCropper({
 
       const processedFile = new File([blob], `avatar-${Date.now()}.png`, { type: 'image/png' })
 
-      // 3. Send to /api/upload/avatar
+      // 5. Send to /api/upload/avatar
       const formData = new FormData()
       formData.append('file', processedFile)
 
@@ -308,10 +315,16 @@ export default function AvatarUploadCropper({
         throw new Error(data.error || 'Failed to upload profile picture.')
       }
 
-      // 4. Update parent and live preview
+      // 6. Update parent and live preview with fresh timestamp
       const finalUrl = data.url + `?t=${Date.now()}`
       setLiveAvatarUrl(finalUrl)
-      onAvatarChange(data.url)
+      onAvatarChange(finalUrl)
+
+      // 7. Broadcast global profile_updated event so Navbar updates instantly
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('profile_updated', { detail: { avatar_url: finalUrl } }))
+      }
+
       setModalOpen(false)
     } catch (err: any) {
       console.error('Failed to save profile picture:', err)

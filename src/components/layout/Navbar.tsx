@@ -52,7 +52,20 @@ export default function Navbar() {
 
     supabase.auth.getUser().then(({ data }) => loadProfile(data.user))
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, s) => loadProfile(s?.user ?? null))
-    return () => subscription.unsubscribe()
+
+    const handleProfileUpdated = (e: any) => {
+      if (e.detail?.avatar_url) {
+        setProfile((prev) => (prev ? { ...prev, avatar_url: e.detail.avatar_url } : null))
+      } else {
+        supabase.auth.getUser().then(({ data }) => loadProfile(data.user))
+      }
+    }
+    window.addEventListener('profile_updated', handleProfileUpdated)
+
+    return () => {
+      subscription.unsubscribe()
+      window.removeEventListener('profile_updated', handleProfileUpdated)
+    }
   }, [])
 
   // Close dropdown on outside click
