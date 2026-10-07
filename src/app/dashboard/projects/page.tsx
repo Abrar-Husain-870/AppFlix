@@ -59,6 +59,21 @@ export default async function DashboardProjectsPage({
 
   return (
     <div style={{ minHeight: '100vh', background: '#080808', padding: '2rem 1.5rem' }}>
+      <style>{`
+        .dash-app-icon-link {
+          transition: transform 0.15s ease, opacity 0.15s ease;
+        }
+        .dash-app-icon-link:hover {
+          transform: scale(1.06);
+          opacity: 0.9;
+        }
+        .dash-app-title-link {
+          transition: color 0.15s ease;
+        }
+        .dash-app-title-link:hover {
+          color: #E50914 !important;
+        }
+      `}</style>
       <BannerUrlCleaner />
       <div style={{ maxWidth: '900px', margin: '0 auto' }}>
         {/* Header */}
@@ -159,18 +174,55 @@ export default async function DashboardProjectsPage({
                     display: 'flex', gap: '0.85rem', alignItems: 'center', flexWrap: 'wrap',
                     transition: 'border-color 0.2s', boxSizing: 'border-box', width: '100%',
                   }}>
-                    {/* Icon */}
-                    <AppIcon
-                      src={project.icon_url}
-                      alt={project.name}
-                      size={44}
-                      fallbackText={project.name}
-                    />
+                    {/* Icon (Clickable to view app) */}
+                    {project.status !== 'deleted' && project.deleted_at === null ? (
+                      <Link
+                        href={`/browse/${project.slug}`}
+                        title={`View ${project.name}`}
+                        className="dash-app-icon-link"
+                        style={{ textDecoration: 'none', flexShrink: 0, display: 'inline-flex' }}
+                      >
+                        <AppIcon
+                          src={project.icon_url}
+                          alt={project.name}
+                          size={44}
+                          fallbackText={project.name}
+                        />
+                      </Link>
+                    ) : (
+                      <AppIcon
+                        src={project.icon_url}
+                        alt={project.name}
+                        size={44}
+                        fallbackText={project.name}
+                      />
+                    )}
 
                     {/* Info */}
                     <div style={{ flex: '1 1 200px', minWidth: 0 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                        <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#FFFFFF' }}>{project.name}</h3>
+                        {project.status !== 'deleted' && project.deleted_at === null ? (
+                          <Link
+                            href={`/browse/${project.slug}`}
+                            style={{ textDecoration: 'none' }}
+                            title={`View ${project.name}`}
+                          >
+                            <h3
+                              className="dash-app-title-link"
+                              style={{
+                                fontSize: '0.95rem',
+                                fontWeight: 700,
+                                color: '#FFFFFF',
+                                margin: 0,
+                                cursor: 'pointer',
+                              }}
+                            >
+                              {project.name}
+                            </h3>
+                          </Link>
+                        ) : (
+                          <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#FFFFFF', margin: 0 }}>{project.name}</h3>
+                        )}
                         {(() => {
                           const isDeleted = project.status === 'deleted' || project.deleted_at !== null
                           let label = cfg.label
