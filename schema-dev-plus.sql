@@ -216,8 +216,9 @@ BEGIN
     END IF;
   END IF;
 
-  -- 1. Fetch & lock project row
-  SELECT user_id, status, name INTO v_user_id, v_status, v_project_name
+  -- 1. Fetch & lock project row with existing listing metadata
+  SELECT user_id, status, name, approved_at, listing_type, listing_paid, listing_expires_at
+  INTO v_user_id, v_status, v_project_name, v_approved_at, v_listing_type, v_listing_paid, v_listing_expires_at
   FROM public.projects
   WHERE id = p_project_id
   FOR UPDATE;
@@ -230,7 +231,52 @@ BEGIN
     RAISE EXCEPTION 'Project is already approved';
   END IF;
 
-  -- 2. Lock developer profile row to serialize concurrent approvals for this user
+  -- 2. EDIT RE-APPROVAL PROTECTION:
+  -- If this project was ALREADY previously approved, preserve its active entitlement!
+  IF v_approved_at IS NOT NULL THEN
+    -- CASE PRE-A: Lifetime free app re-approval
+    IF v_listing_type = 'free' AND v_listing_paid = TRUE THEN
+      UPDATE public.projects
+      SET status = 'approved',
+          approved_at = v_now,
+          listing_type = 'free',
+          listing_paid = TRUE,
+          listing_expires_at = NULL,
+          rejection_reason = NULL
+      WHERE id = p_project_id;
+
+      RETURN jsonb_build_object(
+        'result', 'approved_existing_free',
+        'user_id', v_user_id,
+        'project_name', v_project_name,
+        'listing_type', 'free',
+        'listing_paid', true,
+        'expires_at', NULL
+      );
+
+    -- CASE PRE-B: Active paid app re-approval with remaining time (e.g. 2 months left)
+    ELSIF v_listing_type = 'paid' AND v_listing_paid = TRUE AND v_listing_expires_at > v_now THEN
+      UPDATE public.projects
+      SET status = 'approved',
+          approved_at = v_now,
+          listing_type = 'paid',
+          listing_paid = TRUE,
+          listing_expires_at = v_listing_expires_at, -- PRESERVES EXACT EXPIRY DATE AND DAYS LEFT!
+          rejection_reason = NULL
+      WHERE id = p_project_id;
+
+      RETURN jsonb_build_object(
+        'result', 'approved_existing_paid',
+        'user_id', v_user_id,
+        'project_name', v_project_name,
+        'listing_type', 'paid',
+        'listing_paid', true,
+        'expires_at', v_listing_expires_at
+      );
+    END IF;
+  END IF;
+
+  -- 3. Lock developer profile row to serialize concurrent approvals for brand new submissions
   SELECT free_listing_used INTO v_free_used
   FROM public.profiles
   WHERE id = v_user_id
@@ -240,7 +286,7 @@ BEGIN
     RAISE EXCEPTION 'Developer profile not found';
   END IF;
 
-  -- 3. Entitlement Evaluation
+  -- 4. Brand New Project Entitlement Evaluation
   IF NOT v_free_used THEN
     -- CASE A: First approved project -> permanent free listing
     UPDATE public.profiles
@@ -252,7 +298,8 @@ BEGIN
         approved_at = v_now,
         listing_type = 'free',
         listing_paid = TRUE,
-        listing_expires_at = NULL
+        listing_expires_at = NULL,
+        rejection_reason = NULL
     WHERE id = p_project_id;
 
     RETURN jsonb_build_object(

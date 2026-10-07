@@ -24,7 +24,161 @@ export async function approveProject(projectId: string) {
   await assertAdmin()
   const supabase = await createServiceRoleClient()
 
-  // Try executing via atomic database RPC for maximum row-level lock safety
+  // 1. Fetch project row first to check if this is an EDIT re-approval or a NEW submission
+  const { data: project, error: projErr } = await supabase
+    .from('projects')
+    .select('id, user_id, name, status, approved_at, listing_type, listing_paid, listing_expires_at')
+    .eq('id', projectId)
+    .single()
+
+  if (projErr || !project) {
+    throw new Error('Project not found')
+  }
+
+  const now = new Date().toISOString()
+  const isEditSubmission = Boolean(project.approved_at)
+
+  // 2. EDIT RE-APPROVAL PROTECTION:
+  // If this project was ALREADY previously approved, preserve its active entitlement!
+  if (isEditSubmission) {
+    // ── CASE A: Previously approved as Lifetime Free listing ──
+    if (project.listing_type === 'free' && project.listing_paid) {
+      await supabase
+        .from('projects')
+        .update({
+          status: 'approved',
+          approved_at: now,
+          listing_type: 'free',
+          listing_paid: true,
+          listing_expires_at: null,
+          rejection_reason: null,
+        })
+        .eq('id', projectId)
+
+      await supabase.from('notifications').insert({
+        user_id: project.user_id,
+        type: 'project_approved',
+        title: 'Project Edits Approved',
+        project_id: projectId,
+        message: `Your edits for "${project.name}" have been approved and your app is live!`,
+      })
+
+      revalidatePath('/admin/queue')
+      revalidatePath('/browse')
+      revalidatePath(`/browse/${projectId}`)
+      return
+    }
+
+    // ── CASE B: Previously approved as Paid listing with ACTIVE time remaining (e.g. 2 months left) ──
+    const hasActivePaidListing =
+      project.listing_type === 'paid' &&
+      project.listing_paid &&
+      project.listing_expires_at &&
+      new Date(project.listing_expires_at) > new Date()
+
+    if (hasActivePaidListing) {
+      // PRESERVES EXACT EXPIRY DATE AND ALL REMAINING DAYS!
+      await supabase
+        .from('projects')
+        .update({
+          status: 'approved',
+          approved_at: now,
+          listing_type: 'paid',
+          listing_paid: true,
+          listing_expires_at: project.listing_expires_at,
+          rejection_reason: null,
+        })
+        .eq('id', projectId)
+
+      const expiryFormatted = new Date(project.listing_expires_at!).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      })
+
+      await supabase.from('notifications').insert({
+        user_id: project.user_id,
+        type: 'project_approved',
+        title: 'Project Edits Approved',
+        project_id: projectId,
+        message: `Your edits for "${project.name}" have been approved! Your active listing remains live until ${expiryFormatted}.`,
+      })
+
+      revalidatePath('/admin/queue')
+      revalidatePath('/browse')
+      revalidatePath(`/browse/${projectId}`)
+      return
+    }
+
+    // ── CASE C: Previously approved as Paid listing but EXPIRED ──
+    // Check if user has an unused reusable listing slot available
+    const { data: reusableSlots } = await supabase
+      .from('listing_slots')
+      .select('id, expires_at')
+      .eq('user_id', project.user_id)
+      .eq('status', 'paid')
+      .gt('expires_at', now)
+      .is('project_id', null)
+      .order('expires_at', { ascending: true })
+      .limit(1)
+
+    const reusableSlot = reusableSlots && reusableSlots.length > 0 ? reusableSlots[0] : null
+    if (reusableSlot) {
+      await supabase
+        .from('listing_slots')
+        .update({ project_id: projectId })
+        .eq('id', reusableSlot.id)
+        .is('project_id', null)
+
+      await supabase
+        .from('projects')
+        .update({
+          status: 'approved',
+          approved_at: now,
+          listing_type: 'paid',
+          listing_paid: true,
+          listing_expires_at: reusableSlot.expires_at,
+          rejection_reason: null,
+        })
+        .eq('id', projectId)
+
+      await supabase.from('notifications').insert({
+        user_id: project.user_id,
+        type: 'project_approved',
+        title: 'Project Edits Approved',
+        project_id: projectId,
+        message: `Your edits for "${project.name}" have been approved and your app is live with your listing slot!`,
+      })
+    } else {
+      // Keep in expired state requiring renewal fee
+      await supabase
+        .from('projects')
+        .update({
+          status: 'approved',
+          approved_at: now,
+          listing_type: 'paid',
+          listing_paid: false,
+          rejection_reason: null,
+        })
+        .eq('id', projectId)
+
+      await supabase.from('notifications').insert({
+        user_id: project.user_id,
+        type: 'project_approved',
+        title: 'Project Edits Approved — Renewal Due',
+        project_id: projectId,
+        message: `Your edits for "${project.name}" have been approved! Renew your listing for ₹79 to make it publicly visible.`,
+      })
+    }
+
+    revalidatePath('/admin/queue')
+    revalidatePath('/browse')
+    revalidatePath(`/browse/${projectId}`)
+    return
+  }
+
+  // 3. FIRST-TIME NEW SUBMISSION (Project never approved before)
+  // Try executing via atomic database RPC
   const { data: rpcResult, error: rpcErr } = await supabase
     .rpc('approve_project_entitlement', { p_project_id: projectId })
 
@@ -33,13 +187,26 @@ export async function approveProject(projectId: string) {
     const userId = resObj.user_id
     const resultType = resObj.result
 
-    if (resultType === 'approved_free') {
+    if (resultType === 'approved_free' || resultType === 'approved_existing_free') {
       await supabase.from('notifications').insert({
         user_id: userId,
         type: 'project_approved',
         title: 'Project Approved',
         project_id: projectId,
         message: 'Your project has been approved and is now live!',
+      })
+    } else if (resultType === 'approved_existing_paid') {
+      const expiryFormatted = resObj.expires_at
+        ? new Date(resObj.expires_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+        : null
+      await supabase.from('notifications').insert({
+        user_id: userId,
+        type: 'project_approved',
+        title: 'Project Approved',
+        project_id: projectId,
+        message: expiryFormatted
+          ? `Your project edits have been approved! Your active listing remains live until ${expiryFormatted}.`
+          : 'Your project edits have been approved and your active listing remains live!',
       })
     } else if (resultType === 'approved_reused_slot') {
       await supabase.from('notifications').insert({
@@ -64,19 +231,7 @@ export async function approveProject(projectId: string) {
     return
   }
 
-  // Fallback if RPC is not installed in database: use atomic conditional filtering
-  const { data: project, error: projErr } = await supabase
-    .from('projects')
-    .select('id, user_id, name')
-    .eq('id', projectId)
-    .single()
-
-  if (projErr || !project) {
-    throw new Error('Project not found')
-  }
-
-  const now = new Date().toISOString()
-
+  // Fallback for brand-new submission if RPC is not available in database
   // Attempt atomic claim of free entitlement using conditional .eq('free_listing_used', false)
   const { data: claimProfile } = await supabase
     .from('profiles')
@@ -95,6 +250,7 @@ export async function approveProject(projectId: string) {
         listing_type: 'free',
         listing_paid: true,
         listing_expires_at: null,
+        rejection_reason: null,
       })
       .eq('id', projectId)
 
@@ -121,7 +277,6 @@ export async function approveProject(projectId: string) {
 
     let claimedSlot = null
     if (reusableSlot) {
-      // Atomic claim of reusable slot using conditional .is('project_id', null)
       const { data: slotRes } = await supabase
         .from('listing_slots')
         .update({ project_id: projectId })
@@ -143,6 +298,7 @@ export async function approveProject(projectId: string) {
           listing_type: 'paid',
           listing_paid: true,
           listing_expires_at: claimedSlot.expires_at,
+          rejection_reason: null,
         })
         .eq('id', projectId)
 
@@ -162,6 +318,7 @@ export async function approveProject(projectId: string) {
           listing_type: 'paid',
           listing_paid: false,
           listing_expires_at: null,
+          rejection_reason: null,
         })
         .eq('id', projectId)
 
