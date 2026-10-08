@@ -102,6 +102,7 @@ export default function SubmitPage() {
       return
     }
 
+    // 1. Try server API route first
     try {
       const formData = new FormData()
       formData.append('file', file)
@@ -111,15 +112,43 @@ export default function SubmitPage() {
         body: formData,
       })
 
-      const data = await res.json()
-      if (!res.ok || !data.success) {
-        throw new Error(data.error || 'Failed to upload screenshot.')
+      if (res.ok) {
+        const contentType = res.headers.get('content-type') || ''
+        if (contentType.includes('application/json')) {
+          const data = await res.json()
+          if (data?.url) {
+            onDone(data.url)
+            return
+          }
+        }
+      }
+    } catch (apiErr) {
+      console.warn('Server upload route failed, attempting direct storage fallback:', apiErr)
+    }
+
+    // 2. Direct client-side Supabase storage fallback
+    try {
+      const supabase = createClient()
+      const ext = file.name.split('.').pop() || 'png'
+      const randomSuffix = Math.random().toString(36).substring(2, 8)
+      const path = `${userId}/screenshot-${Date.now()}-${randomSuffix}.${ext}`
+
+      const { error: storageError } = await supabase.storage
+        .from('project-images')
+        .upload(path, file, { contentType: file.type || 'image/png', upsert: true })
+
+      if (storageError) {
+        throw new Error(storageError.message)
       }
 
-      onDone(data.url)
-    } catch (err: any) {
-      console.error('Screenshot upload error:', err)
-      alert('Upload failed: ' + (err.message || 'An unexpected error occurred during upload.'))
+      const { data: urlData } = supabase.storage.from('project-images').getPublicUrl(path)
+      if (urlData?.publicUrl) {
+        onDone(urlData.publicUrl)
+        return
+      }
+    } catch (fallbackErr: any) {
+      console.error('Direct storage upload error:', fallbackErr)
+      alert('Upload failed: ' + (fallbackErr?.message || 'Could not upload image. Please try a different or smaller image.'))
     }
   }
 

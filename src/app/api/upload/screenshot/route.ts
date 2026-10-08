@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient, createServiceRoleClient } from '@/lib/supabase/server'
-import sharp from 'sharp'
 
 export const dynamic = 'force-dynamic'
 
@@ -47,36 +46,17 @@ export async function POST(req: NextRequest) {
 
     // 5. Decode image buffer
     const inputBuffer = Buffer.from(await file.arrayBuffer())
+    const ext = file.name.split('.').pop() || 'png'
 
-    // 6. Process and optimize with sharp (maintain aspect ratio, max 2560px, convert to WebP)
-    let processedBuffer: Buffer
-    let contentType = 'image/webp'
-    let fileExtension = 'webp'
-
-    try {
-      processedBuffer = await sharp(inputBuffer)
-        .resize(2560, 2560, {
-          fit: 'inside',
-          withoutEnlargement: true,
-        })
-        .webp({ quality: 85 })
-        .toBuffer()
-    } catch (sharpError) {
-      // Fallback to original buffer if sharp fails on uncommon formats
-      processedBuffer = inputBuffer
-      contentType = file.type || 'image/png'
-      fileExtension = file.name.split('.').pop() || 'png'
-    }
-
-    // 7. Use service role client to bypass storage RLS permission issues safely
+    // 6. Use service role client to upload directly to project-images bucket (bypasses RLS)
     const storageClient = await createServiceRoleClient()
     const randomSuffix = Math.random().toString(36).substring(2, 8)
-    const filePath = `${user.id}/screenshot-${Date.now()}-${randomSuffix}.${fileExtension}`
+    const filePath = `${user.id}/screenshot-${Date.now()}-${randomSuffix}.${ext}`
 
     const { error: uploadError } = await storageClient.storage
       .from('project-images')
-      .upload(filePath, processedBuffer, {
-        contentType,
+      .upload(filePath, inputBuffer, {
+        contentType: file.type || 'image/png',
         upsert: true,
       })
 
