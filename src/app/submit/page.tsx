@@ -2,7 +2,7 @@
 
 import { useActionState, useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { submitProject } from '@/app/actions/submit'
+import { submitProject, uploadScreenshotAction } from '@/app/actions/submit'
 import { Upload, X, Loader2, CheckCircle, Globe, GitBranch, Smartphone, Image as ImageIcon } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -102,13 +102,37 @@ export default function SubmitPage() {
       return
     }
 
-    // 1. Try server API route first
+    const supabase = createClient()
+    const { data: sessionData } = await supabase.auth.getSession()
+    const accessToken = sessionData.session?.access_token
+
+    // 1. Try Server Action first (Native Next.js RPC, eliminates manual HTTP parsing glitches)
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      const actionRes = await uploadScreenshotAction(formData, accessToken)
+      if (actionRes?.url) {
+        onDone(actionRes.url)
+        return
+      }
+    } catch (actionErr) {
+      console.warn('Server action upload failed, trying API route fallback:', actionErr)
+    }
+
+    // 2. Try server API route with Bearer token authentication
     try {
       const formData = new FormData()
       formData.append('file', file)
 
+      const headers: Record<string, string> = {}
+      if (accessToken) {
+        headers['Authorization'] = `Bearer ${accessToken}`
+      }
+
       const res = await fetch('/api/upload/screenshot', {
         method: 'POST',
+        headers,
+        credentials: 'include',
         body: formData,
       })
 
@@ -126,9 +150,8 @@ export default function SubmitPage() {
       console.warn('Server upload route failed, attempting direct storage fallback:', apiErr)
     }
 
-    // 2. Direct client-side Supabase storage fallback
+    // 3. Direct client-side Supabase storage fallback (with auto-recovery for response gzip decoding)
     try {
-      const supabase = createClient()
       const ext = file.name.split('.').pop() || 'png'
       const randomSuffix = Math.random().toString(36).substring(2, 8)
       const path = `${userId}/screenshot-${Date.now()}-${randomSuffix}.${ext}`
@@ -138,6 +161,23 @@ export default function SubmitPage() {
         .upload(path, file, { contentType: file.type || 'image/png', upsert: true })
 
       if (storageError) {
+        const errMsg = storageError.message || ''
+        // If the error was the known V8/storage-js JSON decoding issue on gzip responses,
+        // verify whether the file was successfully written to the bucket.
+        if (errMsg.includes('Unexpected token') || errMsg.includes('JSON')) {
+          const { data: urlData } = supabase.storage.from('project-images').getPublicUrl(path)
+          if (urlData?.publicUrl) {
+            try {
+              const checkRes = await fetch(urlData.publicUrl, { method: 'HEAD' })
+              if (checkRes.ok) {
+                onDone(urlData.publicUrl)
+                return
+              }
+            } catch {
+              // File not reachable, rethrow
+            }
+          }
+        }
         throw new Error(storageError.message)
       }
 

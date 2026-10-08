@@ -15,10 +15,35 @@ const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024 // 10 MB
 
 export async function POST(req: NextRequest) {
   try {
-    // 1. Authenticate user
-    const authSupabase = await createServerClient()
-    const { data: { user }, error: authError } = await authSupabase.auth.getUser()
-    if (authError || !user) {
+    // 1. Authenticate user: check Bearer token first, then session cookies
+    let user = null
+    const authHeader = req.headers.get('Authorization') || req.headers.get('authorization')
+    if (authHeader?.startsWith('Bearer ')) {
+      const token = authHeader.substring(7).trim()
+      if (token) {
+        try {
+          const serviceClient = await createServiceRoleClient()
+          const { data, error } = await serviceClient.auth.getUser(token)
+          if (!error && data?.user) {
+            user = data.user
+          }
+        } catch (authErr) {
+          console.warn('[API /api/upload/screenshot] Bearer validation error:', authErr)
+        }
+      }
+    }
+
+    if (!user) {
+      try {
+        const authSupabase = await createServerClient()
+        const { data: { user: cookieUser } } = await authSupabase.auth.getUser()
+        user = cookieUser
+      } catch (cookieErr) {
+        console.warn('[API /api/upload/screenshot] Cookie auth error:', cookieErr)
+      }
+    }
+
+    if (!user) {
       return NextResponse.json({ error: 'You must be signed in to upload screenshots.' }, { status: 401 })
     }
 

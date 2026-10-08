@@ -1,6 +1,6 @@
 'use server'
 
-import { createServerClient } from '@/lib/supabase/server'
+import { createServerClient, createServiceRoleClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 
@@ -113,3 +113,70 @@ export async function submitProject(state: SubmitState, formData: FormData): Pro
   revalidatePath('/dashboard/projects')
   redirect('/dashboard/projects?submitted=true')
 }
+
+export async function uploadScreenshotAction(
+  formData: FormData,
+  accessToken?: string
+): Promise<{ url?: string; error?: string }> {
+  try {
+    let user = null
+    const storageClient = await createServiceRoleClient()
+
+    if (accessToken) {
+      try {
+        const { data, error } = await storageClient.auth.getUser(accessToken)
+        if (!error && data?.user) {
+          user = data.user
+        }
+      } catch (authErr) {
+        console.warn('[uploadScreenshotAction] Bearer token validation error:', authErr)
+      }
+    }
+
+    if (!user) {
+      try {
+        const supabase = await createServerClient()
+        const { data: { user: cookieUser } } = await supabase.auth.getUser()
+        user = cookieUser
+      } catch (cookieErr) {
+        console.warn('[uploadScreenshotAction] Cookie auth check error:', cookieErr)
+      }
+    }
+
+    if (!user) {
+      return { error: 'You must be signed in to upload screenshots.' }
+    }
+
+    const file = formData.get('file') as File | null
+    if (!file) {
+      return { error: 'No screenshot file provided.' }
+    }
+
+    const inputBuffer = Buffer.from(await file.arrayBuffer())
+    const ext = file.name.split('.').pop() || 'png'
+    const randomSuffix = Math.random().toString(36).substring(2, 8)
+    const filePath = `${user.id}/screenshot-${Date.now()}-${randomSuffix}.${ext}`
+
+    const { error: uploadError } = await storageClient.storage
+      .from('project-images')
+      .upload(filePath, inputBuffer, {
+        contentType: file.type || 'image/png',
+        upsert: true,
+      })
+
+    if (uploadError) {
+      console.error('[uploadScreenshotAction] Storage upload error:', uploadError)
+      return { error: uploadError.message }
+    }
+
+    const { data: urlData } = storageClient.storage
+      .from('project-images')
+      .getPublicUrl(filePath)
+
+    return { url: urlData.publicUrl }
+  } catch (err: any) {
+    console.error('[uploadScreenshotAction] Unexpected error:', err)
+    return { error: err?.message || 'Failed to upload screenshot.' }
+  }
+}
+
