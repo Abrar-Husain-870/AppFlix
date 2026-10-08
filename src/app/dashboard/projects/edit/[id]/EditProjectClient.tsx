@@ -110,23 +110,31 @@ export default function EditProjectClient({ project }: { project: Project }) {
     })
   }
 
-  async function uploadFile(file: File, bucket: string, onDone: (url: string) => void) {
-    if (!userId) return
-    const supabase = createClient()
-    const ext = file.name.split('.').pop()
-    const path = `${userId}/${Date.now()}.${ext}`
-    const { error } = await supabase.storage.from(bucket).upload(path, file, { upsert: true })
-    if (error) { alert('Upload failed: ' + error.message); return }
-    const { data } = supabase.storage.from(bucket).getPublicUrl(path)
-    onDone(data.publicUrl)
-  }
+  async function uploadFile(file: File, onDone: (url: string) => void) {
+    if (!userId) {
+      alert('You must be signed in to upload screenshots.')
+      return
+    }
 
-  async function handleIconUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file) return
-    setUploadingIcon(true)
-    await uploadFile(file, 'icons', (url) => setIconUrl(url))
-    setUploadingIcon(false)
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+
+      const res = await fetch('/api/upload/screenshot', {
+        method: 'POST',
+        body: formData,
+      })
+
+      const data = await res.json()
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Failed to upload screenshot.')
+      }
+
+      onDone(data.url)
+    } catch (err: any) {
+      console.error('Screenshot upload error:', err)
+      alert('Upload failed: ' + (err.message || 'An unexpected error occurred during upload.'))
+    }
   }
 
   async function handleScreenshotUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -134,9 +142,10 @@ export default function EditProjectClient({ project }: { project: Project }) {
     if (!files.length) return
     setUploadingScreenshot(true)
     for (const file of files) {
-      await uploadFile(file, 'project-images', (url) => setScreenshotUrls(prev => [...prev, url]))
+      await uploadFile(file, (url) => setScreenshotUrls(prev => [...prev, url]))
     }
     setUploadingScreenshot(false)
+    e.target.value = ''
   }
 
   const tabStyle = (tab: 'text' | 'media'): React.CSSProperties => ({
