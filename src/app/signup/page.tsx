@@ -293,7 +293,7 @@ export default function SignupPage() {
           </div>
 
           {/* Google Sign-in */}
-          <GoogleSignInButton label="Sign up with Google" redirectToNext="/?justLoggedIn=true" />
+          <GoogleSignInButton label="Sign up with Google" redirectToNext="/" />
 
           {/* Divider */}
           <div style={{

@@ -4,9 +4,9 @@ import { createServerClient } from '@/lib/supabase/server'
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')
-  const rawNext = searchParams.get('next') ?? '/?justLoggedIn=true'
+  const rawNext = searchParams.get('next') ?? '/'
   // Prevent open-redirect vulnerabilities: ensure next starts with '/' and not '//'
-  const next = rawNext.startsWith('/') && !rawNext.startsWith('//') ? rawNext : '/?justLoggedIn=true'
+  const next = rawNext.startsWith('/') && !rawNext.startsWith('//') ? rawNext : '/'
 
   // Handle provider-level error (e.g. user canceled Google OAuth consent)
   const providerError = searchParams.get('error_description') || searchParams.get('error')

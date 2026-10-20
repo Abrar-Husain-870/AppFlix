@@ -275,7 +275,7 @@ export default function LoginPage() {
           </div>
 
           {/* Google Sign-in */}
-          <GoogleSignInButton label="Continue with Google" redirectToNext="/?justLoggedIn=true" />
+          <GoogleSignInButton label="Continue with Google" redirectToNext="/" />
 
           {/* Prominent Create Account Button */}
           <div style={{ marginTop: '0.75rem' }}>

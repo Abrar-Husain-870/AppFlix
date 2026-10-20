@@ -11,7 +11,7 @@ interface GoogleSignInButtonProps {
 
 export default function GoogleSignInButton({
   label = 'Continue with Google',
-  redirectToNext = '/?justLoggedIn=true'
+  redirectToNext = '/'
 }: GoogleSignInButtonProps) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -20,10 +20,10 @@ export default function GoogleSignInButton({
     setLoading(true)
     setError(null)
 
-    // Store intro trigger flag before leaving the page
+    // Ensure intro animation flag is cleared for Google OAuth signins
     if (typeof window !== 'undefined') {
       try {
-        sessionStorage.setItem('play_appflix_intro', 'true')
+        sessionStorage.removeItem('play_appflix_intro')
       } catch {}
     }
 

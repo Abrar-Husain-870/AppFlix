@@ -327,46 +327,6 @@ window.AppflixIntro = (() => {
             }
         }
 
-        function showTapPrompt() {
-            if (isCompleted) return;
-            var prompt = document.createElement('div');
-            prompt.id = 'appflix-intro-tap-prompt';
-            prompt.style.cssText = 'position:fixed;inset:0;z-index:10000000;display:flex;align-items:center;justify-content:center;background:#000000;cursor:pointer;user-select:none;';
-            prompt.innerHTML = '<div style="display:flex;align-items:center;gap:0.75rem;padding:0.85rem 1.75rem;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.2);border-radius:9999px;box-shadow:0 8px 32px rgba(0,0,0,0.6);transition:transform 0.2s,background 0.2s;"><svg width="20" height="20" viewBox="0 0 24 24" fill="#E50914"><path d="M8 5v14l11-7z"/></svg><span style="color:#FFFFFF;font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',Roboto,sans-serif;font-weight:600;font-size:0.95rem;letter-spacing:0.02em;">Click anywhere to enter AppFlix</span></div>';
-            
-            function onUserTap() {
-                window.removeEventListener('click', onUserTap);
-                window.removeEventListener('keydown', onUserTap);
-                window.removeEventListener('touchstart', onUserTap);
-                if (prompt.parentNode) prompt.parentNode.removeChild(prompt);
-                if (isCompleted || !audio) return;
-                try {
-                    audio.currentTime = 0;
-                    var p = audio.play();
-                    if (p && typeof p.then === 'function') {
-                        p.then(function() {
-                            audioDriving = true;
-                            startLoop();
-                        }).catch(function() {
-                            audioDriving = false;
-                            startLoop();
-                        });
-                    } else {
-                        audioDriving = true;
-                        startLoop();
-                    }
-                } catch(e) {
-                    audioDriving = false;
-                    startLoop();
-                }
-            }
-
-            window.addEventListener('click', onUserTap);
-            window.addEventListener('keydown', onUserTap);
-            window.addEventListener('touchstart', onUserTap);
-            document.body.appendChild(prompt);
-        }
-
         if (audio) {
             var started = false;
 
@@ -386,9 +346,8 @@ window.AppflixIntro = (() => {
                         audioDriving = true;
                         startLoop();
                     }).catch(function(err) {
-                        // Autoplay blocked by browser policy on fresh page navigation
-                        // Instead of starting silently and playing sound late, prompt the user for 1 tap
-                        showTapPrompt();
+                        audioDriving = false;
+                        startLoop();
                     });
                 } else {
                     audioDriving = true;
