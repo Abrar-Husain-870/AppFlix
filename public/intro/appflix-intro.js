@@ -272,18 +272,18 @@ window.AppflixIntro = (() => {
             var delta = timestamp - lastTime;
             lastTime  = timestamp;
 
-            var msPerFrame = 1000 / fps;
-            accumulator += delta;
-            while (accumulator >= msPerFrame) {
-                currentFrame++;
-                accumulator -= msPerFrame;
-            }
-
-            // Sync visual frame to audio playback timestamp whenever audio is driving
-            if (audioDriving && audio && !audio.paused && audio.currentTime >= 0) {
+            // Determine current frame
+            if (audioDriving && audio && !audio.paused) {
+                // Audio is driving: Frame is 100% strictly bound to exact audio playback position
                 var audioFrame = Math.floor(audio.currentTime * fps) + 1;
-                if (Math.abs(audioFrame - currentFrame) >= 1) {
-                    currentFrame = audioFrame;
+                currentFrame = Math.min(totalFrames, Math.max(1, audioFrame));
+            } else {
+                // Fallback / silent mode: Advance with wall-clock time
+                var msPerFrame = 1000 / fps;
+                accumulator += delta;
+                while (accumulator >= msPerFrame) {
+                    currentFrame++;
+                    accumulator -= msPerFrame;
                 }
             }
 
@@ -349,7 +349,7 @@ window.AppflixIntro = (() => {
                     playPromise.then(function() {
                         audioDriving = true;
                         startLoop();
-                    }).catch(function() {
+                    }).catch(function(err) {
                         // Autoplay blocked by browser policy — start visual animation smoothly
                         audioDriving = false;
                         startLoop();
@@ -367,13 +367,12 @@ window.AppflixIntro = (() => {
                 audio.addEventListener('canplay', initiatePlayback, { once: true });
                 audio.addEventListener('canplaythrough', initiatePlayback, { once: true });
 
-                // Safety timeout: If audio is still buffering or doesn't fire within 250ms,
-                // start visual animation so user isn't stuck on a black screen.
+                // Buffer safety timeout: Allow ample time to buffer before fallback
                 setTimeout(function() {
                     if (!started) {
                         initiatePlayback();
                     }
-                }, 250);
+                }, 1000);
             }
         } else {
             startLoop();

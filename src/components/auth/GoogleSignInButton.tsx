@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Loader2 } from 'lucide-react'
 
@@ -13,19 +14,31 @@ export default function GoogleSignInButton({
   label = 'Continue with Google',
   redirectToNext = '/?justLoggedIn=true'
 }: GoogleSignInButtonProps) {
+  const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const popupRef = useRef<Window | null>(null)
+
+  useEffect(() => {
+    // Warm up audio buffer in browser cache on component mount
+    if (typeof window === 'undefined') return
+    try {
+      const a = new Audio('/intro/intro_audio.mp3')
+      a.preload = 'auto'
+      a.load()
+    } catch {}
+  }, [])
 
   async function handleGoogleSignIn() {
     setLoading(true)
     setError(null)
 
-    // Store intro trigger flag before leaving the page
-    if (typeof window !== 'undefined') {
-      try {
-        sessionStorage.setItem('play_appflix_intro', 'true')
-      } catch {}
-    }
+    // Pre-arm audio on direct user click gesture in this window
+    try {
+      const a = new Audio('/intro/intro_audio.mp3')
+      a.preload = 'auto'
+      a.load()
+    } catch {}
 
     try {
       const supabase = createClient()
@@ -36,6 +49,7 @@ export default function GoogleSignInButton({
         provider: 'google',
         options: {
           redirectTo: callbackUrl,
+          skipBrowserRedirect: true,
           queryParams: {
             access_type: 'offline',
             prompt: 'select_account',
@@ -49,9 +63,128 @@ export default function GoogleSignInButton({
         return
       }
 
-      if (data?.url) {
-        window.location.href = data.url
+      if (!data?.url) {
+        setError('No authorization URL returned from Supabase')
+        setLoading(false)
+        return
       }
+
+      // Center the OAuth popup on the user's active monitor
+      const width = 500
+      const height = 650
+      const left = Math.max(0, window.screenX + (window.outerWidth - width) / 2)
+      const top = Math.max(0, window.screenY + (window.outerHeight - height) / 2)
+
+      const popup = window.open(
+        data.url,
+        'appflix_google_auth',
+        `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes,status=yes`
+      )
+      popupRef.current = popup
+
+      if (!popup || popup.closed || typeof popup.closed === 'undefined') {
+        // Fallback: If popups are strictly blocked by browser settings, use full-page redirect
+        if (typeof window !== 'undefined') {
+          sessionStorage.setItem('play_appflix_intro', 'true')
+        }
+        window.location.href = data.url
+        return
+      }
+
+      let checkTimer: any = null
+      let authChannel: BroadcastChannel | null = null
+
+      const cleanupListeners = () => {
+        if (checkTimer) clearInterval(checkTimer)
+        if (authChannel) {
+          authChannel.close()
+          authChannel = null
+        }
+        window.removeEventListener('storage', handleStorage)
+        window.removeEventListener('message', handlePostMessage)
+      }
+
+      const handleSuccess = async (nextPath: string) => {
+        cleanupListeners()
+        try {
+          if (popup && !popup.closed) popup.close()
+        } catch {}
+
+        if (typeof window !== 'undefined') {
+          sessionStorage.setItem('play_appflix_intro', 'true')
+        }
+
+        // Notify client-side state of auth change immediately
+        try {
+          const { data: { user } } = await supabase.auth.getUser()
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('auth_state_changed', { detail: { user } }))
+            window.dispatchEvent(new CustomEvent('profile_updated'))
+          }
+        } catch {}
+
+        // Client-side SPA navigation preserves user activation so audio plays instantly
+        router.refresh()
+        router.push(nextPath || '/?justLoggedIn=true')
+      }
+
+      const handleError = (errMsg: string) => {
+        cleanupListeners()
+        try {
+          if (popup && !popup.closed) popup.close()
+        } catch {}
+        setError(decodeURIComponent(errMsg || 'Google Sign-in failed'))
+        setLoading(false)
+      }
+
+      // 1. BroadcastChannel Listener (independent of window.opener)
+      if (typeof BroadcastChannel !== 'undefined') {
+        try {
+          authChannel = new BroadcastChannel('appflix_oauth_channel')
+          authChannel.onmessage = (event) => {
+            if (event.data?.type === 'APPFLIX_OAUTH_SUCCESS') {
+              handleSuccess(event.data.next)
+            } else if (event.data?.type === 'APPFLIX_OAUTH_ERROR') {
+              handleError(event.data.error)
+            }
+          }
+        } catch {}
+      }
+
+      // 2. LocalStorage StorageEvent Listener (cross-window fallback)
+      const handleStorage = (event: StorageEvent) => {
+        if (event.key === 'appflix_oauth_result' && event.newValue) {
+          try {
+            const data = JSON.parse(event.newValue)
+            localStorage.removeItem('appflix_oauth_result')
+            if (data.type === 'APPFLIX_OAUTH_SUCCESS') {
+              handleSuccess(data.next)
+            } else if (data.type === 'APPFLIX_OAUTH_ERROR') {
+              handleError(data.error)
+            }
+          } catch {}
+        }
+      }
+      window.addEventListener('storage', handleStorage)
+
+      // 3. PostMessage Listener (direct window.opener fallback)
+      const handlePostMessage = (event: MessageEvent) => {
+        if (event.origin !== window.location.origin) return
+        if (event.data?.type === 'APPFLIX_OAUTH_SUCCESS') {
+          handleSuccess(event.data.next)
+        } else if (event.data?.type === 'APPFLIX_OAUTH_ERROR') {
+          handleError(event.data.error)
+        }
+      }
+      window.addEventListener('message', handlePostMessage)
+
+      // Monitor popup closure (if user manually closes the popup window)
+      checkTimer = setInterval(() => {
+        if (popup.closed) {
+          cleanupListeners()
+          setLoading(false)
+        }
+      }, 500)
     } catch (err: any) {
       setError(err?.message || 'Failed to initialize Google Sign-in')
       setLoading(false)
