@@ -250,10 +250,6 @@ window.AppflixIntro = (() => {
                 rafId = null;
             }
 
-            window.removeEventListener('click', handleUserInteraction);
-            window.removeEventListener('keydown', handleUserInteraction);
-            window.removeEventListener('touchstart', handleUserInteraction);
-
             if (audio) {
                 try {
                     audio.pause();
@@ -309,22 +305,6 @@ window.AppflixIntro = (() => {
             lastTime = null;
             accumulator = 0;
             rafId = requestAnimationFrame(tick);
-        }
-
-        function handleUserInteraction() {
-            if (isCompleted || !audio) return;
-            // If audio was blocked by autoplay, allow user click/key to resume audio in sync
-            if (!audioDriving && currentFrame <= totalFrames) {
-                try {
-                    audio.currentTime = Math.max(0, (currentFrame - 1) / fps);
-                    var p = audio.play();
-                    if (p && typeof p.then === 'function') {
-                        p.then(function() {
-                            audioDriving = true;
-                        }).catch(function() {});
-                    }
-                } catch(e) {}
-            }
         }
 
         if (audio) {
