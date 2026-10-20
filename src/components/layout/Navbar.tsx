@@ -60,13 +60,42 @@ export default function Navbar() {
         supabase.auth.getUser().then(({ data }) => loadProfile(data.user))
       }
     }
+
+    const handleAuthChanged = (e: any) => {
+      if (e.detail?.user !== undefined) {
+        loadProfile(e.detail.user)
+      } else {
+        supabase.auth.getUser().then(({ data }) => loadProfile(data.user))
+      }
+    }
+
     window.addEventListener('profile_updated', handleProfileUpdated)
+    window.addEventListener('auth_state_changed', handleAuthChanged)
 
     return () => {
       subscription.unsubscribe()
       window.removeEventListener('profile_updated', handleProfileUpdated)
+      window.removeEventListener('auth_state_changed', handleAuthChanged)
     }
   }, [])
+
+  // Re-verify auth state whenever the user navigates (e.g. from /login to /)
+  useEffect(() => {
+    const supabase = createClient()
+    supabase.auth.getUser().then(async ({ data }) => {
+      setUser(data.user)
+      if (data.user) {
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('display_name, username, avatar_url, role')
+          .eq('id', data.user.id)
+          .single()
+        setProfile(profileData)
+      } else {
+        setProfile(null)
+      }
+    })
+  }, [pathname])
 
   // Close dropdown on outside click
   useEffect(() => {

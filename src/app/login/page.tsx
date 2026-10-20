@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Loader2, Globe, ChevronDown, UserPlus } from 'lucide-react'
+import GoogleSignInButton from '@/components/auth/GoogleSignInButton'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -16,6 +17,11 @@ export default function LoginPage() {
 
   useEffect(() => {
     setMounted(true)
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search)
+      const err = params.get('error')
+      if (err) setError(decodeURIComponent(err))
+    }
   }, [])
 
   async function handleSubmit(e: React.FormEvent) {
@@ -261,45 +267,50 @@ export default function LoginPage() {
             display: 'flex',
             alignItems: 'center',
             gap: '0.75rem',
-            margin: '1.75rem 0 1.25rem',
+            margin: '1.5rem 0 1.25rem',
           }}>
             <div style={{ flex: 1, height: '1px', background: 'rgba(255, 255, 255, 0.15)' }} />
             <span style={{ color: '#888888', fontSize: '0.78rem', fontWeight: 600 }}>OR</span>
             <div style={{ flex: 1, height: '1px', background: 'rgba(255, 255, 255, 0.15)' }} />
           </div>
 
+          {/* Google Sign-in */}
+          <GoogleSignInButton label="Continue with Google" redirectToNext="/?justLoggedIn=true" />
+
           {/* Prominent Create Account Button */}
-          <Link
-            href="/signup"
-            id="login-create-account-btn"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '0.5rem',
-              width: '100%',
-              padding: '0.85rem',
-              background: 'rgba(255, 255, 255, 0.08)',
-              border: '1px solid rgba(255, 255, 255, 0.25)',
-              borderRadius: '4px',
-              color: '#FFFFFF',
-              fontWeight: 600,
-              fontSize: '0.95rem',
-              textDecoration: 'none',
-              transition: 'background 0.2s, border-color 0.2s',
-              boxSizing: 'border-box',
-            }}
-            onMouseEnter={e => {
-              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)'
-              e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.4)'
-            }}
-            onMouseLeave={e => {
-              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)'
-              e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.25)'
-            }}
-          >
-            <UserPlus size={16} /> Create an Account
-          </Link>
+          <div style={{ marginTop: '0.75rem' }}>
+            <Link
+              href="/signup"
+              id="login-create-account-btn"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.5rem',
+                width: '100%',
+                padding: '0.85rem',
+                background: 'rgba(255, 255, 255, 0.08)',
+                border: '1px solid rgba(255, 255, 255, 0.25)',
+                borderRadius: '4px',
+                color: '#FFFFFF',
+                fontWeight: 600,
+                fontSize: '0.95rem',
+                textDecoration: 'none',
+                transition: 'background 0.2s, border-color 0.2s',
+                boxSizing: 'border-box',
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)'
+                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.4)'
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)'
+                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.25)'
+              }}
+            >
+              <UserPlus size={16} /> Create an Account
+            </Link>
+          </div>
 
           {/* ReCAPTCHA Notice */}
           <p style={{

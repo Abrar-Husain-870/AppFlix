@@ -197,9 +197,10 @@ window.AppflixIntro = (() => {
 
     function play(options) {
         options = options || {};
-        var canvasId   = options.canvasId   || 'appflix-intro-canvas';
-        var audioSrc   = options.audioSrc   !== undefined ? options.audioSrc : 'intro_audio.mp3';
-        var onComplete = options.onComplete || null;
+        var canvasId     = options.canvasId     || 'appflix-intro-canvas';
+        var audioSrc     = options.audioSrc     !== undefined ? options.audioSrc : 'intro_audio.mp3';
+        var audioElement = options.audioElement || null;
+        var onComplete   = options.onComplete   || null;
 
         var canvas = document.getElementById(canvasId);
         if (!canvas) {
@@ -212,7 +213,7 @@ window.AppflixIntro = (() => {
         canvas.style.left       = '0';
         canvas.style.width      = '100vw';
         canvas.style.height     = '100vh';
-        canvas.style.zIndex     = '9999';
+        canvas.style.zIndex     = '9999999';
         canvas.style.display    = 'block';
         canvas.style.background = '#000';
         canvas.width  = window.innerWidth;
@@ -220,9 +221,11 @@ window.AppflixIntro = (() => {
 
         var ctx = canvas.getContext('2d');
 
-        var audio = null;
-        if (audioSrc) {
+        var audio = audioElement || null;
+        if (!audio && audioSrc) {
             audio = new Audio(audioSrc);
+        }
+        if (audio) {
             audio.preload = 'auto';
         }
 
@@ -232,35 +235,61 @@ window.AppflixIntro = (() => {
         var lastTime     = null;
         var accumulator  = 0;
         var rafId        = null;
+        var isCompleted  = false;
+        var audioDriving = false;
+
+        // Render initial black frame right away
+        renderFrame(ctx, canvas.width, canvas.height, 1);
+
+        function cleanup() {
+            if (isCompleted) return;
+            isCompleted = true;
+
+            if (rafId) {
+                cancelAnimationFrame(rafId);
+                rafId = null;
+            }
+
+            window.removeEventListener('click', handleUserInteraction);
+            window.removeEventListener('keydown', handleUserInteraction);
+            window.removeEventListener('touchstart', handleUserInteraction);
+
+            if (audio) {
+                try {
+                    audio.pause();
+                } catch(e) {}
+                audio = null;
+            }
+
+            canvas.style.display = 'none';
+            if (onComplete) onComplete();
+        }
 
         function tick(timestamp) {
+            if (isCompleted) return;
+
             if (!lastTime) lastTime = timestamp;
             var delta = timestamp - lastTime;
             lastTime  = timestamp;
-            accumulator += delta;
 
             var msPerFrame = 1000 / fps;
+            accumulator += delta;
             while (accumulator >= msPerFrame) {
                 currentFrame++;
                 accumulator -= msPerFrame;
-                if (currentFrame > totalFrames) {
-                    cancelAnimationFrame(rafId);
-                    if (audio) {
-                        try { audio.pause(); } catch(e) {}
-                        audio = null;
-                    }
-                    canvas.style.display = 'none';
-                    if (onComplete) onComplete();
-                    return;
+            }
+
+            // Sync visual frame to audio playback timestamp whenever audio is driving
+            if (audioDriving && audio && !audio.paused && audio.currentTime >= 0) {
+                var audioFrame = Math.floor(audio.currentTime * fps) + 1;
+                if (Math.abs(audioFrame - currentFrame) >= 1) {
+                    currentFrame = audioFrame;
                 }
             }
 
-            // Sync frame rendering position with audio currentTime for accurate timing
-            if (audio && !audio.paused && audio.currentTime > 0) {
-                var audioFrame = Math.floor(audio.currentTime * fps) + 1;
-                if (audioFrame <= totalFrames) {
-                    currentFrame = Math.max(currentFrame, audioFrame);
-                }
+            if (currentFrame > totalFrames || (audioDriving && audio && audio.ended)) {
+                cleanup();
+                return;
             }
 
             // Cross-fade the canvas DOM element smoothly into the landing page during final spectrum frames (115-160)
@@ -275,22 +304,80 @@ window.AppflixIntro = (() => {
             rafId = requestAnimationFrame(tick);
         }
 
-        if (audio) {
-            var attemptAudioPlay = function() {
-                if (!audio) return;
-                audio.play().then(function() {
-                    window.removeEventListener('click', attemptAudioPlay);
-                    window.removeEventListener('keydown', attemptAudioPlay);
-                    window.removeEventListener('touchstart', attemptAudioPlay);
-                }).catch(function() {});
-            };
-            attemptAudioPlay();
-            window.addEventListener('click', attemptAudioPlay, { once: true });
-            window.addEventListener('keydown', attemptAudioPlay, { once: true });
-            window.addEventListener('touchstart', attemptAudioPlay, { once: true });
+        function startLoop() {
+            if (rafId || isCompleted) return;
+            lastTime = null;
+            accumulator = 0;
+            rafId = requestAnimationFrame(tick);
         }
 
-        rafId = requestAnimationFrame(tick);
+        function handleUserInteraction() {
+            if (isCompleted || !audio) return;
+            // If audio was blocked by autoplay, allow user click/key to resume audio in sync
+            if (!audioDriving && currentFrame <= totalFrames) {
+                try {
+                    audio.currentTime = Math.max(0, (currentFrame - 1) / fps);
+                    var p = audio.play();
+                    if (p && typeof p.then === 'function') {
+                        p.then(function() {
+                            audioDriving = true;
+                        }).catch(function() {});
+                    }
+                } catch(e) {}
+            }
+        }
+
+        window.addEventListener('click', handleUserInteraction, { once: true });
+        window.addEventListener('keydown', handleUserInteraction, { once: true });
+        window.addEventListener('touchstart', handleUserInteraction, { once: true });
+
+        if (audio) {
+            var started = false;
+
+            var initiatePlayback = function() {
+                if (started || isCompleted) return;
+                started = true;
+
+                var playPromise;
+                try {
+                    playPromise = audio.play();
+                } catch (e) {
+                    playPromise = Promise.reject(e);
+                }
+
+                if (playPromise !== undefined && typeof playPromise.then === 'function') {
+                    playPromise.then(function() {
+                        audioDriving = true;
+                        startLoop();
+                    }).catch(function() {
+                        // Autoplay blocked by browser policy — start visual animation smoothly
+                        audioDriving = false;
+                        startLoop();
+                    });
+                } else {
+                    audioDriving = true;
+                    startLoop();
+                }
+            };
+
+            // If audio is already loaded enough to play, initiate immediately
+            if (audio.readyState >= 3) {
+                initiatePlayback();
+            } else {
+                audio.addEventListener('canplay', initiatePlayback, { once: true });
+                audio.addEventListener('canplaythrough', initiatePlayback, { once: true });
+
+                // Safety timeout: If audio is still buffering or doesn't fire within 250ms,
+                // start visual animation so user isn't stuck on a black screen.
+                setTimeout(function() {
+                    if (!started) {
+                        initiatePlayback();
+                    }
+                }, 250);
+            }
+        } else {
+            startLoop();
+        }
     }
 
     return { play: play };

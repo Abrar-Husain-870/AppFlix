@@ -62,8 +62,16 @@ export async function createServerClient() {
  * NEVER import this into a client component or expose to the browser.
  */
 export async function createServiceRoleClient() {
+  if (typeof window !== 'undefined') {
+    throw new Error('createServiceRoleClient cannot be called on the client.');
+  }
+
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(/^["']|["']$/g, '').trim()!;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY?.replace(/^["']|["']$/g, '').trim()!;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY?.replace(/^["']|["']$/g, '').trim();
+
+  if (!key) {
+    throw new Error('Missing SUPABASE_SERVICE_ROLE_KEY server environment variable.');
+  }
 
   return createClient(url, key, {
     auth: {

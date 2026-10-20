@@ -40,12 +40,14 @@ export default function AppFlixLandingIntro() {
 
     function runEngine() {
       const canvasEl = document.getElementById('appflix-intro-canvas')
+      const audioEl = document.getElementById('appflix-intro-audio') as HTMLAudioElement | null
       const AppflixIntro = (window as any).AppflixIntro
 
       if (canvasEl && AppflixIntro && typeof AppflixIntro.play === 'function') {
         try {
           AppflixIntro.play({
             canvasId: 'appflix-intro-canvas',
+            audioElement: audioEl,
             audioSrc: '/intro/intro_audio.mp3',
             onComplete: () => {
               setShouldPlay(false)
@@ -72,32 +74,42 @@ export default function AppFlixLandingIntro() {
   if (!shouldPlay) return null
 
   const canvasContent = (
-    <canvas
-      id="appflix-intro-canvas"
-      style={{
-        display: 'block',
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        width: '100vw',
-        height: '100vh',
-        zIndex: 9999999,
-        background: '#000000',
-        opacity: 1,
-        pointerEvents: 'all',
-      }}
-    />
+    <>
+      <canvas
+        id="appflix-intro-canvas"
+        style={{
+          display: 'block',
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          zIndex: 9999999,
+          background: '#000000',
+          opacity: 1,
+          pointerEvents: 'all',
+        }}
+      />
+      <audio
+        id="appflix-intro-audio"
+        src="/intro/intro_audio.mp3"
+        preload="auto"
+        playsInline
+        style={{ display: 'none' }}
+      />
+    </>
   )
 
   return (
     <>
+      <link rel="preload" href="/intro/intro_audio.mp3" as="audio" type="audio/mpeg" />
       <Script
-        src="/intro/spectrum_data.js"
+        src="/intro/spectrum_data.js?v=2"
         strategy="afterInteractive"
         onLoad={() => setSpectrumLoaded(true)}
       />
       <Script
-        src="/intro/appflix-intro.js"
+        src="/intro/appflix-intro.js?v=2"
         strategy="afterInteractive"
         onLoad={() => setEngineLoaded(true)}
       />

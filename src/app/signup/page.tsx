@@ -4,6 +4,7 @@ import { useActionState, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { signUp } from '@/app/actions/auth'
 import { Loader2, Globe, ChevronDown, LogIn } from 'lucide-react'
+import GoogleSignInButton from '@/components/auth/GoogleSignInButton'
 
 export default function SignupPage() {
   const [state, action, pending] = useActionState(signUp, undefined)
@@ -284,7 +285,22 @@ export default function SignupPage() {
             display: 'flex',
             alignItems: 'center',
             gap: '0.75rem',
-            margin: '1.75rem 0 1.25rem',
+            margin: '1.5rem 0 1.25rem',
+          }}>
+            <div style={{ flex: 1, height: '1px', background: 'rgba(255, 255, 255, 0.15)' }} />
+            <span style={{ color: '#888888', fontSize: '0.78rem', fontWeight: 600 }}>OR</span>
+            <div style={{ flex: 1, height: '1px', background: 'rgba(255, 255, 255, 0.15)' }} />
+          </div>
+
+          {/* Google Sign-in */}
+          <GoogleSignInButton label="Sign up with Google" redirectToNext="/?justLoggedIn=true" />
+
+          {/* Divider */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.75rem',
+            margin: '1.5rem 0 1.25rem',
           }}>
             <div style={{ flex: 1, height: '1px', background: 'rgba(255, 255, 255, 0.15)' }} />
             <span style={{ color: '#888888', fontSize: '0.78rem', fontWeight: 600 }}>ALREADY HAVE AN ACCOUNT?</span>
