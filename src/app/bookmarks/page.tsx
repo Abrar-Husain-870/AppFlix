@@ -74,6 +74,28 @@ export default function BookmarksPage() {
     loadBookmarks()
   }, [])
 
+  useEffect(() => {
+    const handleUpvoteSync = (e: Event) => {
+      const customEvent = e as CustomEvent<{ projectId: string; upvoted: boolean; count: number }>
+      const { projectId, upvoted, count } = customEvent.detail || {}
+      if (!projectId) return
+
+      setUpvotedIds(prev => {
+        const next = new Set(prev)
+        if (upvoted) next.add(projectId)
+        else next.delete(projectId)
+        return next
+      })
+
+      setBookmarkedProjects(prev =>
+        prev.map(p => (p.id === projectId ? { ...p, upvote_count: count } : p))
+      )
+    }
+
+    window.addEventListener('appflix:upvote-change', handleUpvoteSync)
+    return () => window.removeEventListener('appflix:upvote-change', handleUpvoteSync)
+  }, [])
+
   return (
     <div style={{ minHeight: '100vh', background: '#080808', padding: '3rem 1.5rem' }}>
       <div style={{ maxWidth: '1360px', margin: '0 auto' }}>

@@ -116,6 +116,29 @@ export default function BrowsePage() {
     return () => subscription.unsubscribe()
   }, [])
 
+  // Sync upvote changes in real time across browse cards
+  useEffect(() => {
+    const handleUpvoteSync = (e: Event) => {
+      const customEvent = e as CustomEvent<{ projectId: string; upvoted: boolean; count: number }>
+      const { projectId, upvoted, count } = customEvent.detail || {}
+      if (!projectId) return
+
+      setUpvotedIds(prev => {
+        const next = new Set(prev)
+        if (upvoted) next.add(projectId)
+        else next.delete(projectId)
+        return next
+      })
+
+      setProjects(prev =>
+        prev.map(p => (p.id === projectId ? { ...p, upvote_count: count } : p))
+      )
+    }
+
+    window.addEventListener('appflix:upvote-change', handleUpvoteSync)
+    return () => window.removeEventListener('appflix:upvote-change', handleUpvoteSync)
+  }, [])
+
   // Fetch categories and tags once
   useEffect(() => {
     const supabase = createClient()

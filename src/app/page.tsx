@@ -5,6 +5,7 @@ import { Flame, ArrowRight, Zap, Shield, BarChart3, Users, ArrowUp } from 'lucid
 import NetflixHorizonDivider from '@/components/ui/NetflixHorizonDivider'
 import NetflixTrendingRow from '@/components/projects/NetflixTrendingRow'
 import AppIcon from '@/components/ui/AppIcon'
+import UpvoteButton from '@/components/projects/UpvoteButton'
 import HeroGetStartedButton from '@/components/ui/HeroGetStartedButton'
 import NetflixReasonCards from '@/components/ui/NetflixReasonCards'
 import NetflixFAQSection from '@/components/ui/NetflixFAQSection'
@@ -65,6 +66,17 @@ async function HomeContent() {
     getFeaturedProjects(),
     getStats(),
   ])
+
+  let userUpvotedIds = new Set<string>()
+  if (user && featured.length > 0) {
+    const featuredIds = featured.map((p: any) => p.id)
+    const { data: upvotes } = await supabase
+      .from('upvotes')
+      .select('project_id')
+      .eq('user_id', user.id)
+      .in('project_id', featuredIds)
+    userUpvotedIds = new Set((upvotes ?? []).map((u: any) => u.project_id))
+  }
 
   return (
     <main style={{ minHeight: '100vh', background: 'transparent' }}>
@@ -214,8 +226,10 @@ async function HomeContent() {
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))', gap: '0.75rem', width: '100%' }}>
             {(featured as any[]).map((project) => (
-              <Link key={project.id} href={`/browse/${project.slug}`} style={{ textDecoration: 'none', display: 'block', minWidth: 0, width: '100%' }}>
-                <div className="card-hover" style={{
+              <div
+                key={project.id}
+                className="card-hover"
+                style={{
                   background: 'linear-gradient(145deg, #0F0F0F 0%, #080808 100%)',
                   border: '1px solid rgba(255, 255, 255, 0.07)',
                   borderRadius: '0.75rem',
@@ -228,7 +242,19 @@ async function HomeContent() {
                   overflow: 'hidden',
                   width: '100%',
                   maxWidth: '100%',
-                }}>
+                }}
+              >
+                <Link
+                  href={`/browse/${project.slug}`}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.65rem',
+                    flex: 1,
+                    minWidth: 0,
+                    textDecoration: 'none',
+                  }}
+                >
                   <AppIcon
                     src={project.icon_url}
                     alt={project.name}
@@ -249,16 +275,17 @@ async function HomeContent() {
                       {project.tagline}
                     </p>
                   </div>
-                  <div style={{
-                    flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: '0.35rem',
-                    background: 'rgba(229, 9, 20, 0.12)', border: '1px solid rgba(229, 9, 20, 0.3)',
-                    borderRadius: '0.45rem', padding: '0.35rem 0.6rem',
-                  }}>
-                    <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#FFFFFF' }}>{project.upvote_count}</span>
-                    <ArrowUp size={13} strokeWidth={2.75} style={{ color: '#E50914' }} />
-                  </div>
+                </Link>
+
+                <div style={{ flexShrink: 0 }}>
+                  <UpvoteButton
+                    projectId={project.id}
+                    initialCount={project.upvote_count}
+                    initialUpvoted={userUpvotedIds.has(project.id)}
+                    requireAuth={!user}
+                  />
                 </div>
-              </Link>
+              </div>
             ))}
           </div>
         </section>

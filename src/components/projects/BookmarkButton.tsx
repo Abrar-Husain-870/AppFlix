@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { bookmarkProject } from '@/app/actions/projects'
 import { Bookmark } from 'lucide-react'
 
@@ -19,29 +19,67 @@ export default function BookmarkButton({
 }: BookmarkButtonProps) {
   const [bookmarked, setBookmarked] = useState(initialBookmarked)
   const [animating, setAnimating] = useState(false)
+  const [isPending, setIsPending] = useState(false)
 
-  async function handleBookmark() {
+  useEffect(() => {
+    setBookmarked(initialBookmarked)
+  }, [initialBookmarked])
+
+  useEffect(() => {
+    const handleSync = (e: Event) => {
+      const customEvent = e as CustomEvent<{ projectId: string; bookmarked: boolean }>
+      if (customEvent.detail?.projectId === projectId) {
+        setBookmarked(customEvent.detail.bookmarked)
+      }
+    }
+    window.addEventListener('appflix:bookmark-change', handleSync)
+    return () => window.removeEventListener('appflix:bookmark-change', handleSync)
+  }, [projectId])
+
+  async function handleBookmark(e: React.MouseEvent) {
+    e.preventDefault()
+    e.stopPropagation()
+
     if (requireAuth) {
       window.location.href = '/login'
       return
     }
+
+    if (isPending) return
+
     const next = !bookmarked
+    const prev = bookmarked
     setBookmarked(next)
     setAnimating(true)
+    setIsPending(true)
     setTimeout(() => setAnimating(false), 300)
+
     try {
-      await bookmarkProject(projectId)
+      const res = await bookmarkProject(projectId)
+      if (res && res.success) {
+        setBookmarked(res.bookmarked)
+        window.dispatchEvent(
+          new CustomEvent('appflix:bookmark-change', {
+            detail: { projectId, bookmarked: res.bookmarked }
+          })
+        )
+      }
     } catch {
-      setBookmarked(!next)
+      setBookmarked(prev)
+    } finally {
+      setIsPending(false)
     }
   }
 
   const isDesktop = variant === 'desktop'
+  const buttonId = isDesktop ? `bookmark-btn-desktop-${projectId}` : `bookmark-btn-${projectId}`
 
   return (
     <button
-      id={`bookmark-btn-${projectId}`}
+      id={buttonId}
+      type="button"
       onClick={handleBookmark}
+      disabled={isPending}
       aria-label={bookmarked ? 'Remove bookmark' : 'Bookmark project'}
       title={bookmarked ? 'Remove bookmark' : 'Save for later'}
       style={{
@@ -55,18 +93,18 @@ export default function BookmarkButton({
         background: bookmarked ? 'rgba(229,9,20,0.12)' : 'rgba(255,255,255,0.05)',
         border: `1px solid ${bookmarked ? 'rgba(229,9,20,0.4)' : '#2B2B2B'}`,
         borderRadius: '0.5rem',
-        cursor: 'pointer',
+        cursor: isPending ? 'wait' : 'pointer',
         transition: 'all 0.2s',
         transform: animating ? 'scale(1.15)' : 'scale(1)',
       }}
       onMouseEnter={e => {
-        if (!bookmarked) {
+        if (!bookmarked && !isPending) {
           e.currentTarget.style.borderColor = 'rgba(229,9,20,0.4)'
           e.currentTarget.style.background = 'rgba(229,9,20,0.08)'
         }
       }}
       onMouseLeave={e => {
-        if (!bookmarked) {
+        if (!bookmarked && !isPending) {
           e.currentTarget.style.borderColor = '#2B2B2B'
           e.currentTarget.style.background = 'rgba(255,255,255,0.05)'
         }
