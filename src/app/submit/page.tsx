@@ -52,6 +52,7 @@ export default function SubmitPage() {
   const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [appName, setAppName] = useState('')
   const [tagline, setTagline] = useState('')
+  const [selectedCategoryId, setSelectedCategoryId] = useState('')
   const [iconUrl, setIconUrl] = useState('')
   const [screenshotUrls, setScreenshotUrls] = useState<string[]>([])
   const [uploadingScreenshot, setUploadingScreenshot] = useState(false)
@@ -250,6 +251,7 @@ export default function SubmitPage() {
               currentIconUrl={iconUrl}
               appName={appName}
               tagline={tagline || 'A maps app built for students, by students.'}
+              categoryName={categories.find(c => String(c.id) === selectedCategoryId)?.name || 'Productivity'}
               userId={userId || undefined}
               onIconChange={(url) => setIconUrl(url)}
             />
@@ -298,6 +300,8 @@ export default function SubmitPage() {
               <div>
                 <Label required>Category</Label>
                 <select id="project-category" name="category_id" required
+                  value={selectedCategoryId}
+                  onChange={e => setSelectedCategoryId(e.target.value)}
                   style={{ ...inputStyle, cursor: 'pointer' }}
                   onFocus={e => e.currentTarget.style.borderColor = '#E50914'}
                   onBlur={e => e.currentTarget.style.borderColor = '#2B2B2B'}

@@ -7,6 +7,7 @@ interface Props {
   href: string
   projectId: string
   id?: string
+  className?: string
   style?: React.CSSProperties
   children: ReactNode
 }
@@ -23,7 +24,7 @@ interface Props {
  * target="_blank" opens a new tab so this page stays open — the async
  * insert has time to complete before anything unloads.
  */
-export default function ExternalLinkButton({ href, projectId, id, style, children }: Props) {
+export default function ExternalLinkButton({ href, projectId, id, className, style, children }: Props) {
   async function handleClick() {
     try {
       const supabase = createClient()
@@ -66,6 +67,7 @@ export default function ExternalLinkButton({ href, projectId, id, style, childre
       target="_blank"
       rel="noopener noreferrer"
       id={id}
+      className={className}
       onClick={handleClick}
       style={style}
     >

@@ -65,6 +65,36 @@ export default function IconUploadCropper({
   // Live preview data URL for marketplace card
   const [livePreviewUrl, setLivePreviewUrl] = useState<string | null>(currentIconUrl || null)
 
+  // Pill Card background selection: 'default' | 'blur' | 'white' | 'black' | '#HEX'
+  const [pillBg, setPillBg] = useState<string>(() => {
+    if (typeof window !== 'undefined' && currentIconUrl) {
+      const match = currentIconUrl.match(/[?&]pill_bg=([^&#]+)/)
+      return match ? decodeURIComponent(match[1]) : 'default'
+    }
+    return 'default'
+  })
+  const [customPillHex, setCustomPillHex] = useState<string>(() => {
+    if (typeof window !== 'undefined' && currentIconUrl) {
+      const match = currentIconUrl.match(/[?&]pill_bg=([^&#]+)/)
+      if (match && decodeURIComponent(match[1]).startsWith('#')) {
+        return decodeURIComponent(match[1])
+      }
+    }
+    return '#1A2332'
+  })
+
+  // Sync pillBg if currentIconUrl changes externally
+  useEffect(() => {
+    if (currentIconUrl) {
+      const match = currentIconUrl.match(/[?&]pill_bg=([^&#]+)/)
+      if (match) {
+        const val = decodeURIComponent(match[1])
+        setPillBg(val)
+        if (val.startsWith('#')) setCustomPillHex(val)
+      }
+    }
+  }, [currentIconUrl])
+
   const fileInputRef = useRef<HTMLInputElement | null>(null)
   const previewCanvasRef = useRef<HTMLCanvasElement | null>(null)
   const imageElementRef = useRef<HTMLImageElement | null>(null)
@@ -301,9 +331,16 @@ export default function IconUploadCropper({
         uploadedUrl = urlData.publicUrl
       }
 
-      // 5. Update state and notify parent
-      setLivePreviewUrl(uploadedUrl)
-      onIconChange(uploadedUrl)
+      // 5. Append pill background style to icon URL so it persists with the project
+      let finalIconUrl = uploadedUrl
+      if (pillBg && pillBg !== 'default') {
+        const base = finalIconUrl.split('?')[0]
+        finalIconUrl = `${base}?pill_bg=${encodeURIComponent(pillBg)}`
+      }
+
+      // 6. Update state and notify parent
+      setLivePreviewUrl(finalIconUrl)
+      onIconChange(finalIconUrl)
       setModalOpen(false)
     } catch (err: any) {
       console.error('Failed to save icon:', err)
@@ -845,6 +882,134 @@ export default function IconUploadCropper({
                     />
                   </div>
                 </div>
+
+                {/* Pill View Card Background Selector */}
+                <div style={{ width: '100%', marginTop: '1.25rem', borderTop: '1px solid rgba(255, 255, 255, 0.08)', paddingTop: '1rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
+                    <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#CCCCCC' }}>
+                      Pill View Card Background
+                    </span>
+                    <span style={{ fontSize: '0.72rem', color: '#E50914', textTransform: 'uppercase', fontWeight: 700 }}>
+                      {pillBg === 'default' ? 'DEFAULT' : pillBg === 'blur' ? 'BLUR' : pillBg === 'white' ? 'WHITE' : pillBg === 'black' ? 'BLACK' : pillBg}
+                    </span>
+                  </div>
+                  <p style={{ color: '#777777', fontSize: '0.72rem', margin: '0 0 0.5rem', lineHeight: 1.3 }}>
+                    Background style for the icon showcase pedestal in AppFlix&apos;s horizontal Pill Card browse view.
+                  </p>
+
+                  {/* 4 Quick Presets: Default, Blur, White, Black */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.3rem', marginBottom: '0.5rem' }}>
+                    {[
+                      { id: 'default', label: 'Default', previewBg: 'linear-gradient(135deg, #18080a 0%, #E50914 100%)' },
+                      { id: 'blur', label: 'Blur', previewBg: 'radial-gradient(circle, #E50914 0%, #111111 80%)' },
+                      { id: 'white', label: 'White', previewBg: '#FFFFFF' },
+                      { id: 'black', label: 'Black', previewBg: '#050505' },
+                    ].map((opt) => {
+                      const isSelected = pillBg.toLowerCase() === opt.id
+                      return (
+                        <button
+                          key={opt.id}
+                          type="button"
+                          onClick={() => setPillBg(opt.id)}
+                          style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '0.2rem',
+                            padding: '0.4rem 0.2rem',
+                            background: isSelected ? 'rgba(229, 9, 20, 0.15)' : '#1F1F1F',
+                            border: `1.5px solid ${isSelected ? '#E50914' : 'rgba(255, 255, 255, 0.08)'}`,
+                            borderRadius: '0.4rem',
+                            color: isSelected ? '#FFFFFF' : '#888888',
+                            fontSize: '0.68rem',
+                            fontWeight: isSelected ? 700 : 400,
+                            cursor: 'pointer',
+                            transition: 'all 0.15s ease',
+                          }}
+                        >
+                          <span
+                            style={{
+                              width: '14px',
+                              height: '14px',
+                              borderRadius: '50%',
+                              background: opt.previewBg,
+                              border: opt.id === 'white' ? '1px solid #AAAAAA' : '1px solid rgba(255,255,255,0.25)',
+                              boxSizing: 'border-box',
+                            }}
+                          />
+                          <span>{opt.label}</span>
+                        </button>
+                      )
+                    })}
+                  </div>
+
+                  {/* Custom Color Selector */}
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    background: '#191919',
+                    border: pillBg.startsWith('#') ? '1.5px solid #E50914' : '1px solid rgba(255, 255, 255, 0.1)',
+                    borderRadius: '0.4rem',
+                    padding: '0.35rem 0.55rem',
+                  }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', cursor: 'pointer', flex: 1 }}>
+                      <input
+                        type="color"
+                        value={pillBg.startsWith('#') ? pillBg : customPillHex}
+                        onChange={(e) => {
+                          const val = e.target.value
+                          setCustomPillHex(val)
+                          setPillBg(val)
+                        }}
+                        style={{
+                          width: '22px',
+                          height: '22px',
+                          padding: 0,
+                          border: 'none',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          background: 'transparent',
+                        }}
+                      />
+                      <span style={{ fontSize: '0.74rem', color: pillBg.startsWith('#') ? '#FFFFFF' : '#AAAAAA', fontWeight: pillBg.startsWith('#') ? 600 : 400 }}>
+                        Custom Color:
+                      </span>
+                    </label>
+                    <input
+                      type="text"
+                      value={pillBg.startsWith('#') ? pillBg : ''}
+                      placeholder="#HEX"
+                      maxLength={7}
+                      onChange={(e) => {
+                        let val = e.target.value.trim()
+                        if (!val) {
+                          setPillBg('default')
+                          return
+                        }
+                        if (!val.startsWith('#')) val = '#' + val
+                        setPillBg(val)
+                        if (/^#[0-9A-Fa-f]{6}$/.test(val)) {
+                          setCustomPillHex(val)
+                        }
+                      }}
+                      style={{
+                        width: '72px',
+                        background: '#111111',
+                        border: '1px solid rgba(255, 255, 255, 0.15)',
+                        borderRadius: '0.3rem',
+                        color: '#FFFFFF',
+                        fontSize: '0.74rem',
+                        padding: '0.2rem 0.4rem',
+                        outline: 'none',
+                        fontFamily: 'monospace',
+                        textTransform: 'uppercase',
+                        textAlign: 'center',
+                      }}
+                    />
+                  </div>
+                </div>
               </div>
 
               {/* Column 2: Live Marketplace Card Preview */}
@@ -960,6 +1125,366 @@ export default function IconUploadCropper({
                     >
                       <Flame size={12} style={{ color: '#E50914' }} />
                       <span>24</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Pill View Card Preview */}
+                <div style={{ marginTop: '1.25rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.6rem' }}>
+                    <span style={{ fontSize: '0.78rem', color: '#888888', display: 'block' }}>
+                      Pill Card Preview (Browse Directory):
+                    </span>
+                    <span
+                      style={{
+                        fontSize: '0.68rem',
+                        fontWeight: 700,
+                        textTransform: 'uppercase',
+                        padding: '0.12rem 0.45rem',
+                        borderRadius: '0.3rem',
+                        background: 'rgba(255, 255, 255, 0.08)',
+                        color: pillBg === 'white' ? '#FFFFFF' : pillBg === 'black' ? '#CCCCCC' : pillBg === 'blur' ? '#E50914' : pillBg.startsWith('#') ? pillBg : '#E50914',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                      }}
+                    >
+                      Bg: {pillBg === 'default' ? 'Default Studio' : pillBg === 'blur' ? 'Blur Bloom' : pillBg === 'white' ? 'White' : pillBg === 'black' ? 'Black' : pillBg}
+                    </span>
+                  </div>
+
+                  <div
+                    className="pill-card"
+                    style={{
+                      background: '#111111',
+                      borderRadius: '0.75rem',
+                      border: '1px solid rgba(255, 255, 255, 0.08)',
+                      boxShadow: '0 12px 32px rgba(0, 0, 0, 0.7)',
+                      cursor: 'default',
+                    }}
+                  >
+                    {/* Left ⅓: Full-height Brand / Logo Showcase Pedestal */}
+                    <div
+                      className="pill-card-brand-side"
+                      style={{
+                        position: 'relative',
+                        overflow: 'hidden',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        padding: '0.65rem 0.5rem',
+                        background:
+                          pillBg === 'white'
+                            ? 'linear-gradient(145deg, #FFFFFF 0%, #EEEEEE 100%)'
+                            : pillBg === 'black'
+                            ? '#050505'
+                            : pillBg === 'blur'
+                            ? '#0B0B0B'
+                            : pillBg.startsWith('#')
+                            ? pillBg
+                            : 'linear-gradient(145deg, #18080a 0%, #0d0405 60%, #080808 100%)',
+                        borderRight:
+                          pillBg === 'white'
+                            ? '1px solid rgba(0, 0, 0, 0.12)'
+                            : '1px solid rgba(255, 255, 255, 0.08)',
+                        boxSizing: 'border-box',
+                      }}
+                    >
+                      {/* Base AppFlix Studio Warm Glow (Default mode) */}
+                      {(!pillBg || pillBg === 'default') && (
+                        <div
+                          style={{
+                            position: 'absolute',
+                            inset: 0,
+                            background: 'radial-gradient(circle at 50% 50%, rgba(229, 9, 20, 0.22) 0%, rgba(229, 9, 20, 0.05) 50%, transparent 70%)',
+                            pointerEvents: 'none',
+                            zIndex: 1,
+                          }}
+                        />
+                      )}
+
+                      {/* Dynamic Ambient Art Bloom (Default mode: subtle / Blur mode: rich & prominent) */}
+                      {livePreviewUrl && (!pillBg || pillBg === 'default' || pillBg === 'blur') && (
+                        <div
+                          style={{
+                            position: 'absolute',
+                            inset: pillBg === 'blur' ? '-25%' : '-30%',
+                            backgroundImage: `url(${livePreviewUrl})`,
+                            backgroundPosition: 'center',
+                            backgroundSize: 'cover',
+                            filter: pillBg === 'blur' ? 'blur(12px) saturate(260%) brightness(1.18)' : 'blur(28px) saturate(280%) brightness(1.35)',
+                            opacity: pillBg === 'blur' ? 0.88 : 0.65,
+                            transform: pillBg === 'blur' ? 'scale(1.35)' : 'scale(1.05)',
+                            pointerEvents: 'none',
+                            zIndex: pillBg === 'blur' ? 1 : 2,
+                          }}
+                        />
+                      )}
+
+                      {/* Blur mode dark vignette overlay */}
+                      {pillBg === 'blur' && (
+                        <div
+                          style={{
+                            position: 'absolute',
+                            inset: 0,
+                            background: 'linear-gradient(to bottom, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.55) 100%)',
+                            pointerEvents: 'none',
+                            zIndex: 2,
+                          }}
+                        />
+                      )}
+
+                      {/* White mode lighting */}
+                      {pillBg === 'white' && (
+                        <div
+                          style={{
+                            position: 'absolute',
+                            inset: 0,
+                            background: 'radial-gradient(circle at 50% 35%, rgba(255, 255, 255, 0.9) 0%, rgba(230, 230, 230, 0.4) 100%)',
+                            pointerEvents: 'none',
+                            zIndex: 1,
+                          }}
+                        />
+                      )}
+
+                      {/* Black mode spotlight */}
+                      {pillBg === 'black' && (
+                        <div
+                          style={{
+                            position: 'absolute',
+                            inset: 0,
+                            background: 'radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.08) 0%, transparent 65%)',
+                            pointerEvents: 'none',
+                            zIndex: 1,
+                          }}
+                        />
+                      )}
+
+                      {/* Custom color highlight overlay */}
+                      {pillBg.startsWith('#') && (
+                        <div
+                          style={{
+                            position: 'absolute',
+                            inset: 0,
+                            background: 'radial-gradient(circle at 50% 40%, rgba(255, 255, 255, 0.2) 0%, rgba(0, 0, 0, 0.35) 100%)',
+                            pointerEvents: 'none',
+                            zIndex: 1,
+                          }}
+                        />
+                      )}
+
+                      {/* Radial Studio Spotlight (Default mode) */}
+                      {(!pillBg || pillBg === 'default') && (
+                        <div
+                          style={{
+                            position: 'absolute',
+                            inset: 0,
+                            background: 'radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.12) 0%, transparent 65%)',
+                            pointerEvents: 'none',
+                            zIndex: 3,
+                          }}
+                        />
+                      )}
+
+                      {/* Top Glass Rim Highlight (not shown on pure white) */}
+                      {pillBg !== 'white' && (
+                        <div
+                          style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            height: '40%',
+                            background: 'linear-gradient(to bottom, rgba(255, 255, 255, 0.08) 0%, transparent 100%)',
+                            pointerEvents: 'none',
+                            zIndex: 3,
+                          }}
+                        />
+                      )}
+
+                      {/* App Logo — Squircle with fill color reflected */}
+                      <div
+                        style={{
+                          position: 'relative',
+                          zIndex: 4,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        <AppIcon
+                          src={livePreviewUrl}
+                          alt={appName || 'Choose Icon'}
+                          size={68}
+                          fallbackText={appName}
+                          style={{
+                            borderRadius: '16px',
+                            background: fillColor === 'transparent' ? (pillBg === 'white' ? '#F8F8F8' : '#161616') : fillColor,
+                            boxShadow:
+                              pillBg === 'white'
+                                ? '0 8px 22px rgba(0, 0, 0, 0.28), 0 2px 6px rgba(0, 0, 0, 0.15)'
+                                : pillBg === 'black'
+                                ? '0 8px 24px rgba(0, 0, 0, 0.95), 0 0 0 1px rgba(255, 255, 255, 0.12)'
+                                : pillBg === 'blur'
+                                ? '0 8px 24px rgba(0, 0, 0, 0.8), 0 0 1px rgba(255, 255, 255, 0.4)'
+                                : pillBg.startsWith('#')
+                                ? '0 8px 24px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.15)'
+                                : '0 6px 16px rgba(0, 0, 0, 0.45)',
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Right ⅔: Details & Actions Side */}
+                    <div
+                      className="pill-card-info-side"
+                      style={{
+                        padding: '0.75rem 0.9rem',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'space-between',
+                        minWidth: 0,
+                        boxSizing: 'border-box',
+                      }}
+                    >
+                      <div>
+                        {/* Top Row: App Name + External Link Icon & Top-Right Upvote Button */}
+                        <div
+                          style={{
+                            display: 'flex',
+                            alignItems: 'flex-start',
+                            justifyContent: 'space-between',
+                            gap: '0.5rem',
+                            marginBottom: '0.2rem',
+                          }}
+                        >
+                          <div
+                            style={{
+                              minWidth: 0,
+                              flex: 1,
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.35rem',
+                            }}
+                          >
+                            <h3
+                              style={{
+                                fontSize: '0.98rem',
+                                fontWeight: 800,
+                                color: '#FFFFFF',
+                                margin: 0,
+                                lineHeight: 1.25,
+                                letterSpacing: '-0.015em',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                              }}
+                            >
+                              {appName || 'App Name'}
+                            </h3>
+                            <ArrowUpRight
+                              size={14}
+                              style={{
+                                color: 'rgba(255, 255, 255, 0.45)',
+                                flexShrink: 0,
+                              }}
+                            />
+                          </div>
+
+                          {/* Upvote Mockup */}
+                          <div
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '0.25rem',
+                              background: '#1F1F1F',
+                              border: '1px solid rgba(255, 255, 255, 0.1)',
+                              borderRadius: '0.35rem',
+                              padding: '0.2rem 0.5rem',
+                              fontSize: '0.72rem',
+                              color: '#FFFFFF',
+                              fontWeight: 600,
+                              flexShrink: 0,
+                            }}
+                          >
+                            <Flame size={11} style={{ color: '#E50914' }} />
+                            <span>24</span>
+                          </div>
+                        </div>
+
+                        {/* Short Summary (Tagline) */}
+                        <p
+                          style={{
+                            fontSize: '0.76rem',
+                            color: '#9E9E9E',
+                            margin: '0.15rem 0 0.45rem',
+                            lineHeight: 1.35,
+                            display: '-webkit-box',
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: 'vertical',
+                            overflow: 'hidden',
+                          }}
+                        >
+                          {tagline || 'A fast, reliable app built for the community.'}
+                        </p>
+
+                        {/* Stage Badge */}
+                        <div style={{ marginBottom: '0.4rem' }}>
+                          <span
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.35rem',
+                              fontSize: '0.62rem',
+                              fontWeight: 800,
+                              letterSpacing: '0.04em',
+                              textTransform: 'uppercase',
+                              padding: '0.12rem 0.45rem',
+                              borderRadius: '9999px',
+                              background: 'rgba(243, 156, 18, 0.12)',
+                              color: '#F39C12',
+                              border: '1px solid rgba(243, 156, 18, 0.4)',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            <span
+                              style={{
+                                width: '5px',
+                                height: '5px',
+                                borderRadius: '50%',
+                                background: '#F39C12',
+                                boxShadow: '0 0 5px rgba(243, 156, 18, 0.8)',
+                                flexShrink: 0,
+                              }}
+                            />
+                            Beta
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Bottom Category Badge Row */}
+                      <div
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.35rem',
+                          flexWrap: 'wrap',
+                          marginTop: 'auto',
+                        }}
+                      >
+                        <span
+                          style={{
+                            fontSize: '0.68rem',
+                            fontWeight: 600,
+                            color: '#FFFFFF',
+                            background: 'rgba(229, 9, 20, 0.16)',
+                            border: '1px solid rgba(229, 9, 20, 0.45)',
+                            padding: '0.15rem 0.45rem',
+                            borderRadius: '0.35rem',
+                          }}
+                        >
+                          {categoryName}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>

@@ -7,7 +7,7 @@ import AppIcon from '@/components/ui/AppIcon'
 import BookmarkButton from '@/components/projects/BookmarkButton'
 import ExternalLinkButton from '@/components/projects/ExternalLinkButton'
 import ViewTracker from '@/components/projects/ViewTracker'
-import { Globe, GitBranch, Calendar, Tag, Monitor, Smartphone, Pencil, ExternalLink, ArrowUpRight } from 'lucide-react'
+import { Globe, GitBranch, Calendar, Tag, Monitor, Smartphone, Pencil, ExternalLink, ArrowUpRight, Link2, Eye, Star, ChevronRight, FolderOpen, Apple, Bot, Terminal } from 'lucide-react'
 import ProductGallery from '@/components/projects/ProductGallery'
 import AdminDeleteButton from '@/components/admin/AdminDeleteButton'
 import ReportModal from '@/components/projects/ReportModal'
@@ -16,6 +16,15 @@ import type { Metadata } from 'next'
 import ShareCard from '@/components/projects/ShareCard'
 import ProjectCommentsSection from '@/components/projects/ProjectCommentsSection'
 import { getProjectComments } from '@/app/actions/comments'
+
+/** Authentic Windows 4-pane icon */
+function WindowsIcon({ size = 13, style }: { size?: number; style?: React.CSSProperties }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" style={style}>
+      <path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.949-1.801" />
+    </svg>
+  )
+}
 
 /** Parse User-Agent string into the device_type enum values used by the DB. */
 function detectDeviceType(ua: string | null): 'mobile' | 'tablet' | 'desktop' {
@@ -28,14 +37,6 @@ function detectDeviceType(ua: string | null): 'mobile' | 'tablet' | 'desktop' {
 
 interface Props {
   params: Promise<{ slug: string }>
-}
-
-const PLATFORM_ICONS: Record<string, React.ReactNode> = {
-  web:     <Globe size={13} />,
-  ios:     <Smartphone size={13} />,
-  android: <Smartphone size={13} />,
-  desktop: <Monitor size={13} />,
-  chrome:  <Globe size={13} />,
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -127,6 +128,31 @@ export default async function ProjectDetailPage({ params }: Props) {
   // Fetch comments for this project
   const initialComments = await getProjectComments(project.id)
 
+  // Calculate average rating & reviews count from initialComments
+  const reviewsCount = initialComments.length
+  const avgRating = reviewsCount > 0
+    ? (initialComments.reduce((acc, c) => acc + (c.rating ?? 5), 0) / reviewsCount).toFixed(1)
+    : null
+
+  // Fetch developer's total approved apps count
+  let devAppsCount = 1
+  if (project.user_id) {
+    const { count } = await supabaseService
+      .from('projects')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', project.user_id)
+      .eq('status', 'approved')
+      .is('deleted_at', null)
+    if (count) devAppsCount = count
+  }
+
+  function formatCount(num: number | null | undefined): string {
+    if (!num) return '0'
+    if (num >= 1_000_000) return (num / 1_000_000).toFixed(1) + 'M'
+    if (num >= 1_000) return (num / 1_000).toFixed(1) + 'K'
+    return num.toString()
+  }
+
   const screenshots = (project.project_images as any[])
     ?.filter((img: any) => img.image_type === 'screenshot')
     ?.sort((a: any, b: any) => a.display_order - b.display_order) ?? []
@@ -200,20 +226,6 @@ export default async function ProjectDetailPage({ params }: Props) {
           )}
 
           <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'flex-start', flexWrap: 'wrap', position: 'relative' }}>
-          {/* Mobile-only pinned Top-Right Actions (Upvote on top, Bookmark below) */}
-          <div className="mobile-only" style={{ position: 'absolute', top: 0, right: 0, zIndex: 10, flexDirection: 'column', gap: '0.5rem', alignItems: 'flex-end' }}>
-            <UpvoteButton
-              projectId={project.id}
-              initialCount={project.upvote_count}
-              initialUpvoted={isUpvoted}
-              requireAuth={!user}
-            />
-            <BookmarkButton
-              projectId={project.id}
-              initialBookmarked={isBookmarked}
-              requireAuth={!user}
-            />
-          </div>
 
           {/* Icon */}
           <AppIcon
@@ -238,127 +250,202 @@ export default async function ProjectDetailPage({ params }: Props) {
               {project.tagline}
             </p>
 
-            {/* Meta row */}
-            <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
+            {/* Meta row: Stage, Category, Tags (without hashtags), Date */}
+            <div style={{ display: 'flex', gap: '0.55rem', flexWrap: 'wrap', alignItems: 'center' }}>
               {/* Stage badge */}
               <span style={{
                 fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase',
-                padding: '0.25rem 0.65rem', borderRadius: '9999px',
+                padding: '0.22rem 0.6rem', borderRadius: '9999px',
                 background: project.stage === 'production' ? 'rgba(46,204,113,0.15)' : 'rgba(243,156,18,0.15)',
                 color: project.stage === 'production' ? '#2ECC71' : '#F39C12',
               }}>
                 {project.stage}
               </span>
 
-              {/* Platforms */}
-              {(project.platforms as string[])?.map((p: string) => (
-                <span key={p} style={{
-                  display: 'flex', alignItems: 'center', gap: '0.3rem',
-                  fontSize: '0.78rem', color: '#888',
-                  background: '#1F1F1F', border: '1px solid #2B2B2B',
-                  padding: '0.25rem 0.6rem', borderRadius: '0.35rem',
-                  textTransform: 'capitalize',
-                }}>
-                  {PLATFORM_ICONS[p] ?? null}
-                  {p}
-                </span>
-              ))}
+              {/* Category */}
+              {(project.categories as any)?.name && (
+                <Link
+                  href={`/browse?category=${(project.categories as any)?.slug || ''}`}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    fontSize: '0.74rem',
+                    fontWeight: 600,
+                    color: '#FFFFFF',
+                    background: 'rgba(229, 9, 20, 0.16)',
+                    border: '1px solid rgba(229, 9, 20, 0.45)',
+                    padding: '0.22rem 0.55rem',
+                    borderRadius: '0.35rem',
+                    textDecoration: 'none',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  {(project.categories as any).name}
+                </Link>
+              )}
+
+              {/* Tags without hashtags */}
+              {(project.project_tags as any[])?.map((pt: any) => {
+                const tagName = pt.tags?.name
+                const tagSlug = pt.tags?.slug
+                if (!tagName) return null
+                return (
+                  <span
+                    key={tagSlug || tagName}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      fontSize: '0.74rem',
+                      fontWeight: 500,
+                      color: '#D4D4D8',
+                      background: '#1F1F1F',
+                      border: '1px solid #2B2B2B',
+                      padding: '0.22rem 0.55rem',
+                      borderRadius: '0.35rem',
+                    }}
+                  >
+                    {tagName}
+                  </span>
+                )
+              })}
 
               {/* Date */}
-              <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.78rem', color: '#555' }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.78rem', color: '#666' }}>
                 <Calendar size={12} />
                 {submittedDate}
               </span>
             </div>
           </div>
 
-          {/* Actions */}
-          <div className="details-actions-container" style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', minWidth: '120px' }}>
-            {/* Desktop-only Upvote & Bookmark Buttons in sidebar */}
-            <div className="desktop-only" style={{ flexDirection: 'column', gap: '0.6rem' }}>
+          {/* Actions - 2-Tier Layout matching Image 2 */}
+          <div className="details-actions-container" style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '0.65rem',
+            width: '360px',
+            maxWidth: '100%',
+            flexShrink: 0,
+          }}>
+            {/* Top Row: Primary Red Buttons (Upvote + Open App) */}
+            <div style={{ display: 'flex', gap: '0.65rem', width: '100%' }}>
               <UpvoteButton
                 projectId={project.id}
                 initialCount={project.upvote_count}
                 initialUpvoted={isUpvoted}
                 requireAuth={!user}
-                variant="desktop"
+                variant="hero"
               />
+
+              {(() => {
+                const primaryLink = project.website_url || project.playstore_url || project.appstore_url
+                const primaryLabel = project.website_url ? 'Open App' : project.playstore_url ? 'Play Store' : project.appstore_url ? 'App Store' : null
+                return primaryLink && primaryLabel ? (
+                  <ExternalLinkButton
+                    href={primaryLink}
+                    projectId={project.id}
+                    id="project-primary-link"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.45rem',
+                      padding: '0.65rem 1rem',
+                      background: '#E50914',
+                      color: '#FFFFFF',
+                      fontWeight: 700,
+                      fontSize: '0.9rem',
+                      borderRadius: '0.65rem',
+                      textDecoration: 'none',
+                      transition: 'all 0.18s ease',
+                      whiteSpace: 'nowrap',
+                      flex: 1,
+                      boxShadow: '0 4px 14px rgba(229, 9, 20, 0.35)',
+                    }}
+                  >
+                    <span>{primaryLabel}</span>
+                    <Link2 size={16} />
+                  </ExternalLinkButton>
+                ) : null
+              })()}
+            </div>
+
+            {/* Subtle Divider Line */}
+            <div style={{
+              width: '100%',
+              height: '1px',
+              background: 'rgba(255, 255, 255, 0.1)',
+              margin: '0.1rem 0',
+            }} />
+
+            {/* Bottom Row: Secondary Grey Pill Buttons (Bookmark + Report + Private Feedback) */}
+            <div style={{ display: 'flex', gap: '0.45rem', width: '100%', alignItems: 'center' }}>
               <BookmarkButton
                 projectId={project.id}
                 initialBookmarked={isBookmarked}
                 requireAuth={!user}
-                variant="desktop"
+                variant="hero"
               />
-            </div>
 
-            {(!user || user.id !== project.user_id) && (
-              <ReportModal
-                projectId={project.id}
-                appName={project.name}
-                requireAuth={!user}
-              />
-            )}
-            {(!user || user.id !== project.user_id) && (
-              <PrivateFeedbackButton
-                projectId={project.id}
-                projectName={project.name}
-                developerName={(project.profiles as any)?.display_name || (project.profiles as any)?.username}
-                isOwner={false}
-                requireAuth={!user}
-                variant="full"
-              />
-            )}
-            {user && project.user_id === user.id && (
-              <Link
-                href={`/dashboard/projects/edit/${project.id}`}
-                id="edit-app-btn"
-                style={{
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem',
-                  padding: '0.6rem 1rem', background: '#262626',
-                  border: '1px solid rgba(229, 9, 20, 0.5)',
-                  color: '#FFFFFF', fontWeight: 600, fontSize: '0.85rem',
-                  borderRadius: '0.5rem', textDecoration: 'none',
-                  transition: 'all 0.2s', whiteSpace: 'nowrap',
-                  boxShadow: '0 4px 12px rgba(229, 9, 20, 0.15)',
-                }}
-              >
-                <Pencil size={14} style={{ color: '#E50914' }} /> Edit App
-              </Link>
-            )}
-
-            {isAdmin && (
-              <AdminDeleteButton projectId={project.id} appName={project.name} />
-            )}
-            {(() => {
-              const primaryLink = project.website_url || project.playstore_url || project.appstore_url
-              const primaryLabel = project.website_url ? 'Visit Site' : project.playstore_url ? 'Play Store' : project.appstore_url ? 'App Store' : null
-              return primaryLink && primaryLabel ? (
-                <ExternalLinkButton
-                  href={primaryLink}
+              {(!user || user.id !== project.user_id) && (
+                <ReportModal
                   projectId={project.id}
-                  id="project-primary-link"
+                  appName={project.name}
+                  requireAuth={!user}
+                  variant="hero"
+                />
+              )}
+
+              {(!user || user.id !== project.user_id) && (
+                <PrivateFeedbackButton
+                  projectId={project.id}
+                  projectName={project.name}
+                  developerName={(project.profiles as any)?.display_name || (project.profiles as any)?.username}
+                  isOwner={false}
+                  requireAuth={!user}
+                  variant="hero"
+                />
+              )}
+
+              {user && project.user_id === user.id && (
+                <Link
+                  href={`/dashboard/projects/edit/${project.id}`}
+                  id="edit-app-btn"
                   style={{
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem',
-                    padding: '0.6rem 1rem', background: '#E50914',
-                    color: '#FFFFFF', fontWeight: 600, fontSize: '0.85rem',
-                    borderRadius: '0.5rem', textDecoration: 'none',
-                    transition: 'background 0.2s', whiteSpace: 'nowrap',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.4rem',
+                    padding: '0.55rem 0.75rem',
+                    background: '#222226',
+                    border: '1px solid rgba(229, 9, 20, 0.5)',
+                    color: '#FFFFFF',
+                    fontWeight: 600,
+                    fontSize: '0.78rem',
+                    borderRadius: '0.5rem',
+                    textDecoration: 'none',
+                    transition: 'all 0.2s',
+                    whiteSpace: 'nowrap',
+                    flex: 1,
                   }}
                 >
-                  <ExternalLink size={14} /> {primaryLabel}
-                </ExternalLinkButton>
-              ) : null
-            })()}
+                  <Pencil size={13} style={{ color: '#E50914' }} /> Edit App
+                </Link>
+              )}
+
+              {isAdmin && (
+                <AdminDeleteButton projectId={project.id} appName={project.name} />
+              )}
+            </div>
           </div>
         </div>
       </div>
     </div>
 
       {/* Main body */}
-      <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '2rem 1.5rem', display: 'flex', gap: '2rem', alignItems: 'flex-start', flexWrap: 'wrap' }}>
+      <div className="details-layout-container" style={{ maxWidth: '1100px', margin: '0 auto', padding: '2rem 1.5rem' }}>
 
-        {/* Left — screenshots + description */}
-        <div style={{ flex: 1, minWidth: '280px' }}>
+        {/* Left / Main column — screenshots + description + tags */}
+        <div className="details-main-content">
 
           {/* Screenshots Gallery with Arrows & Lightbox */}
           <ProductGallery screenshots={screenshots} projectName={project.name} />
@@ -387,14 +474,390 @@ export default async function ProjectDetailPage({ params }: Props) {
                     background: '#1F1F1F', border: '1px solid #2B2B2B',
                     padding: '0.25rem 0.65rem', borderRadius: '9999px',
                   }}>
-                    #{pt.tags?.name}
+                    {pt.tags?.name}
                   </span>
                 ))}
               </div>
             </div>
           )}
+        </div>
 
-          {/* Customer Reviews & Comments Section */}
+        {/* Right sidebar — Inspired by reference design */}
+        <aside className="details-sidebar">
+          {/* ── CARD 1: App Details, Platforms, Stats, Share ── */}
+          <div style={{
+            background: '#0D0D0E',
+            border: '1px solid rgba(255, 255, 255, 0.08)',
+            borderRadius: '16px',
+            padding: '1.25rem',
+            marginBottom: '1rem',
+          }}>
+            {/* 1. App Details */}
+            <h3 style={{
+              fontSize: '0.75rem',
+              fontWeight: 700,
+              color: '#8E8E93',
+              letterSpacing: '0.04em',
+              textTransform: 'uppercase',
+              margin: '0 0 0.75rem 0',
+            }}>
+              App Details
+            </h3>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+              {/* Developer Item */}
+              {(project.profiles as any)?.username ? (
+                <Link
+                  href={`/developer/${(project.profiles as any).username}`}
+                  className="sidepanel-row-link"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '0.5rem 0.5rem',
+                    borderRadius: '8px',
+                    textDecoration: 'none',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', minWidth: 0 }}>
+                    <div style={{
+                      width: '32px',
+                      height: '32px',
+                      borderRadius: '50%',
+                      background: 'linear-gradient(135deg, #2A2A30 0%, #1A1A1E 100%)',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                      overflow: 'hidden',
+                    }}>
+                      {(project.profiles as any).avatar_url ? (
+                        <img
+                          src={(project.profiles as any).avatar_url}
+                          alt={(project.profiles as any).username}
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        />
+                      ) : (
+                        <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#FFFFFF' }}>
+                          {((project.profiles as any).username?.[0] || 'D').toUpperCase()}
+                        </span>
+                      )}
+                    </div>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontSize: '0.72rem', color: '#71717A', fontWeight: 500, lineHeight: 1.2 }}>
+                        Developer
+                      </div>
+                      <div style={{
+                        fontSize: '0.86rem',
+                        fontWeight: 600,
+                        color: '#FFFFFF',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                      }}>
+                        {(project.profiles as any).display_name || (project.profiles as any).username}
+                      </div>
+                    </div>
+                  </div>
+                  <ChevronRight size={15} style={{ color: '#555555', flexShrink: 0 }} />
+                </Link>
+              ) : null}
+
+              {/* Category Item */}
+              {(project.categories as any)?.name ? (
+                <Link
+                  href={`/browse?category=${(project.categories as any)?.slug || ''}`}
+                  className="sidepanel-row-link"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '0.5rem 0.5rem',
+                    borderRadius: '8px',
+                    textDecoration: 'none',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', minWidth: 0 }}>
+                    <div style={{
+                      width: '32px',
+                      height: '32px',
+                      borderRadius: '8px',
+                      background: 'rgba(255, 255, 255, 0.05)',
+                      border: '1px solid rgba(255, 255, 255, 0.08)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#A1A1AA',
+                      flexShrink: 0,
+                    }}>
+                      <FolderOpen size={15} />
+                    </div>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontSize: '0.72rem', color: '#71717A', fontWeight: 500, lineHeight: 1.2 }}>
+                        Category
+                      </div>
+                      <div style={{
+                        fontSize: '0.86rem',
+                        fontWeight: 600,
+                        color: '#FFFFFF',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                      }}>
+                        {(project.categories as any)?.name}
+                      </div>
+                    </div>
+                  </div>
+                  <ChevronRight size={15} style={{ color: '#555555', flexShrink: 0 }} />
+                </Link>
+              ) : null}
+
+              {/* GitHub Repo (if exists) */}
+              {project.github_url && (
+                <ExternalLinkButton
+                  href={project.github_url}
+                  projectId={project.id}
+                  id="project-sidebar-github-link"
+                  className="sidepanel-row-link"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '0.5rem 0.5rem',
+                    borderRadius: '8px',
+                    textDecoration: 'none',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', minWidth: 0 }}>
+                    <div style={{
+                      width: '32px',
+                      height: '32px',
+                      borderRadius: '8px',
+                      background: 'rgba(255, 255, 255, 0.05)',
+                      border: '1px solid rgba(255, 255, 255, 0.08)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#A1A1AA',
+                      flexShrink: 0,
+                    }}>
+                      <GitBranch size={15} />
+                    </div>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontSize: '0.72rem', color: '#71717A', fontWeight: 500, lineHeight: 1.2 }}>
+                        Repository
+                      </div>
+                      <div style={{
+                        fontSize: '0.86rem',
+                        fontWeight: 600,
+                        color: '#FFFFFF',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                      }}>
+                        GitHub Repo
+                      </div>
+                    </div>
+                  </div>
+                  <ChevronRight size={15} style={{ color: '#555555', flexShrink: 0 }} />
+                </ExternalLinkButton>
+              )}
+            </div>
+
+            {/* Divider */}
+            {((project.platforms as string[])?.length > 0) && (
+              <>
+                <div style={{ height: '1px', background: 'rgba(255, 255, 255, 0.06)', margin: '0.9rem 0' }} />
+
+                {/* 2. Platforms */}
+                <h3 style={{
+                  fontSize: '0.75rem',
+                  fontWeight: 700,
+                  color: '#8E8E93',
+                  letterSpacing: '0.04em',
+                  textTransform: 'uppercase',
+                  margin: '0 0 0.65rem 0',
+                }}>
+                  Platforms
+                </h3>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.9rem', flexWrap: 'wrap' }}>
+                  {(project.platforms as string[]).map(p => {
+                    const norm = p.toLowerCase()
+                    let icon = <Globe size={14} style={{ color: '#A1A1AA' }} />
+                    let label = p.charAt(0).toUpperCase() + p.slice(1)
+                    if (norm === 'web') {
+                      icon = <Globe size={14} style={{ color: '#A1A1AA' }} />
+                      label = 'Web'
+                    } else if (norm === 'ios') {
+                      icon = <Apple size={14} style={{ color: '#A1A1AA' }} />
+                      label = 'iOS'
+                    } else if (norm === 'android') {
+                      icon = <Bot size={14} style={{ color: '#A1A1AA' }} />
+                      label = 'Android'
+                    } else if (norm === 'windows' || norm === 'win') {
+                      icon = <WindowsIcon size={13} style={{ color: '#A1A1AA' }} />
+                      label = 'Windows'
+                    } else if (norm === 'macos' || norm === 'mac') {
+                      icon = <Apple size={14} style={{ color: '#A1A1AA' }} />
+                      label = 'macOS'
+                    } else if (norm === 'linux') {
+                      icon = <Terminal size={14} style={{ color: '#A1A1AA' }} />
+                      label = 'Linux'
+                    } else if (norm === 'desktop') {
+                      icon = <Monitor size={14} style={{ color: '#A1A1AA' }} />
+                      label = 'Desktop'
+                    }
+                    return (
+                      <span key={p} style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.35rem',
+                        fontSize: '0.8rem',
+                        color: '#D4D4D8',
+                        fontWeight: 500,
+                      }}>
+                        {icon}
+                        {label}
+                      </span>
+                    )
+                  })}
+                </div>
+              </>
+            )}
+
+            {/* Divider */}
+            <div style={{ height: '1px', background: 'rgba(255, 255, 255, 0.06)', margin: '0.9rem 0' }} />
+
+            {/* 3. Stats */}
+            <h3 style={{
+              fontSize: '0.75rem',
+              fontWeight: 700,
+              color: '#8E8E93',
+              letterSpacing: '0.04em',
+              textTransform: 'uppercase',
+              margin: '0 0 0.65rem 0',
+            }}>
+              Stats
+            </h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
+              {/* Total Views */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.82rem', color: '#8E8E93' }}>
+                  <Eye size={14} style={{ color: '#71717A' }} /> Total Views
+                </span>
+                <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#FFFFFF' }}>
+                  {formatCount(project.view_count)}
+                </span>
+              </div>
+
+              {/* Rating */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.82rem', color: '#8E8E93' }}>
+                  <Star size={14} style={{ color: '#E5A00D', fill: '#E5A00D' }} /> Rating
+                </span>
+                <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#FFFFFF' }}>
+                  {reviewsCount > 0 ? `${avgRating} (${reviewsCount})` : '—'}
+                </span>
+              </div>
+            </div>
+
+            {/* Divider */}
+            <div style={{ height: '1px', background: 'rgba(255, 255, 255, 0.06)', margin: '0.9rem 0' }} />
+
+            {/* 4. Share */}
+            <h3 style={{
+              fontSize: '0.75rem',
+              fontWeight: 700,
+              color: '#8E8E93',
+              letterSpacing: '0.04em',
+              textTransform: 'uppercase',
+              margin: '0 0 0.65rem 0',
+            }}>
+              Share
+            </h3>
+            <ShareCard projectName={project.name} projectSlug={project.slug} variant="inline" />
+          </div>
+
+          {/* ── CARD 2: Developer Card ── */}
+          {(project.profiles as any)?.username && (
+            <div style={{
+              background: '#0D0D0E',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+              borderRadius: '16px',
+              padding: '1.25rem',
+            }}>
+              <h3 style={{
+                fontSize: '0.75rem',
+                fontWeight: 700,
+                color: '#8E8E93',
+                letterSpacing: '0.04em',
+                textTransform: 'uppercase',
+                margin: '0 0 0.75rem 0',
+              }}>
+                Developer
+              </h3>
+              <Link
+                href={`/developer/${(project.profiles as any).username}`}
+                className="sidepanel-dev-card"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  textDecoration: 'none',
+                  padding: '0.35rem 0.25rem',
+                  borderRadius: '8px',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', minWidth: 0 }}>
+                  <div style={{
+                    width: '42px',
+                    height: '42px',
+                    borderRadius: '50%',
+                    background: 'linear-gradient(135deg, #2A2A30 0%, #1A1A1E 100%)',
+                    border: '1px solid rgba(255, 255, 255, 0.12)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                    overflow: 'hidden',
+                  }}>
+                    {(project.profiles as any).avatar_url ? (
+                      <img
+                        src={(project.profiles as any).avatar_url}
+                        alt={(project.profiles as any).username}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      />
+                    ) : (
+                      <span style={{ fontSize: '0.95rem', fontWeight: 800, color: '#FFFFFF' }}>
+                        {((project.profiles as any).username?.[0] || 'D').toUpperCase()}
+                      </span>
+                    )}
+                  </div>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{
+                      fontSize: '0.9rem',
+                      fontWeight: 700,
+                      color: '#FFFFFF',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                    }}>
+                      {(project.profiles as any).display_name || (project.profiles as any).username}
+                    </div>
+                    <div style={{ fontSize: '0.76rem', color: '#71717A', marginTop: '0.1rem' }}>
+                      {devAppsCount} {devAppsCount === 1 ? 'app' : 'apps'}
+                    </div>
+                  </div>
+                </div>
+                <ChevronRight size={16} style={{ color: '#555555', flexShrink: 0 }} />
+              </Link>
+            </div>
+          )}
+        </aside>
+
+        {/* Customer Reviews & Comments Section */}
+        <div className="details-comments">
           <ProjectCommentsSection
             projectId={project.id}
             slug={project.slug}
@@ -403,147 +866,10 @@ export default async function ProjectDetailPage({ params }: Props) {
             isAdmin={isAdmin}
             currentUserId={user?.id ?? null}
             initialComments={initialComments}
+            projectStage={project.stage}
+            projectPlatforms={project.platforms}
           />
         </div>
-
-        {/* Right sidebar — links + stats */}
-        <aside style={{ width: '220px', flexShrink: 0 }}>
-          {/* Stats card */}
-          <div style={{
-            background: 'linear-gradient(145deg, #0F0F0F 0%, #080808 100%)',
-            border: '1px solid rgba(255, 255, 255, 0.07)',
-            borderRadius: '0.75rem', padding: '1.25rem', marginBottom: '1rem',
-          }}>
-            <h3 style={{ fontSize: '0.7rem', fontWeight: 800, color: '#777777', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '0.75rem' }}>Stats</h3>
-            {[
-              { label: 'Upvotes',   value: project.upvote_count },
-              { label: 'Views',     value: project.view_count },
-              { label: 'Bookmarks', value: project.bookmark_count },
-            ].map(s => (
-              <div key={s.label} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0', borderBottom: '1px solid rgba(255, 255, 255, 0.06)' }}>
-                <span style={{ fontSize: '0.82rem', color: '#AAAAAA' }}>{s.label}</span>
-                <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#FFFFFF' }}>{s.value ?? 0}</span>
-              </div>
-            ))}
-          </div>
-
-          {/* Links card — website, github, app store, play store */}
-          {(project.website_url || project.github_url || project.appstore_url || project.playstore_url) && (
-            <div style={{
-              background: 'linear-gradient(145deg, #0F0F0F 0%, #080808 100%)',
-              border: '1px solid rgba(255, 255, 255, 0.07)',
-              borderRadius: '0.75rem', padding: '1.25rem', marginBottom: '1rem',
-            }}>
-              <h3 style={{ fontSize: '0.7rem', fontWeight: 800, color: '#777777', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '0.75rem' }}>Links</h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                {project.website_url && (
-                  <ExternalLinkButton
-                    href={project.website_url}
-                    projectId={project.id}
-                    id="project-sidebar-website-link"
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: '0.5rem',
-                      fontSize: '0.85rem', color: '#AAAAAA', textDecoration: 'none',
-                      padding: '0.45rem 0.6rem', borderRadius: '0.4rem',
-                      border: '1px solid #2B2B2B', transition: 'border-color 0.2s, color 0.2s',
-                    }}
-                  >
-                    <Globe size={14} /> Visit Site
-                  </ExternalLinkButton>
-                )}
-                {project.github_url && (
-                  <ExternalLinkButton
-                    href={project.github_url}
-                    projectId={project.id}
-                    id="project-github-link"
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: '0.5rem',
-                      fontSize: '0.85rem', color: '#AAAAAA', textDecoration: 'none',
-                      padding: '0.45rem 0.6rem', borderRadius: '0.4rem',
-                      border: '1px solid #2B2B2B', transition: 'border-color 0.2s, color 0.2s',
-                    }}
-                  >
-                    <GitBranch size={14} /> GitHub Repo
-                  </ExternalLinkButton>
-                )}
-                {project.appstore_url && (
-                  <ExternalLinkButton
-                    href={project.appstore_url}
-                    projectId={project.id}
-                    id="project-appstore-link"
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: '0.5rem',
-                      fontSize: '0.85rem', color: '#AAAAAA', textDecoration: 'none',
-                      padding: '0.45rem 0.6rem', borderRadius: '0.4rem',
-                      border: '1px solid #2B2B2B',
-                    }}
-                  >
-                    <Smartphone size={14} /> App Store
-                  </ExternalLinkButton>
-                )}
-                {project.playstore_url && (
-                  <ExternalLinkButton
-                    href={project.playstore_url}
-                    projectId={project.id}
-                    id="project-playstore-link"
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: '0.5rem',
-                      fontSize: '0.85rem', color: '#AAAAAA', textDecoration: 'none',
-                      padding: '0.45rem 0.6rem', borderRadius: '0.4rem',
-                      border: '1px solid #2B2B2B',
-                    }}
-                  >
-                    <Smartphone size={14} /> Play Store
-                  </ExternalLinkButton>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Share Card */}
-          <ShareCard projectName={project.name} projectSlug={project.slug} />
-
-          {/* Owner / Developer */}
-          {(project.profiles as any)?.username && (
-            <Link
-              href={`/developer/${(project.profiles as any).username}`}
-              style={{ textDecoration: 'none', display: 'block' }}
-            >
-              <div className="dev-card-hover">
-                <h3 style={{ fontSize: '0.7rem', fontWeight: 800, color: '#777777', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '0.75rem' }}>
-                  Developer
-                </h3>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', minWidth: 0 }}>
-                  <div style={{
-                    width: '36px', height: '36px', borderRadius: '50%',
-                    background: 'linear-gradient(135deg, #E50914 0%, #B20710 100%)',
-                    border: '1px solid rgba(255, 255, 255, 0.15)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: '0.9rem', fontWeight: 800, color: '#FFFFFF', flexShrink: 0,
-                    boxShadow: '0 2px 8px rgba(229, 9, 20, 0.3)',
-                    overflow: 'hidden',
-                  }}>
-                    {(project.profiles as any).avatar_url
-                      ? <img src={(project.profiles as any).avatar_url} alt={(project.profiles as any).username} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                      : (project.profiles as any).username[0].toUpperCase()}
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <span style={{
-                      fontSize: '0.85rem', color: '#FFFFFF', fontWeight: 600,
-                      display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                    }}>
-                      {(project.profiles as any).display_name || `@${(project.profiles as any).username}`}
-                    </span>
-                    <span style={{ fontSize: '0.72rem', color: '#666' }}>
-                      @{(project.profiles as any).username}
-                    </span>
-                  </div>
-                  <ArrowUpRight size={13} style={{ color: '#555', flexShrink: 0 }} />
-                </div>
-              </div>
-            </Link>
-          )}
-        </aside>
       </div>
     </div>
   )

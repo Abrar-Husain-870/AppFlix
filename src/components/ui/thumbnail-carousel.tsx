@@ -99,7 +99,7 @@ function Thumbnails({ items, activeIndex, onSelect }: ThumbnailsProps) {
   return (
     <div
       ref={thumbnailsRef}
-      className='overflow-x-auto w-full no-scrollbar py-2.5 px-2 overscroll-x-contain'
+      className='product-gallery-thumbnails overflow-x-auto w-full no-scrollbar py-2.5 px-2 overscroll-x-contain'
       style={{
         scrollbarWidth: 'none',
         msOverflowStyle: 'none',
@@ -112,7 +112,7 @@ function Thumbnails({ items, activeIndex, onSelect }: ThumbnailsProps) {
           display: none;
         }
       `}</style>
-      <div className='flex gap-2.5 sm:gap-3 items-center mx-auto' style={{ width: 'fit-content' }}>
+      <div className='flex gap-2 sm:gap-2.5 items-center mx-auto' style={{ width: 'fit-content' }}>
         {items.map((item, i) => {
           const isActive = i === activeIndex;
           return (
@@ -129,19 +129,38 @@ function Thumbnails({ items, activeIndex, onSelect }: ThumbnailsProps) {
                 scale: isActive ? 1.05 : 1,
               }}
               transition={{ duration: 0.2, ease: 'easeOut' }}
-              className='relative shrink-0 p-0 m-0 border-0 bg-transparent flex cursor-pointer outline-none focus:outline-none'
+              style={{
+                height: '52px',
+                padding: 0,
+                margin: 0,
+                border: 'none',
+                background: 'transparent',
+                display: 'flex',
+                alignItems: 'center',
+                flexShrink: 0,
+                cursor: 'pointer',
+                outline: 'none',
+              }}
             >
-              {/* Thumbnail Image: Red border is directly painted on the image itself (0px gap/filler) */}
+              {/* Thumbnail Image: strictly constrained height, width, and rounded border */}
               <img
                 src={item.url}
                 alt={item.title || `Thumbnail ${i + 1}`}
-                className={`h-[44px] xs:h-[50px] sm:h-[58px] w-auto block rounded-lg select-none pointer-events-none transition-all duration-200 ${
-                  isActive
-                    ? 'border-2 border-[#E50914] opacity-100'
-                    : 'border-2 border-white/10 opacity-40 hover:opacity-75 hover:border-white/30'
-                }`}
                 style={{
+                  height: '48px',
+                  maxHeight: '48px',
+                  width: 'auto',
+                  maxWidth: '80px',
+                  objectFit: 'cover',
+                  display: 'block',
+                  borderRadius: '8px',
+                  border: isActive ? '2px solid #E50914' : '2px solid rgba(255, 255, 255, 0.15)',
+                  opacity: isActive ? 1 : 0.45,
                   filter: 'drop-shadow(0 4px 10px rgba(0, 0, 0, 0.85))',
+                  userSelect: 'none',
+                  pointerEvents: 'none',
+                  transition: 'all 0.2s ease',
+                  boxSizing: 'border-box',
                 }}
                 draggable={false}
               />
@@ -222,8 +241,8 @@ export default function ThumbnailCarousel({
       <div className='flex flex-col gap-3'>
         {/* Main Infinite Carousel Container — touchAction: pan-y allows vertical page scrolling */}
         <div
-          className='relative overflow-hidden rounded-xl bg-transparent h-[270px] xs:h-[320px] sm:h-[420px] md:h-[490px]'
-          style={{ touchAction: 'pan-y' }}
+          className='relative overflow-hidden rounded-xl bg-transparent'
+          style={{ touchAction: 'pan-y', height: 'clamp(340px, 60vh, 580px)' }}
         >
           <AnimatePresence initial={false} custom={direction}>
             <motion.div
@@ -264,7 +283,7 @@ export default function ThumbnailCarousel({
                   hasDraggedRef.current = false;
                 }, 100);
               }}
-              className='absolute inset-0 w-full h-full flex items-center justify-center p-2 sm:p-6 md:p-8 select-none cursor-grab active:cursor-grabbing'
+              className='absolute inset-0 w-full h-full flex items-center justify-center p-2 sm:p-4 md:p-5 select-none cursor-grab active:cursor-grabbing'
               onClick={() => {
                 if (hasDraggedRef.current) return;
                 if (onImageClick) {

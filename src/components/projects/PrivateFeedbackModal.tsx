@@ -3,7 +3,7 @@
 import { useState, useEffect, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import {
-  X, Lock, Send, CheckCircle2, AlertCircle, MessageSquare,
+  X, Lock, Key, Send, CheckCircle2, AlertCircle, MessageSquare,
   Clock, Trash2, Loader2, Sparkles
 } from 'lucide-react'
 import {
@@ -414,8 +414,9 @@ export function PrivateFeedbackButton({
   developerName?: string
   isOwner?: boolean
   requireAuth?: boolean
-  variant?: 'compact' | 'full'
+  variant?: 'compact' | 'full' | 'hero'
 }) {
+  const isHero = variant === 'hero'
   const [isOpen, setIsOpen] = useState(false)
   const router = useRouter()
 
@@ -437,32 +438,55 @@ export function PrivateFeedbackButton({
           display: 'inline-flex',
           alignItems: 'center',
           justifyContent: 'center',
-          gap: '0.45rem',
-          padding: '0.6rem 0.9rem',
-          background: '#181818',
-          border: '1px solid #333333',
-          color: '#DDDDDD',
-          fontSize: '0.82rem',
+          gap: '0.35rem',
+          padding: isHero ? '0.55rem 0.65rem' : '0.6rem 0.9rem',
+          background: isHero ? '#222226' : '#181818',
+          border: isHero ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid #333333',
+          color: isHero ? '#D4D4D8' : '#DDDDDD',
+          fontSize: isHero ? '0.78rem' : '0.82rem',
           fontWeight: 600,
           borderRadius: '0.5rem',
           cursor: 'pointer',
-          transition: 'all 0.2s ease',
-          width: variant === 'full' ? '100%' : 'auto',
+          transition: 'all 0.18s ease',
+          width: isHero ? '100%' : variant === 'full' ? '100%' : 'auto',
+          flex: isHero ? 1.25 : 'none',
           whiteSpace: 'nowrap',
         }}
         onMouseEnter={e => {
+          if (isHero) {
+            e.currentTarget.style.background = '#2E2E34'
+            e.currentTarget.style.color = '#FFFFFF'
+            e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.18)'
+            return
+          }
           e.currentTarget.style.borderColor = 'rgba(229, 9, 20, 0.7)'
           e.currentTarget.style.color = '#FFFFFF'
           e.currentTarget.style.background = '#222222'
         }}
         onMouseLeave={e => {
+          if (isHero) {
+            e.currentTarget.style.background = '#222226'
+            e.currentTarget.style.color = '#D4D4D8'
+            e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)'
+            return
+          }
           e.currentTarget.style.borderColor = '#333333'
           e.currentTarget.style.color = '#DDDDDD'
           e.currentTarget.style.background = '#181818'
         }}
       >
-        <Lock size={13} style={{ color: '#E50914' }} />
-        <span>Private Feedback</span>
+        {isHero ? (
+          <>
+            <Key size={13} style={{ color: '#A1A1AA', flexShrink: 0 }} />
+            <span>Private Feedback</span>
+            <Sparkles size={13} style={{ color: '#A1A1AA', flexShrink: 0 }} />
+          </>
+        ) : (
+          <>
+            <Lock size={13} style={{ color: '#E50914' }} />
+            <span>Private Feedback</span>
+          </>
+        )}
       </button>
 
       {isOpen && (

@@ -9,6 +9,7 @@ interface ReportModalProps {
   projectId: string
   appName: string
   requireAuth?: boolean
+  variant?: 'default' | 'hero'
 }
 
 const REPORT_CATEGORIES = [
@@ -45,7 +46,8 @@ const REPORT_CATEGORIES = [
   },
 ]
 
-export default function ReportModal({ projectId, appName, requireAuth = false }: ReportModalProps) {
+export default function ReportModal({ projectId, appName, requireAuth = false, variant = 'default' }: ReportModalProps) {
+  const isHero = variant === 'hero'
   const [isOpen, setIsOpen] = useState(false)
   const [selectedCategory, setSelectedCategory] = useState('misleading')
   const [errorMsg, setErrorMsg] = useState('')
@@ -96,29 +98,43 @@ export default function ReportModal({ projectId, appName, requireAuth = false }:
           alignItems: 'center',
           justifyContent: 'center',
           width: '100%',
+          flex: isHero ? 1 : 'none',
           gap: '0.4rem',
-          padding: '0.6rem 0.9rem',
-          background: 'rgba(255, 255, 255, 0.05)',
-          border: '1px solid rgba(255, 255, 255, 0.12)',
+          padding: isHero ? '0.55rem 0.75rem' : '0.6rem 0.9rem',
+          background: isHero ? '#222226' : 'rgba(255, 255, 255, 0.05)',
+          border: isHero ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid rgba(255, 255, 255, 0.12)',
           borderRadius: '0.5rem',
-          color: '#888888',
-          fontSize: '0.82rem',
+          color: isHero ? '#D4D4D8' : '#888888',
+          fontSize: isHero ? '0.78rem' : '0.82rem',
           fontWeight: 600,
           cursor: 'pointer',
-          transition: 'all 0.2s',
+          transition: 'all 0.18s ease',
+          whiteSpace: 'nowrap',
         }}
         onMouseEnter={e => {
+          if (isHero) {
+            e.currentTarget.style.background = '#2E2E34'
+            e.currentTarget.style.color = '#FFFFFF'
+            e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.18)'
+            return
+          }
           e.currentTarget.style.color = '#EF4444'
           e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.4)'
           e.currentTarget.style.background = 'rgba(239, 68, 68, 0.08)'
         }}
         onMouseLeave={e => {
+          if (isHero) {
+            e.currentTarget.style.background = '#222226'
+            e.currentTarget.style.color = '#D4D4D8'
+            e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)'
+            return
+          }
           e.currentTarget.style.color = '#888888'
           e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.12)'
           e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'
         }}
       >
-        <Flag size={13} /> Report
+        <Flag size={13} style={{ color: isHero ? '#A1A1AA' : undefined }} /> Report
       </button>
 
       {isOpen && (

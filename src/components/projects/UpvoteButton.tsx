@@ -9,7 +9,7 @@ interface UpvoteButtonProps {
   initialCount: number
   initialUpvoted: boolean
   requireAuth?: boolean
-  variant?: 'compact' | 'desktop'
+  variant?: 'compact' | 'desktop' | 'hero'
 }
 
 export default function UpvoteButton({
@@ -91,8 +91,25 @@ export default function UpvoteButton({
     }
   }
 
-  const isDesktop = variant === 'desktop'
-  const buttonId = isDesktop ? `upvote-btn-desktop-${projectId}` : `upvote-btn-${projectId}`
+  const [isHovered, setIsHovered] = useState(false)
+
+  const isHero = variant === 'hero'
+  const isDesktop = variant === 'desktop' || isHero
+  const buttonId = isHero ? `upvote-btn-hero-${projectId}` : isDesktop ? `upvote-btn-desktop-${projectId}` : `upvote-btn-${projectId}`
+
+  // Match the browse page theme:
+  // - Unvoted: white/grey (dark background, #2B2B2B border, grey arrow, white text)
+  // - Upvoted: red theme (translucent red background, red border, red arrow, red text)
+  const bg = optimisticUpvoted
+    ? (isHovered ? 'rgba(229, 9, 20, 0.22)' : 'rgba(229, 9, 20, 0.15)')
+    : (isHovered ? 'rgba(255, 255, 255, 0.10)' : isHero ? '#1F1F24' : 'rgba(255, 255, 255, 0.05)')
+
+  const border = optimisticUpvoted
+    ? (isHovered ? '1px solid #E50914' : '1px solid rgba(229, 9, 20, 0.55)')
+    : (isHovered ? '1px solid rgba(255, 255, 255, 0.25)' : '1px solid #2B2B2B')
+
+  const arrowColor = optimisticUpvoted ? '#E50914' : isHovered ? '#FFFFFF' : '#AAAAAA'
+  const textColor = optimisticUpvoted ? '#E50914' : '#FFFFFF'
 
   return (
     <button
@@ -101,45 +118,37 @@ export default function UpvoteButton({
       onClick={handleUpvote}
       disabled={isPending}
       aria-label={`${optimisticUpvoted ? 'Remove upvote from' : 'Upvote'} project`}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       style={{
         display: 'inline-flex',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: '0.4rem',
-        padding: isDesktop ? '0.6rem 1rem' : '0.45rem 0.85rem',
+        gap: '0.45rem',
+        padding: isHero ? '0.65rem 1rem' : isDesktop ? '0.6rem 1rem' : '0.45rem 0.85rem',
         width: isDesktop ? '100%' : 'auto',
-        background: optimisticUpvoted ? 'rgba(229,9,20,0.15)' : 'rgba(255,255,255,0.05)',
-        border: `1px solid ${optimisticUpvoted ? 'rgba(229,9,20,0.5)' : '#2B2B2B'}`,
-        borderRadius: '0.5rem',
+        flex: isHero ? 1 : 'none',
+        background: bg,
+        border: border,
+        borderRadius: isHero ? '0.65rem' : '0.5rem',
         cursor: isPending ? 'wait' : 'pointer',
-        transition: 'all 0.2s',
-        transform: animating ? 'scale(1.05)' : 'scale(1)',
+        transition: 'all 0.18s ease',
+        transform: animating ? 'scale(1.04)' : isHovered && isHero ? 'translateY(-1px)' : 'scale(1)',
         opacity: isPending ? 0.8 : 1,
+        boxShadow: optimisticUpvoted && isHero ? '0 4px 14px rgba(229, 9, 20, 0.25)' : 'none',
       }}
       className={animating ? 'upvote-animate' : ''}
-      onMouseEnter={e => {
-        if (!optimisticUpvoted && !isPending) {
-          e.currentTarget.style.borderColor = 'rgba(229,9,20,0.4)'
-          e.currentTarget.style.background = 'rgba(229,9,20,0.08)'
-        }
-      }}
-      onMouseLeave={e => {
-        if (!optimisticUpvoted && !isPending) {
-          e.currentTarget.style.borderColor = '#2B2B2B'
-          e.currentTarget.style.background = 'rgba(255,255,255,0.05)'
-        }
-      }}
     >
       <ArrowUp
-        size={14}
+        size={isHero ? 16 : 14}
         strokeWidth={2.75}
-        style={{ color: optimisticUpvoted ? '#E50914' : '#AAAAAA', transition: 'color 0.2s' }}
+        style={{ color: arrowColor, transition: 'color 0.2s' }}
       />
       <span style={{
-        fontSize: '0.85rem',
+        fontSize: isHero ? '0.9rem' : '0.85rem',
         fontWeight: 700,
         lineHeight: 1,
-        color: optimisticUpvoted ? '#E50914' : '#FFFFFF',
+        color: textColor,
         transition: 'color 0.2s',
       }}>
         {isDesktop ? (

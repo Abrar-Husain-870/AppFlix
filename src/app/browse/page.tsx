@@ -5,12 +5,13 @@ import { createClient } from '@/lib/supabase/client'
 import { applyPublicVisibilityFilter } from '@/lib/supabase/public-queries'
 import ProjectCard from '@/components/projects/ProjectCard'
 
-import { TrendingUp, Clock, Flame, ChevronLeft, ChevronRight, Bookmark, Search } from 'lucide-react'
+import { TrendingUp, Clock, ChevronLeft, ChevronRight, Bookmark, Search } from 'lucide-react'
 import type { User } from '@supabase/supabase-js'
 import NetflixHorizonDivider from '@/components/ui/NetflixHorizonDivider'
 import NetflixTrendingRow from '@/components/projects/NetflixTrendingRow'
 import NetflixFooterCTA from '@/components/ui/NetflixFooterCTA'
 import DiscoverDevelopersSection from '@/components/developers/DiscoverDevelopersSection'
+import ViewModeToggle, { CardViewMode } from '@/components/ui/ViewModeToggle'
 
 interface Category {
   id: number
@@ -80,7 +81,6 @@ const TAG_ICONS: Record<string, string> = {
 const SORT_OPTIONS: { value: SortOption; label: string; icon: React.ReactNode }[] = [
   { value: 'top',        label: 'Top',        icon: <TrendingUp size={14} /> },
   { value: 'newest',     label: 'Newest',     icon: <Clock size={14} /> },
-  { value: 'trending',   label: 'Hot',        icon: <Flame size={14} /> },
   { value: 'bookmarked', label: 'Bookmarked', icon: <Bookmark size={14} /> },
 ]
 
@@ -95,8 +95,23 @@ export default function BrowsePage() {
   const [sort, setSort] = useState<SortOption>('top')
   const [search, setSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
+  const [viewMode, setViewMode] = useState<CardViewMode>('grid')
   const catScrollRef  = useRef<HTMLDivElement>(null)
   const sortScrollRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('appflix_card_view_mode')
+      if (saved === 'pill' || saved === 'grid') setViewMode(saved)
+    } catch {}
+  }, [])
+
+  const handleViewModeChange = (mode: CardViewMode) => {
+    setViewMode(mode)
+    try {
+      localStorage.setItem('appflix_card_view_mode', mode)
+    } catch {}
+  }
 
   function scroll(ref: React.RefObject<HTMLDivElement | null>, dir: 'left' | 'right') {
     ref.current?.scrollBy({ left: dir === 'left' ? -240 : 240, behavior: 'smooth' })
@@ -467,7 +482,7 @@ export default function BrowsePage() {
             </aside>
 
             {/* Main content */}
-            <main style={{ flex: 1, minWidth: 0 }}>
+            <main className="browse-content-area" style={{ flex: 1, minWidth: 0 }}>
               {/* Netflix-Style Minimal Category Navigation Rail */}
               <div style={{ position: 'relative', marginBottom: '1.75rem' }}>
                 {/* Left Edge Fading Overlay */}
@@ -563,105 +578,86 @@ export default function BrowsePage() {
                 </div>
               </div>
 
-              {/* Header + Sort controls bar */}
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                marginBottom: '1.5rem',
-                flexWrap: 'wrap',
-                gap: '1rem',
-              }}>
-                {/* Netflix-style Title Header */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                  <div style={{ width: '4px', height: '24px', background: '#E50914', borderRadius: '2px' }} />
-                  <h2 style={{ fontSize: '1.4rem', fontWeight: 800, color: '#FFFFFF', letterSpacing: '-0.02em', margin: 0 }}>
+              {/* Header + Sort controls bar (Redesigned for clean 3-tier mobile layout matching screenshot) */}
+              <div className="browse-filter-header">
+                {/* Tier 1: Title Header */}
+                <div className="browse-title-group">
+                  <div className="browse-title-accent" />
+                  <h2 className="browse-title-text">
                     {selectedCategory === 'all'
                       ? 'Explore All Apps'
                       : categories.find(c => c.slug === selectedCategory)?.name || 'Apps'}
                   </h2>
-                  <span style={{
-                    fontSize: '0.8rem',
-                    fontWeight: 700,
-                    color: '#E50914',
-                    background: 'rgba(229, 9, 20, 0.15)',
-                    padding: '0.15rem 0.55rem',
-                    borderRadius: '9999px',
-                    border: '1px solid rgba(229, 9, 20, 0.3)',
-                  }}>
+                  <span className="browse-title-badge">
                     {projects.length}
                   </span>
                 </div>
 
-                {/* Right-aligned Controls: Apps Search Input + Sort Tabs */}
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'flex-end',
-                  gap: '0.75rem',
-                  flexWrap: 'wrap',
-                  marginLeft: 'auto',
-                }}>
-                  {/* Apps Search Input - Identical CSS to Developer search bar */}
-                  <div style={{ position: 'relative', width: '220px', maxWidth: '100%' }}>
-                    <Search size={15} style={{ position: 'absolute', left: '0.85rem', top: '50%', transform: 'translateY(-50%)', color: '#777777' }} />
-                    <input
-                      type="text"
-                      placeholder="Search apps…"
-                      value={search}
-                      onChange={e => setSearch(e.target.value)}
-                      style={{
-                        width: '100%',
-                        padding: '0.55rem 0.85rem 0.55rem 2.4rem',
-                        background: '#1A1A1A',
-                        border: '1px solid #2B2B2B',
-                        borderRadius: '0.5rem',
-                        color: '#FFFFFF',
-                        fontSize: '0.85rem',
-                        outline: 'none',
-                        transition: 'border-color 0.2s',
-                        boxSizing: 'border-box',
-                      }}
-                      onFocus={e => (e.currentTarget.style.borderColor = '#E50914')}
-                      onBlur={e => (e.currentTarget.style.borderColor = '#2B2B2B')}
-                    />
+                {/* Tier 2: Search Input Box (Full width on small screens, top-right on desktop) */}
+                <div className="browse-search-box">
+                  <Search size={16} className="browse-search-icon" />
+                  <input
+                    id="browse-search-apps-input"
+                    type="text"
+                    placeholder="Search apps..."
+                    value={search}
+                    onChange={e => setSearch(e.target.value)}
+                    className="browse-search-input"
+                    aria-label="Search apps"
+                  />
+                </div>
+
+                {/* Tier 3: Controls Row (Single Bar on Left + ViewModeToggle on Right) */}
+                <div className="browse-filter-controls-row">
+                  {/* Single bar containing sort buttons */}
+                  <div className="browse-sort-single-bar" role="tablist" aria-label="Sort options">
+                    {SORT_OPTIONS.map(opt => {
+                      const isActive = sort === opt.value
+                      return (
+                        <button
+                          key={opt.value}
+                          id={`sort-${opt.value}`}
+                          type="button"
+                          role="tab"
+                          aria-selected={isActive}
+                          onClick={() => setSort(opt.value)}
+                          className={`browse-sort-bar-item ${isActive ? 'browse-sort-bar-item-active' : ''}`}
+                        >
+                          {opt.icon}
+                          <span>{opt.label}</span>
+                        </button>
+                      )
+                    })}
                   </div>
 
-                  {/* Sort tabs bar matching Developer Section styling */}
-                  <div style={{ display: 'flex', gap: '0.3rem', background: '#1A1A1A', padding: '0.25rem', borderRadius: '0.5rem', border: '1px solid #2B2B2B', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-                    {SORT_OPTIONS.map(opt => (
-                      <button
-                        key={opt.value}
-                        id={`sort-${opt.value}`}
-                        onClick={() => setSort(opt.value)}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '0.35rem',
-                          padding: '0.4rem 0.75rem',
-                          fontSize: '0.78rem',
-                          fontWeight: sort === opt.value ? 700 : 500,
-                          background: sort === opt.value ? '#E50914' : 'transparent',
-                          color: sort === opt.value ? '#FFFFFF' : '#888888',
-                          border: 'none',
-                          borderRadius: '0.35rem',
-                          cursor: 'pointer',
-                          transition: 'all 0.15s',
-                        }}
-                      >
-                        {opt.icon}
-                        {opt.label}
-                      </button>
-                    ))}
+                  {/* View Mode Toggle Button on the right of the bar */}
+                  <div className="browse-filter-view-toggle">
+                    <ViewModeToggle viewMode={viewMode} onChange={handleViewModeChange} />
                   </div>
                 </div>
               </div>
 
-              {/* Grid */}
+              {/* Grid / Pill Display */}
               {loading ? (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 280px), 1fr))', gap: '1rem', width: '100%' }}>
+                <div
+                  className={viewMode === 'pill' ? 'pill-cards-grid' : undefined}
+                  style={viewMode === 'grid' ? {
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 280px), 1fr))',
+                    gap: '1rem',
+                    width: '100%',
+                  } : undefined}
+                >
                   {Array.from({ length: 6 }).map((_, i) => (
-                    <div key={i} className="skeleton" style={{ height: '210px', borderRadius: '0.85rem', background: '#1F1F1F' }} />
+                    <div
+                      key={i}
+                      className="skeleton"
+                      style={{
+                        height: viewMode === 'pill' ? '140px' : '210px',
+                        borderRadius: viewMode === 'pill' ? '0.75rem' : '0.85rem',
+                        background: '#1F1F1F',
+                      }}
+                    />
                   ))}
                 </div>
               ) : projects.length === 0 ? (
@@ -681,7 +677,15 @@ export default function BrowsePage() {
                   </p>
                 </div>
               ) : (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 280px), 1fr))', gap: '1rem', width: '100%' }}>
+                <div
+                  className={viewMode === 'pill' ? 'pill-cards-grid' : undefined}
+                  style={viewMode === 'grid' ? {
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 280px), 1fr))',
+                    gap: '1rem',
+                    width: '100%',
+                  } : undefined}
+                >
                   {projects.map(project => (
                     <ProjectCard
                       key={project.id}
@@ -689,6 +693,7 @@ export default function BrowsePage() {
                       isUpvoted={upvotedIds.has(project.id)}
                       isAuthenticated={!!user}
                       currentUserId={user?.id}
+                      viewMode={viewMode}
                     />
                   ))}
                 </div>

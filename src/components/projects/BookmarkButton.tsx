@@ -8,7 +8,7 @@ interface BookmarkButtonProps {
   projectId: string
   initialBookmarked: boolean
   requireAuth?: boolean
-  variant?: 'compact' | 'desktop'
+  variant?: 'compact' | 'desktop' | 'hero'
 }
 
 export default function BookmarkButton({
@@ -71,8 +71,9 @@ export default function BookmarkButton({
     }
   }
 
-  const isDesktop = variant === 'desktop'
-  const buttonId = isDesktop ? `bookmark-btn-desktop-${projectId}` : `bookmark-btn-${projectId}`
+  const isHero = variant === 'hero'
+  const isDesktop = variant === 'desktop' || isHero
+  const buttonId = isHero ? `bookmark-btn-hero-${projectId}` : isDesktop ? `bookmark-btn-desktop-${projectId}` : `bookmark-btn-${projectId}`
 
   return (
     <button
@@ -87,23 +88,39 @@ export default function BookmarkButton({
         alignItems: 'center',
         justifyContent: 'center',
         gap: '0.4rem',
-        padding: isDesktop ? '0.6rem 1rem' : '0',
+        padding: isHero ? '0.55rem 0.75rem' : isDesktop ? '0.6rem 1rem' : '0',
         width: isDesktop ? '100%' : '38px',
         height: isDesktop ? 'auto' : '38px',
-        background: bookmarked ? 'rgba(229,9,20,0.12)' : 'rgba(255,255,255,0.05)',
-        border: `1px solid ${bookmarked ? 'rgba(229,9,20,0.4)' : '#2B2B2B'}`,
+        flex: isHero ? 1 : 'none',
+        background: isHero
+          ? (bookmarked ? 'rgba(229,9,20,0.18)' : '#222226')
+          : (bookmarked ? 'rgba(229,9,20,0.12)' : 'rgba(255,255,255,0.05)'),
+        border: isHero
+          ? `1px solid ${bookmarked ? 'rgba(229,9,20,0.5)' : 'rgba(255,255,255,0.08)'}`
+          : `1px solid ${bookmarked ? 'rgba(229,9,20,0.4)' : '#2B2B2B'}`,
         borderRadius: '0.5rem',
         cursor: isPending ? 'wait' : 'pointer',
-        transition: 'all 0.2s',
-        transform: animating ? 'scale(1.15)' : 'scale(1)',
+        transition: 'all 0.18s ease',
+        transform: animating ? 'scale(1.08)' : 'scale(1)',
+        whiteSpace: 'nowrap',
       }}
       onMouseEnter={e => {
+        if (isHero) {
+          e.currentTarget.style.background = '#2E2E34'
+          e.currentTarget.style.borderColor = 'rgba(255,255,255,0.18)'
+          return
+        }
         if (!bookmarked && !isPending) {
           e.currentTarget.style.borderColor = 'rgba(229,9,20,0.4)'
           e.currentTarget.style.background = 'rgba(229,9,20,0.08)'
         }
       }}
       onMouseLeave={e => {
+        if (isHero) {
+          e.currentTarget.style.background = bookmarked ? 'rgba(229,9,20,0.18)' : '#222226'
+          e.currentTarget.style.borderColor = bookmarked ? 'rgba(229,9,20,0.5)' : 'rgba(255,255,255,0.08)'
+          return
+        }
         if (!bookmarked && !isPending) {
           e.currentTarget.style.borderColor = '#2B2B2B'
           e.currentTarget.style.background = 'rgba(255,255,255,0.05)'
@@ -113,17 +130,17 @@ export default function BookmarkButton({
       <Bookmark
         size={14}
         fill={bookmarked ? '#E50914' : 'none'}
-        style={{ color: bookmarked ? '#E50914' : '#AAAAAA', transition: 'color 0.2s' }}
+        style={{ color: bookmarked ? '#E50914' : '#A1A1AA', transition: 'color 0.2s' }}
       />
       {isDesktop && (
         <span style={{
-          fontSize: '0.85rem',
+          fontSize: isHero ? '0.78rem' : '0.85rem',
           fontWeight: 600,
-          color: bookmarked ? '#E50914' : '#FFFFFF',
+          color: bookmarked ? '#E50914' : '#D4D4D8',
           transition: 'color 0.2s',
           lineHeight: 1
         }}>
-          {bookmarked ? 'Bookmarked' : 'Bookmark'}
+          {bookmarked ? 'Saved' : 'Bookmark'}
         </span>
       )}
     </button>
