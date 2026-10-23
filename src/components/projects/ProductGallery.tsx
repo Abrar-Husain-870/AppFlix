@@ -1,7 +1,9 @@
 'use client'
 
-import { useRef, useState, useEffect } from 'react'
-import { ChevronLeft, ChevronRight, X, Maximize2 } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { X, ChevronLeft, ChevronRight } from 'lucide-react'
+import { motion, AnimatePresence, type PanInfo } from 'framer-motion'
+import ThumbnailCarousel from '@/components/ui/thumbnail-carousel'
 
 interface Screenshot {
   id: string
@@ -13,32 +15,90 @@ interface ProductGalleryProps {
   projectName: string
 }
 
+const fullscreenVariants = {
+  enter: (dir: number) => ({
+    x: dir > 0 ? 400 : dir < 0 ? -400 : 0,
+    opacity: 0,
+    scale: 0.96,
+  }),
+  center: {
+    zIndex: 1,
+    x: 0,
+    opacity: 1,
+    scale: 1,
+  },
+  exit: (dir: number) => ({
+    zIndex: 0,
+    x: dir < 0 ? 400 : -400,
+    opacity: 0,
+    scale: 0.96,
+  }),
+}
+
 export default function ProductGallery({ screenshots, projectName }: ProductGalleryProps) {
-  const scrollRef = useRef<HTMLDivElement>(null)
-  const [showLeftArrow, setShowLeftArrow] = useState(false)
-  const [showRightArrow, setShowRightArrow] = useState(true)
-  const [selectedImage, setSelectedImage] = useState<string | null>(null)
-
-  const checkScroll = () => {
-    if (!scrollRef.current) return
-    const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current
-    setShowLeftArrow(scrollLeft > 10)
-    setShowRightArrow(scrollLeft < scrollWidth - clientWidth - 10)
-  }
-
-  useEffect(() => {
-    checkScroll()
-    window.addEventListener('resize', checkScroll)
-    return () => window.removeEventListener('resize', checkScroll)
-  }, [screenshots])
-
-  const scroll = (direction: 'left' | 'right') => {
-    if (!scrollRef.current) return
-    const scrollAmount = direction === 'left' ? -380 : 380
-    scrollRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' })
-  }
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
+  const [direction, setDirection] = useState(0)
 
   if (!screenshots || screenshots.length === 0) return null
+
+  const carouselItems = screenshots.map((img, idx) => ({
+    id: img.id || idx,
+    url: img.image_url,
+    title: `${projectName} screenshot ${idx + 1}`,
+  }))
+
+  const hasMultiple = screenshots.length > 1
+
+  const handlePrev = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation()
+    setDirection(-1)
+    setSelectedIndex((prev) =>
+      prev !== null ? (prev - 1 + screenshots.length) % screenshots.length : 0
+    )
+  }
+
+  const handleNext = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation()
+    setDirection(1)
+    setSelectedIndex((prev) =>
+      prev !== null ? (prev + 1) % screenshots.length : 0
+    )
+  }
+
+  // Prevent background page scrolling on mobile while modal is open
+  useEffect(() => {
+    if (selectedIndex !== null) {
+      const originalOverflow = document.body.style.overflow
+      const originalTouchAction = document.body.style.touchAction
+      document.body.style.overflow = 'hidden'
+      document.body.style.touchAction = 'none'
+      return () => {
+        document.body.style.overflow = originalOverflow
+        document.body.style.touchAction = originalTouchAction
+      }
+    }
+  }, [selectedIndex])
+
+  // Keyboard navigation inside fullscreen modal (Left, Right, Escape)
+  useEffect(() => {
+    if (selectedIndex === null) return
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setSelectedIndex(null)
+      } else if (e.key === 'ArrowLeft') {
+        handlePrev()
+      } else if (e.key === 'ArrowRight') {
+        handleNext()
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [selectedIndex, screenshots.length])
+
+  const currentScreenshot =
+    selectedIndex !== null ? screenshots[selectedIndex] : null
 
   return (
     <div style={{ marginBottom: '2.5rem' }}>
@@ -53,199 +113,38 @@ export default function ProductGallery({ screenshots, projectName }: ProductGall
         gap: '0.5rem',
       }}>
         <div style={{ width: '3px', height: '16px', background: '#E50914', borderRadius: '2px' }} />
-        Product Gallery ({screenshots.length})
+        App Preview ({screenshots.length})
       </h2>
 
-      {/* Gallery Container with Arrows */}
-      <div style={{ position: 'relative', width: '100%' }}>
-        {/* Left Arrow Button */}
-        {showLeftArrow && (
-          <button
-            type="button"
-            onClick={() => scroll('left')}
-            aria-label="Scroll left"
-            style={{
-              position: 'absolute',
-              left: '-12px',
-              top: '50%',
-              transform: 'translateY(-50%)',
-              zIndex: 20,
-              width: '36px',
-              height: '56px',
-              background: 'rgba(15, 15, 15, 0.85)',
-              backdropFilter: 'blur(8px)',
-              border: '1px solid rgba(255, 255, 255, 0.2)',
-              borderRadius: '6px',
-              color: '#FFFFFF',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              boxShadow: '0 8px 24px rgba(0, 0, 0, 0.8)',
-              transition: 'all 0.2s ease',
-            }}
-            onMouseEnter={e => {
-              e.currentTarget.style.background = '#E50914'
-              e.currentTarget.style.borderColor = '#E50914'
-            }}
-            onMouseLeave={e => {
-              e.currentTarget.style.background = 'rgba(15, 15, 15, 0.85)'
-              e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)'
-            }}
-          >
-            <ChevronLeft size={22} />
-          </button>
-        )}
+      {/* Modern Thumbnail Carousel Showcase */}
+      <ThumbnailCarousel
+        items={carouselItems}
+        onImageClick={(_item, idx) => {
+          setDirection(0)
+          setSelectedIndex(idx)
+        }}
+      />
 
-        {/* Right Arrow Button */}
-        {showRightArrow && (
-          <button
-            type="button"
-            onClick={() => scroll('right')}
-            aria-label="Scroll right"
-            style={{
-              position: 'absolute',
-              right: '-12px',
-              top: '50%',
-              transform: 'translateY(-50%)',
-              zIndex: 20,
-              width: '36px',
-              height: '56px',
-              background: 'rgba(15, 15, 15, 0.85)',
-              backdropFilter: 'blur(8px)',
-              border: '1px solid rgba(255, 255, 255, 0.2)',
-              borderRadius: '6px',
-              color: '#FFFFFF',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              boxShadow: '0 8px 24px rgba(0, 0, 0, 0.8)',
-              transition: 'all 0.2s ease',
-            }}
-            onMouseEnter={e => {
-              e.currentTarget.style.background = '#E50914'
-              e.currentTarget.style.borderColor = '#E50914'
-            }}
-            onMouseLeave={e => {
-              e.currentTarget.style.background = 'rgba(15, 15, 15, 0.85)'
-              e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)'
-            }}
-          >
-            <ChevronRight size={22} />
-          </button>
-        )}
-
-        {/* Scroll Track */}
+      {/* Fullscreen Lightbox Modal with Full Touch/Mouse Swipe & Navigation */}
+      {selectedIndex !== null && currentScreenshot && (
         <div
-          ref={scrollRef}
-          onScroll={checkScroll}
-          style={{
-            display: 'flex',
-            gap: '1rem',
-            overflowX: 'auto',
-            overflowY: 'hidden',
-            scrollbarWidth: 'none',
-            msOverflowStyle: 'none',
-            padding: '0.4rem 4px 1rem 4px',
-            scrollSnapType: 'x mandatory',
-            scrollBehavior: 'smooth',
-          }}
-          className="no-scrollbar"
-        >
-          {screenshots.map((img, idx) => (
-            <div
-              key={img.id || idx}
-              onClick={() => setSelectedImage(img.image_url)}
-              style={{
-                position: 'relative',
-                flexShrink: 0,
-                height: '240px',
-                borderRadius: '0.75rem',
-                overflow: 'hidden',
-                border: '1px solid rgba(255, 255, 255, 0.12)',
-                background: '#1A1A1A',
-                cursor: 'pointer',
-                scrollSnapAlign: 'start',
-                transition: 'all 0.25s ease',
-                boxShadow: '0 6px 20px rgba(0, 0, 0, 0.5)',
-              }}
-              onMouseEnter={e => {
-                e.currentTarget.style.borderColor = '#E50914'
-                e.currentTarget.style.transform = 'translateY(-4px)'
-                e.currentTarget.style.boxShadow = '0 12px 30px rgba(229, 9, 20, 0.35)'
-                const overlay = e.currentTarget.querySelector('.zoom-overlay') as HTMLElement
-                if (overlay) overlay.style.opacity = '1'
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.12)'
-                e.currentTarget.style.transform = 'translateY(0)'
-                e.currentTarget.style.boxShadow = '0 6px 20px rgba(0, 0, 0, 0.5)'
-                const overlay = e.currentTarget.querySelector('.zoom-overlay') as HTMLElement
-                if (overlay) overlay.style.opacity = '0'
-              }}
-            >
-              <img
-                src={img.image_url}
-                alt={`${projectName} screenshot ${idx + 1}`}
-                style={{
-                  height: '100%',
-                  width: 'auto',
-                  objectFit: 'cover',
-                  display: 'block',
-                }}
-              />
-              {/* Zoom Hover Overlay */}
-              <div
-                className="zoom-overlay"
-                style={{
-                  position: 'absolute',
-                  inset: 0,
-                  background: 'rgba(0, 0, 0, 0.45)',
-                  backdropFilter: 'blur(2px)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  opacity: 0,
-                  transition: 'opacity 0.2s ease',
-                  color: '#FFFFFF',
-                }}
-              >
-                <div style={{
-                  background: '#E50914',
-                  borderRadius: '50%',
-                  padding: '0.6rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  boxShadow: '0 4px 14px rgba(229, 9, 20, 0.5)',
-                }}>
-                  <Maximize2 size={18} />
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Lightbox Modal */}
-      {selectedImage && (
-        <div
-          onClick={() => setSelectedImage(null)}
+          onClick={() => setSelectedIndex(null)}
           style={{
             position: 'fixed',
             inset: 0,
             zIndex: 9999,
-            background: 'rgba(0, 0, 0, 0.92)',
-            backdropFilter: 'blur(12px)',
+            background: 'rgba(0, 0, 0, 0.94)',
+            backdropFilter: 'blur(16px)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            padding: '2rem',
+            overflow: 'hidden',
           }}
         >
+          {/* Close Button */}
           <button
-            onClick={() => setSelectedImage(null)}
+            type="button"
+            onClick={() => setSelectedIndex(null)}
             aria-label="Close image preview"
             style={{
               position: 'absolute',
@@ -261,27 +160,186 @@ export default function ProductGallery({ screenshots, projectName }: ProductGall
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              transition: 'background 0.2s',
+              transition: 'all 0.2s ease',
+              zIndex: 10002,
             }}
-            onMouseEnter={e => e.currentTarget.style.background = '#E50914'}
-            onMouseLeave={e => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)'}
+            onMouseEnter={e => {
+              e.currentTarget.style.background = '#E50914'
+              e.currentTarget.style.transform = 'scale(1.08)'
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)'
+              e.currentTarget.style.transform = 'scale(1)'
+            }}
           >
             <X size={24} />
           </button>
 
-          <img
-            src={selectedImage}
-            alt={`${projectName} enlarged screenshot`}
-            style={{
-              maxWidth: '90vw',
-              maxHeight: '85vh',
-              borderRadius: '0.75rem',
-              boxShadow: '0 20px 60px rgba(0, 0, 0, 0.9), 0 0 40px rgba(229, 9, 20, 0.25)',
-              objectFit: 'contain',
-              border: '1px solid rgba(255, 255, 255, 0.15)',
-            }}
-            onClick={e => e.stopPropagation()}
-          />
+          {/* Fullscreen Left Arrow Button */}
+          {hasMultiple && (
+            <button
+              type="button"
+              onClick={handlePrev}
+              aria-label="Previous image"
+              style={{
+                position: 'absolute',
+                left: '1.5rem',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                zIndex: 10002,
+                width: '48px',
+                height: '48px',
+                borderRadius: '50%',
+                background: 'rgba(0, 0, 0, 0.75)',
+                backdropFilter: 'blur(8px)',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                color: '#FFFFFF',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                boxShadow: '0 8px 24px rgba(0, 0, 0, 0.9)',
+                transition: 'all 0.2s ease',
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.background = '#E50914'
+                e.currentTarget.style.borderColor = '#E50914'
+                e.currentTarget.style.transform = 'translateY(-50%) scale(1.1)'
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.background = 'rgba(0, 0, 0, 0.75)'
+                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)'
+                e.currentTarget.style.transform = 'translateY(-50%) scale(1)'
+              }}
+            >
+              <ChevronLeft size={28} />
+            </button>
+          )}
+
+          {/* Fullscreen Right Arrow Button */}
+          {hasMultiple && (
+            <button
+              type="button"
+              onClick={handleNext}
+              aria-label="Next image"
+              style={{
+                position: 'absolute',
+                right: '1.5rem',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                zIndex: 10002,
+                width: '48px',
+                height: '48px',
+                borderRadius: '50%',
+                background: 'rgba(0, 0, 0, 0.75)',
+                backdropFilter: 'blur(8px)',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                color: '#FFFFFF',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                boxShadow: '0 8px 24px rgba(0, 0, 0, 0.9)',
+                transition: 'all 0.2s ease',
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.background = '#E50914'
+                e.currentTarget.style.borderColor = '#E50914'
+                e.currentTarget.style.transform = 'translateY(-50%) scale(1.1)'
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.background = 'rgba(0, 0, 0, 0.75)'
+                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)'
+                e.currentTarget.style.transform = 'translateY(-50%) scale(1)'
+              }}
+            >
+              <ChevronRight size={28} />
+            </button>
+          )}
+
+          {/* Swipeable Fullscreen Slide View */}
+          <div
+            className="relative w-full h-full flex items-center justify-center overflow-hidden"
+            onClick={() => setSelectedIndex(null)}
+          >
+            <AnimatePresence initial={false} custom={direction}>
+              <motion.div
+                key={selectedIndex}
+                custom={direction}
+                variants={fullscreenVariants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={{
+                  x: { type: 'spring', stiffness: 320, damping: 32 },
+                  opacity: { duration: 0.22 },
+                  scale: { duration: 0.22 },
+                }}
+                drag={hasMultiple ? 'x' : false}
+                dragDirectionLock={true}
+                dragConstraints={{ left: 0, right: 0 }}
+                dragElastic={0.45}
+                style={{ touchAction: 'none' }}
+                onDragEnd={(_e, info: PanInfo) => {
+                  const offset = info.offset.x
+                  const velocity = info.velocity.x
+
+                  // Swipe left -> next image
+                  if (offset < -35 || velocity < -300) {
+                    handleNext()
+                  }
+                  // Swipe right -> previous image
+                  else if (offset > 35 || velocity > 300) {
+                    handlePrev()
+                  }
+                }}
+                onClick={(e) => e.stopPropagation()}
+                className="absolute inset-0 flex items-center justify-center p-4 sm:p-10 select-none cursor-grab active:cursor-grabbing"
+              >
+                <img
+                  src={currentScreenshot.image_url}
+                  alt={`${projectName} screenshot ${selectedIndex + 1}`}
+                  style={{
+                    maxWidth: '85vw',
+                    maxHeight: '82vh',
+                    borderRadius: '0.75rem',
+                    boxShadow: '0 24px 60px rgba(0, 0, 0, 0.95), 0 0 30px rgba(0, 0, 0, 0.8)',
+                    objectFit: 'contain',
+                    border: '1px solid rgba(255, 255, 255, 0.12)',
+                    userSelect: 'none',
+                    pointerEvents: 'none',
+                  }}
+                  draggable={false}
+                />
+              </motion.div>
+            </AnimatePresence>
+          </div>
+
+          {/* Fullscreen Counter Badge */}
+          {hasMultiple && (
+            <div
+              style={{
+                position: 'absolute',
+                bottom: '1.5rem',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                background: 'rgba(0, 0, 0, 0.8)',
+                backdropFilter: 'blur(8px)',
+                color: 'rgba(255, 255, 255, 0.95)',
+                padding: '0.35rem 1rem',
+                borderRadius: '9999px',
+                fontSize: '0.8rem',
+                fontWeight: 600,
+                letterSpacing: '0.05em',
+                border: '1px solid rgba(255, 255, 255, 0.15)',
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.8)',
+                pointerEvents: 'none',
+                zIndex: 10001,
+              }}
+            >
+              {selectedIndex + 1} / {screenshots.length}
+            </div>
+          )}
         </div>
       )}
     </div>

@@ -115,17 +115,28 @@ export default function NotificationBell() {
     return () => clearInterval(interval)
   }, [])
 
-  // Close popover when clicking outside
+  // Close popover when clicking outside or pressing Escape
   useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
+    function handleClickOutside(e: MouseEvent | TouchEvent) {
       if (popoverRef.current && !popoverRef.current.contains(e.target as Node)) {
+        setIsOpen(false)
+      }
+    }
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') {
         setIsOpen(false)
       }
     }
     if (isOpen) {
       document.addEventListener('mousedown', handleClickOutside)
+      document.addEventListener('touchstart', handleClickOutside)
+      document.addEventListener('keydown', handleKeyDown)
     }
-    return () => document.removeEventListener('mousedown', handleClickOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+      document.removeEventListener('touchstart', handleClickOutside)
+      document.removeEventListener('keydown', handleKeyDown)
+    }
   }, [isOpen])
 
   function handleToggleOpen() {
@@ -243,36 +254,38 @@ export default function NotificationBell() {
 
       {/* Floating Popover Panel - Netflix Dark Cinema Theme */}
       {isOpen && (
-        <div style={{
-          position: 'absolute',
-          top: 'calc(100% + 10px)',
-          right: 0,
-          width: '390px',
-          maxWidth: 'calc(100vw - 20px)',
-          background: 'linear-gradient(180deg, #181212 0%, #121212 25%, #0E0E0E 100%)',
-          border: '1px solid #2B2B2B',
-          borderRadius: '0.85rem',
-          boxShadow: '0 25px 60px rgba(0, 0, 0, 0.95), 0 0 25px rgba(229, 9, 20, 0.12)',
-          zIndex: 1000,
-          overflow: 'hidden',
-          display: 'flex',
-          flexDirection: 'column',
-          maxHeight: '530px',
-          animation: 'dropdownIn 0.18s cubic-bezier(0.16, 1, 0.3, 1)',
-        }}>
-          {/* Header */}
-          <div style={{
-            padding: '1rem 1.25rem 0.85rem',
-            borderBottom: '1px solid #222222',
+        <div
+          className="notification-popover-panel"
+          style={{
+            background: 'linear-gradient(180deg, #181212 0%, #121212 25%, #0E0E0E 100%)',
+            border: '1px solid #2B2B2B',
+            boxShadow: '0 25px 60px rgba(0, 0, 0, 0.95), 0 0 25px rgba(229, 9, 20, 0.12)',
+            zIndex: 1000,
+            overflow: 'hidden',
             display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            background: 'rgba(255, 255, 255, 0.015)',
-          }}>
-            <div>
+            flexDirection: 'column',
+          }}
+        >
+          {/* Header */}
+          <div
+            className="notif-header-container"
+            style={{
+              padding: '1rem 1.25rem 0.85rem',
+              borderBottom: '1px solid #222222',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              background: 'rgba(255, 255, 255, 0.015)',
+              gap: '0.5rem',
+            }}
+          >
+            <div style={{ minWidth: 0 }}>
               <div style={{ width: '1.75rem', height: '2.5px', background: '#E50914', borderRadius: '2px', marginBottom: '0.35rem' }} />
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <h3 style={{ fontSize: '1rem', fontWeight: 900, color: '#FFFFFF', margin: 0, letterSpacing: '-0.03em' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                <h3
+                  className="notif-header-title"
+                  style={{ fontSize: '1rem', fontWeight: 900, color: '#FFFFFF', margin: 0, letterSpacing: '-0.03em', whiteSpace: 'nowrap' }}
+                >
                   Notifications
                 </h3>
                 {unreadCount > 0 && (
@@ -286,6 +299,7 @@ export default function NotificationBell() {
                     color: '#FFFFFF',
                     boxShadow: '0 0 8px rgba(229, 9, 20, 0.5)',
                     letterSpacing: '0.04em',
+                    whiteSpace: 'nowrap',
                   }}>
                     {unreadCount} new
                   </span>
@@ -293,12 +307,13 @@ export default function NotificationBell() {
               </div>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexShrink: 0 }}>
               {unreadCount > 0 && (
                 <button
                   onClick={handleMarkAllRead}
                   disabled={isPending}
                   title="Mark all as read"
+                  className="notif-header-btn"
                   style={{
                     background: 'rgba(255, 255, 255, 0.05)',
                     border: '1px solid rgba(255, 255, 255, 0.1)',
@@ -312,6 +327,7 @@ export default function NotificationBell() {
                     padding: '0.3rem 0.55rem',
                     borderRadius: '0.35rem',
                     transition: 'all 0.15s ease',
+                    whiteSpace: 'nowrap',
                   }}
                   onMouseEnter={e => {
                     e.currentTarget.style.color = '#FFFFFF'
@@ -324,7 +340,8 @@ export default function NotificationBell() {
                     e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'
                   }}
                 >
-                  <CheckCheck size={13} style={{ color: '#E50914' }} /> Mark read
+                  <CheckCheck size={13} style={{ color: '#E50914' }} />
+                  <span className="notif-btn-label">Mark read</span>
                 </button>
               )}
               {notifications.some(n => n.is_read) && (
@@ -332,6 +349,7 @@ export default function NotificationBell() {
                   onClick={handleClearRead}
                   disabled={isPending}
                   title="Clear all read notifications"
+                  className="notif-header-btn"
                   style={{
                     background: 'transparent',
                     border: '1px solid transparent',
@@ -345,6 +363,7 @@ export default function NotificationBell() {
                     padding: '0.3rem 0.5rem',
                     borderRadius: '0.35rem',
                     transition: 'all 0.15s ease',
+                    whiteSpace: 'nowrap',
                   }}
                   onMouseEnter={e => {
                     e.currentTarget.style.color = '#FF6B6B'
@@ -357,20 +376,59 @@ export default function NotificationBell() {
                     e.currentTarget.style.background = 'transparent'
                   }}
                 >
-                  <Trash2 size={12} /> Clear
+                  <Trash2 size={12} />
+                  <span className="notif-btn-label">Clear</span>
                 </button>
               )}
+
+              {/* Cross / Close Panel Button */}
+              <button
+                id="close-notifications-panel-btn"
+                onClick={() => setIsOpen(false)}
+                title="Close notifications"
+                aria-label="Close notifications"
+                style={{
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  border: '1px solid rgba(255, 255, 255, 0.12)',
+                  color: '#AAAAAA',
+                  width: '28px',
+                  height: '28px',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                  flexShrink: 0,
+                  marginLeft: '0.15rem',
+                }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.color = '#FFFFFF'
+                  e.currentTarget.style.borderColor = '#E50914'
+                  e.currentTarget.style.background = 'rgba(229, 9, 20, 0.2)'
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.color = '#AAAAAA'
+                  e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.12)'
+                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'
+                }}
+              >
+                <X size={15} />
+              </button>
             </div>
           </div>
 
           {/* Netflix Segmented Tabs (Unread default on left, All on right) */}
-          <div style={{
-            display: 'flex',
-            borderBottom: '1px solid #202020',
-            padding: '0.45rem 1.25rem',
-            gap: '0.5rem',
-            background: '#0D0D0D',
-          }}>
+          <div
+            className="notif-tabs-container"
+            style={{
+              display: 'flex',
+              borderBottom: '1px solid #202020',
+              padding: '0.45rem 1.25rem',
+              gap: '0.5rem',
+              background: '#0D0D0D',
+            }}
+          >
             <button
               onClick={() => setFilter('unread')}
               style={{
@@ -434,12 +492,17 @@ export default function NotificationBell() {
           </div>
 
           {/* Notifications List */}
-          <div style={{
-            overflowY: 'auto',
-            maxHeight: '390px',
-            display: 'flex',
-            flexDirection: 'column',
-          }}>
+          <div
+            className="notif-list-container"
+            style={{
+              overflowY: 'auto',
+              maxHeight: '390px',
+              display: 'flex',
+              flexDirection: 'column',
+              overscrollBehavior: 'contain',
+              WebkitOverflowScrolling: 'touch',
+            }}
+          >
             {displayedNotifications.length === 0 ? (
               <div style={{
                 padding: '3rem 1.5rem',

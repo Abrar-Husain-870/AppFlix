@@ -43,15 +43,14 @@ export default function AppIcon({
   // Standard squircle curvature: ~22% of dimension
   const borderRadius = Math.max(6, Math.round(size * 0.22))
 
-  const isSamplePlaceholder =
-    !fallbackText ||
-    fallbackText.trim() === '' ||
-    fallbackText === 'Your App Name' ||
-    fallbackText.toLowerCase() === 'app icon' ||
-    fallbackText.toLowerCase().includes('sample') ||
-    fallbackText.toLowerCase().includes('choose')
+  const initial = (fallbackText || alt || 'A').trim().charAt(0).toUpperCase()
 
-  const initial = (fallbackText || alt || '?').trim().charAt(0).toUpperCase()
+  const isSamplePlaceholder =
+    Boolean(fallbackText) &&
+    (fallbackText === 'Your App Name' ||
+      fallbackText?.toLowerCase() === 'choose' ||
+      fallbackText?.toLowerCase() === 'choose icon') &&
+    (!alt || alt === 'App Icon' || alt === 'Your App Name')
 
   const showImage = Boolean(src) && !imageError
 

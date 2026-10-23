@@ -239,8 +239,8 @@ export default function NetflixTrendingRow({ projects, title = 'Trending Now' }:
                           display: 'block',
                         }}
                       />
-                    ) : iconSrc ? (
-                      /* Option B: App Logo Badge on Background */
+                    ) : (
+                      /* Option B: App Logo Badge on Background (Unified AppIcon with solid dark background & red initial) */
                       <div style={{
                         position: 'absolute',
                         inset: 0,
@@ -292,54 +292,6 @@ export default function NetflixTrendingRow({ projects, title = 'Trending Now' }:
                             }}
                             fallbackText={project.name}
                           />
-                        </div>
-                      </div>
-                    ) : (
-                      /* Option C: Fallback */
-                      <div style={{
-                        position: 'absolute',
-                        inset: 0,
-                        overflow: 'hidden',
-                      }}>
-                        <img
-                          src="/assets/poster backgronds for apps.jpg"
-                          alt=""
-                          style={{
-                            position: 'absolute',
-                            inset: 0,
-                            width: '100%',
-                            height: '100%',
-                            objectFit: 'cover',
-                          }}
-                        />
-                        <div style={{
-                          position: 'absolute',
-                          inset: 0,
-                          background: 'linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.85) 100%)',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          padding: '0.75rem',
-                          boxSizing: 'border-box',
-                        }}>
-                          <div style={{
-                            width: '56px',
-                            height: '56px',
-                            borderRadius: '14px',
-                            background: 'rgba(229, 9, 20, 0.35)',
-                            border: '1px solid rgba(229, 9, 20, 0.6)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            marginBottom: '0.5rem',
-                            color: '#FFFFFF',
-                            fontWeight: 900,
-                            fontSize: '1.6rem',
-                            boxShadow: '0 8px 20px rgba(0, 0, 0, 0.6)',
-                          }}>
-                            {project.name.charAt(0)}
-                          </div>
                         </div>
                       </div>
                     )}
