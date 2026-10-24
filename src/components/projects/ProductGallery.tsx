@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { X, ChevronLeft, ChevronRight } from 'lucide-react'
 import { motion, AnimatePresence, type PanInfo } from 'framer-motion'
 import ThumbnailCarousel from '@/components/ui/thumbnail-carousel'
@@ -38,6 +39,11 @@ const fullscreenVariants = {
 export default function ProductGallery({ screenshots, projectName }: ProductGalleryProps) {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
   const [direction, setDirection] = useState(0)
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   if (!screenshots || screenshots.length === 0) return null
 
@@ -145,32 +151,47 @@ export default function ProductGallery({ screenshots, projectName }: ProductGall
       />
 
       {/* Fullscreen Lightbox Modal with Full Touch/Mouse Swipe & Navigation */}
-      {selectedIndex !== null && currentScreenshot && (
+      {mounted && selectedIndex !== null && currentScreenshot && createPortal(
         <div
+          id="fullscreen-lightbox-modal"
           onClick={() => setSelectedIndex(null)}
           style={{
             position: 'fixed',
             inset: 0,
-            zIndex: 9999,
-            background: 'rgba(0, 0, 0, 0.94)',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            width: '100vw',
+            height: '100dvh',
+            zIndex: 999999,
+            background: 'rgba(0, 0, 0, 0.95)',
             backdropFilter: 'blur(16px)',
+            WebkitBackdropFilter: 'blur(16px)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             overflow: 'hidden',
+            boxSizing: 'border-box',
+            margin: 0,
+            padding: 0,
           }}
         >
           {/* Close Button */}
           <button
             type="button"
-            onClick={() => setSelectedIndex(null)}
+            onClick={(e) => {
+              e.stopPropagation()
+              setSelectedIndex(null)
+            }}
             aria-label="Close image preview"
             style={{
-              position: 'absolute',
-              top: '1.5rem',
-              right: '1.5rem',
-              background: 'rgba(255, 255, 255, 0.15)',
-              border: 'none',
+              position: 'fixed',
+              top: 'clamp(1rem, 2.5vw, 1.75rem)',
+              right: 'clamp(1rem, 2.5vw, 1.75rem)',
+              background: 'rgba(0, 0, 0, 0.75)',
+              backdropFilter: 'blur(8px)',
+              border: '1px solid rgba(255, 255, 255, 0.2)',
               borderRadius: '50%',
               width: '44px',
               height: '44px',
@@ -180,18 +201,21 @@ export default function ProductGallery({ screenshots, projectName }: ProductGall
               alignItems: 'center',
               justifyContent: 'center',
               transition: 'all 0.2s ease',
-              zIndex: 10002,
+              zIndex: 1000005,
+              boxShadow: '0 4px 16px rgba(0, 0, 0, 0.8)',
             }}
             onMouseEnter={e => {
               e.currentTarget.style.background = '#E50914'
+              e.currentTarget.style.borderColor = '#E50914'
               e.currentTarget.style.transform = 'scale(1.08)'
             }}
             onMouseLeave={e => {
-              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)'
+              e.currentTarget.style.background = 'rgba(0, 0, 0, 0.75)'
+              e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)'
               e.currentTarget.style.transform = 'scale(1)'
             }}
           >
-            <X size={24} />
+            <X size={22} />
           </button>
 
           {/* Fullscreen Left Arrow Button */}
@@ -201,13 +225,13 @@ export default function ProductGallery({ screenshots, projectName }: ProductGall
               onClick={handlePrev}
               aria-label="Previous image"
               style={{
-                position: 'absolute',
-                left: '1.5rem',
+                position: 'fixed',
+                left: 'clamp(0.75rem, 2vw, 2rem)',
                 top: '50%',
                 transform: 'translateY(-50%)',
-                zIndex: 10002,
-                width: '48px',
-                height: '48px',
+                zIndex: 1000005,
+                width: '46px',
+                height: '46px',
                 borderRadius: '50%',
                 background: 'rgba(0, 0, 0, 0.75)',
                 backdropFilter: 'blur(8px)',
@@ -231,7 +255,7 @@ export default function ProductGallery({ screenshots, projectName }: ProductGall
                 e.currentTarget.style.transform = 'translateY(-50%) scale(1)'
               }}
             >
-              <ChevronLeft size={28} />
+              <ChevronLeft size={26} />
             </button>
           )}
 
@@ -242,13 +266,13 @@ export default function ProductGallery({ screenshots, projectName }: ProductGall
               onClick={handleNext}
               aria-label="Next image"
               style={{
-                position: 'absolute',
-                right: '1.5rem',
+                position: 'fixed',
+                right: 'clamp(0.75rem, 2vw, 2rem)',
                 top: '50%',
                 transform: 'translateY(-50%)',
-                zIndex: 10002,
-                width: '48px',
-                height: '48px',
+                zIndex: 1000005,
+                width: '46px',
+                height: '46px',
                 borderRadius: '50%',
                 background: 'rgba(0, 0, 0, 0.75)',
                 backdropFilter: 'blur(8px)',
@@ -272,13 +296,21 @@ export default function ProductGallery({ screenshots, projectName }: ProductGall
                 e.currentTarget.style.transform = 'translateY(-50%) scale(1)'
               }}
             >
-              <ChevronRight size={28} />
+              <ChevronRight size={26} />
             </button>
           )}
 
           {/* Swipeable Fullscreen Slide View */}
           <div
-            className="relative w-full h-full flex items-center justify-center overflow-hidden"
+            style={{
+              position: 'relative',
+              width: '100%',
+              height: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              overflow: 'hidden',
+            }}
             onClick={() => setSelectedIndex(null)}
           >
             <AnimatePresence initial={false} custom={direction}>
@@ -298,7 +330,23 @@ export default function ProductGallery({ screenshots, projectName }: ProductGall
                 dragDirectionLock={true}
                 dragConstraints={{ left: 0, right: 0 }}
                 dragElastic={0.15}
-                style={{ touchAction: 'none' }}
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  width: '100%',
+                  height: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: 'clamp(0.75rem, 3vw, 2.5rem)',
+                  boxSizing: 'border-box',
+                  touchAction: 'none',
+                  cursor: hasMultiple ? 'grab' : 'default',
+                }}
                 onDragEnd={(_e, info: PanInfo) => {
                   const offset = info.offset.x
                   const velocity = info.velocity.x
@@ -313,18 +361,19 @@ export default function ProductGallery({ screenshots, projectName }: ProductGall
                   }
                 }}
                 onClick={(e) => e.stopPropagation()}
-                className="absolute inset-0 flex items-center justify-center p-4 sm:p-10 select-none cursor-grab active:cursor-grabbing"
               >
                 <img
                   src={currentScreenshot.image_url}
                   alt={`${projectName} screenshot ${selectedIndex + 1}`}
                   style={{
-                    maxWidth: '85vw',
-                    maxHeight: '82vh',
+                    maxWidth: 'min(92vw, 1300px)',
+                    maxHeight: 'min(82vh, 82dvh)',
+                    width: 'auto',
+                    height: 'auto',
                     borderRadius: '0.75rem',
                     boxShadow: '0 24px 60px rgba(0, 0, 0, 0.95), 0 0 30px rgba(0, 0, 0, 0.8)',
                     objectFit: 'contain',
-                    border: '1px solid rgba(255, 255, 255, 0.12)',
+                    border: '1px solid rgba(255, 255, 255, 0.14)',
                     userSelect: 'none',
                     WebkitUserSelect: 'none',
                     WebkitTouchCallout: 'none',
@@ -341,8 +390,8 @@ export default function ProductGallery({ screenshots, projectName }: ProductGall
           {hasMultiple && (
             <div
               style={{
-                position: 'absolute',
-                bottom: '1.5rem',
+                position: 'fixed',
+                bottom: 'clamp(1rem, 2.5vw, 1.75rem)',
                 left: '50%',
                 transform: 'translateX(-50%)',
                 background: 'rgba(0, 0, 0, 0.8)',
@@ -356,13 +405,14 @@ export default function ProductGallery({ screenshots, projectName }: ProductGall
                 border: '1px solid rgba(255, 255, 255, 0.15)',
                 boxShadow: '0 4px 12px rgba(0, 0, 0, 0.8)',
                 pointerEvents: 'none',
-                zIndex: 10001,
+                zIndex: 1000004,
               }}
             >
               {selectedIndex + 1} / {screenshots.length}
             </div>
           )}
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   )

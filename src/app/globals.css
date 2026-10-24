@@ -837,7 +837,6 @@ body {
   width: 100%;
   max-width: 1100px;
   overflow-x: clip !important;
-  contain: paint;
 }
 
 .details-main-content {
@@ -846,7 +845,6 @@ body {
   min-width: 0;
   max-width: 100%;
   overflow-x: clip !important;
-  contain: paint;
 }
 
 .details-sidebar {
@@ -873,7 +871,6 @@ body {
     width: 100% !important;
     max-width: 100% !important;
     overflow-x: clip !important;
-    contain: paint !important;
   }
 
   .details-main-content {
@@ -881,7 +878,6 @@ body {
     width: 100% !important;
     max-width: 100% !important;
     overflow-x: clip !important;
-    contain: paint !important;
   }
 
   .details-sidebar {
