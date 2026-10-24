@@ -43,11 +43,11 @@ export default function TopAppsSection({
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', flexWrap: 'wrap' }}>
-          <ViewModeToggle viewMode={viewMode} onChange={handleViewChange} />
-
           <Link href="/browse" style={{ color: '#E50914', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none' }}>
             View all →
           </Link>
+
+          <ViewModeToggle viewMode={viewMode} onChange={handleViewChange} />
         </div>
       </div>
 

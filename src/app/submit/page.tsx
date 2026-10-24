@@ -52,10 +52,18 @@ export default function SubmitPage() {
   const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [appName, setAppName] = useState('')
   const [tagline, setTagline] = useState('')
+  const [description, setDescription] = useState('')
   const [selectedCategoryId, setSelectedCategoryId] = useState('')
+  const [selectedStage, setSelectedStage] = useState('')
+  const [websiteUrl, setWebsiteUrl] = useState('')
+  const [githubUrl, setGithubUrl] = useState('')
+  const [appstoreUrl, setAppstoreUrl] = useState('')
+  const [playstoreUrl, setPlaystoreUrl] = useState('')
   const [iconUrl, setIconUrl] = useState('')
   const [screenshotUrls, setScreenshotUrls] = useState<string[]>([])
   const [uploadingScreenshot, setUploadingScreenshot] = useState(false)
+  const [clientErrors, setClientErrors] = useState<Record<string, string>>({})
+  const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false)
   const router = useRouter()
   const [userId, setUserId] = useState<string | null>(null)
   const [checkingAuth, setCheckingAuth] = useState(true)
@@ -73,6 +81,102 @@ export default function SubmitPage() {
     supabase.from('categories').select('id, name, slug').order('name').then(({ data }) => setCategories(data ?? []))
   }, [router])
 
+  // Scroll to topmost invalid field
+  const scrollToFirstError = (errors: Record<string, string>) => {
+    const fieldOrder: { key: string; containerId: string; focusId?: string }[] = [
+      { key: 'icon', containerId: 'project-icon-section' },
+      { key: 'name', containerId: 'project-name-container', focusId: 'project-name' },
+      { key: 'tagline', containerId: 'project-tagline-container', focusId: 'project-tagline' },
+      { key: 'description', containerId: 'project-description-container', focusId: 'project-description' },
+      { key: 'category_id', containerId: 'project-category-container', focusId: 'project-category' },
+      { key: 'stage', containerId: 'project-stage-container', focusId: 'project-stage' },
+      { key: 'platforms', containerId: 'project-platforms-section' },
+      { key: 'tags', containerId: 'project-tags-section' },
+      { key: 'links', containerId: 'project-links-section', focusId: 'website-url' },
+    ]
+
+    const firstInvalid = fieldOrder.find(item => !!errors[item.key])
+    if (!firstInvalid) return
+
+    const targetEl = document.getElementById(firstInvalid.focusId || firstInvalid.containerId) || document.getElementById(firstInvalid.containerId)
+    if (targetEl) {
+      targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' })
+
+      if (firstInvalid.focusId) {
+        const focusEl = document.getElementById(firstInvalid.focusId)
+        if (focusEl && typeof focusEl.focus === 'function') {
+          setTimeout(() => {
+            try {
+              focusEl.focus({ preventScroll: true })
+            } catch {
+              focusEl.focus()
+            }
+          }, 200)
+        }
+      }
+    }
+  }
+
+  // Auto-scroll to first error when server action returns fieldErrors
+  useEffect(() => {
+    if (state?.fieldErrors && Object.keys(state.fieldErrors).length > 0) {
+      scrollToFirstError(state.fieldErrors)
+    }
+  }, [state])
+
+  function clearFieldError(field: string) {
+    setClientErrors(prev => {
+      if (!prev[field]) return prev
+      const next = { ...prev }
+      delete next[field]
+      return next
+    })
+  }
+
+  function validateForm(): Record<string, string> {
+    const errs: Record<string, string> = {}
+    if (!iconUrl) {
+      errs.icon = 'Please upload an app icon.'
+    }
+    if (!appName.trim() || appName.trim().length < 3) {
+      errs.name = 'Name must be at least 3 characters.'
+    }
+    if (!tagline.trim() || tagline.trim().length < 10) {
+      errs.tagline = 'Tagline must be at least 10 characters.'
+    }
+    if (!description.trim() || description.trim().length < 50) {
+      errs.description = 'Description must be at least 50 characters.'
+    }
+    if (!selectedCategoryId) {
+      errs.category_id = 'Please select a category.'
+    }
+    if (!selectedStage) {
+      errs.stage = 'Please select a project stage.'
+    }
+    if (selectedPlatforms.length === 0) {
+      errs.platforms = 'Select at least one platform.'
+    }
+    if (selectedTags.length > 5) {
+      errs.tags = 'You can select up to 5 tags only.'
+    }
+    const hasLink = !!(websiteUrl.trim() || githubUrl.trim() || appstoreUrl.trim() || playstoreUrl.trim())
+    if (!hasLink) {
+      errs.links = 'Please provide at least one link (Website, GitHub, App Store, or Play Store).'
+    }
+    return errs
+  }
+
+  function handleFormSubmit(e: React.FormEvent<HTMLFormElement>) {
+    setHasAttemptedSubmit(true)
+    const errs = validateForm()
+    if (Object.keys(errs).length > 0) {
+      e.preventDefault()
+      setClientErrors(errs)
+      scrollToFirstError(errs)
+      return
+    }
+  }
+
   if (checkingAuth) {
     return (
       <div style={{
@@ -86,7 +190,11 @@ export default function SubmitPage() {
   }
 
   function togglePlatform(p: string) {
-    setSelectedPlatforms(prev => prev.includes(p) ? prev.filter(x => x !== p) : [...prev, p])
+    setSelectedPlatforms(prev => {
+      const next = prev.includes(p) ? prev.filter(x => x !== p) : [...prev, p]
+      if (next.length > 0) clearFieldError('platforms')
+      return next
+    })
   }
 
   function toggleTag(t: string) {
@@ -204,7 +312,7 @@ export default function SubmitPage() {
     e.target.value = ''
   }
 
-  const fe = state?.fieldErrors ?? {}
+  const fe = { ...clientErrors, ...(state?.fieldErrors ?? {}) }
 
   return (
     <div style={{ minHeight: '100vh', background: '#080808', padding: '2rem 1.5rem' }}>
@@ -231,7 +339,7 @@ export default function SubmitPage() {
           </div>
         )}
 
-        <form action={action} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+        <form noValidate action={action} onSubmit={handleFormSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           {/* Hidden fields for file URLs + platforms */}
           <input type="hidden" name="icon_url" value={iconUrl} />
           {screenshotUrls.map((url, i) => (
@@ -245,7 +353,12 @@ export default function SubmitPage() {
           ))}
 
           {/* ── App Icon ── */}
-          <div style={{ background: '#1F1F1F', border: '1px solid #2B2B2B', borderRadius: '0.75rem', padding: '1.25rem' }}>
+          <div id="project-icon-section" style={{
+            background: '#1F1F1F',
+            border: '1px solid #2B2B2B',
+            borderRadius: '0.75rem',
+            padding: '1.25rem',
+          }}>
             <Label required>App Icon</Label>
             <IconUploadCropper
               currentIconUrl={iconUrl}
@@ -253,42 +366,117 @@ export default function SubmitPage() {
               tagline={tagline || 'A maps app built for students, by students.'}
               categoryName={categories.find(c => String(c.id) === selectedCategoryId)?.name || 'Productivity'}
               userId={userId || undefined}
-              onIconChange={(url) => setIconUrl(url)}
+              onIconChange={(url) => {
+                setIconUrl(url)
+                clearFieldError('icon')
+              }}
             />
+            <FieldError msg={fe.icon} />
           </div>
 
           {/* ── Basic Info ── */}
           <div style={{ background: '#1F1F1F', border: '1px solid #2B2B2B', borderRadius: '0.75rem', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             <h2 style={{ fontSize: '0.9rem', fontWeight: 700, color: '#FFFFFF', margin: 0 }}>Basic Info</h2>
 
-            <div>
+            <div id="project-name-container">
               <Label required>App Name</Label>
-              <input id="project-name" name="name" type="text" placeholder="e.g. CampusMap" required maxLength={60} style={inputStyle}
+              <input
+                id="project-name"
+                name="name"
+                type="text"
+                placeholder="e.g. CampusMap"
+                maxLength={60}
+                style={{
+                  ...inputStyle,
+                  borderColor: fe.name ? '#E50914' : '#2B2B2B',
+                }}
                 value={appName}
-                onChange={e => setAppName(e.target.value)}
+                onChange={e => {
+                  setAppName(e.target.value)
+                  if (e.target.value.trim().length >= 3) clearFieldError('name')
+                }}
                 onFocus={e => e.currentTarget.style.borderColor = '#E50914'}
-                onBlur={e => e.currentTarget.style.borderColor = '#2B2B2B'} />
+                onBlur={e => e.currentTarget.style.borderColor = fe.name ? '#E50914' : '#2B2B2B'}
+              />
               <FieldError msg={fe.name} />
             </div>
 
-            <div>
+            <div id="project-tagline-container">
               <Label required>Tagline <span style={{ color: '#555', fontWeight: 400 }}>(one sentence)</span></Label>
-              <input id="project-tagline" name="tagline" type="text" placeholder="A maps app built for students, by students." required maxLength={100} style={inputStyle}
+              <input
+                id="project-tagline"
+                name="tagline"
+                type="text"
+                placeholder="A maps app built for students, by students."
+                maxLength={100}
+                style={{
+                  ...inputStyle,
+                  borderColor: (fe.tagline || (hasAttemptedSubmit && tagline.trim().length < 10)) ? '#E50914' : '#2B2B2B',
+                }}
                 value={tagline}
-                onChange={e => setTagline(e.target.value)}
+                onChange={e => {
+                  setTagline(e.target.value)
+                  if (e.target.value.trim().length >= 10) clearFieldError('tagline')
+                }}
                 onFocus={e => e.currentTarget.style.borderColor = '#E50914'}
-                onBlur={e => e.currentTarget.style.borderColor = '#2B2B2B'} />
-              <FieldError msg={fe.tagline} />
+                onBlur={e => e.currentTarget.style.borderColor = (fe.tagline || (hasAttemptedSubmit && tagline.trim().length < 10)) ? '#E50914' : '#2B2B2B'}
+              />
+              {/* Upfront red requirement state as user fills */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.35rem' }}>
+                {tagline.trim().length < 10 ? (
+                  <span style={{ color: '#FF6B6B', fontSize: '0.78rem', fontWeight: 500 }}>
+                    Tagline must be at least 10 characters.
+                  </span>
+                ) : (
+                  <span style={{ color: '#2ECC71', fontSize: '0.78rem', fontWeight: 500 }}>
+                    ✓ Tagline meets requirement
+                  </span>
+                )}
+                <span style={{ color: tagline.trim().length < 10 ? '#FF6B6B' : '#777777', fontSize: '0.75rem', fontWeight: 600 }}>
+                  {tagline.length}/100
+                </span>
+              </div>
+              {fe.tagline && fe.tagline !== 'Tagline must be at least 10 characters.' && <FieldError msg={fe.tagline} />}
             </div>
 
-            <div>
+            <div id="project-description-container">
               <Label required>Description</Label>
-              <textarea id="project-description" name="description" placeholder="Tell people what your project does, why you built it, and what makes it special…" required rows={5}
-                style={{ ...inputStyle, resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.6 }}
+              <textarea
+                id="project-description"
+                name="description"
+                placeholder="Tell people what your project does, why you built it, and what makes it special…"
+                rows={5}
+                value={description}
+                onChange={e => {
+                  setDescription(e.target.value)
+                  if (e.target.value.trim().length >= 50) clearFieldError('description')
+                }}
+                style={{
+                  ...inputStyle,
+                  resize: 'vertical',
+                  fontFamily: 'inherit',
+                  lineHeight: 1.6,
+                  borderColor: (fe.description || (hasAttemptedSubmit && description.trim().length < 50)) ? '#E50914' : '#2B2B2B',
+                }}
                 onFocus={e => e.currentTarget.style.borderColor = '#E50914'}
-                onBlur={e => e.currentTarget.style.borderColor = '#2B2B2B'}
+                onBlur={e => e.currentTarget.style.borderColor = (fe.description || (hasAttemptedSubmit && description.trim().length < 50)) ? '#E50914' : '#2B2B2B'}
               />
-              <FieldError msg={fe.description} />
+              {/* Upfront red requirement state as user fills */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.35rem' }}>
+                {description.trim().length < 50 ? (
+                  <span style={{ color: '#FF6B6B', fontSize: '0.78rem', fontWeight: 500 }}>
+                    Description must be at least 50 characters.
+                  </span>
+                ) : (
+                  <span style={{ color: '#2ECC71', fontSize: '0.78rem', fontWeight: 500 }}>
+                    ✓ Description meets requirement
+                  </span>
+                )}
+                <span style={{ color: description.trim().length < 50 ? '#FF6B6B' : '#777777', fontSize: '0.75rem', fontWeight: 600 }}>
+                  {description.length} / 50 min
+                </span>
+              </div>
+              {fe.description && fe.description !== 'Description must be at least 50 characters.' && <FieldError msg={fe.description} />}
             </div>
           </div>
 
@@ -297,14 +485,23 @@ export default function SubmitPage() {
             <h2 style={{ fontSize: '0.9rem', fontWeight: 700, color: '#FFFFFF', margin: 0 }}>Classification</h2>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-              <div>
+              <div id="project-category-container">
                 <Label required>Category</Label>
-                <select id="project-category" name="category_id" required
+                <select
+                  id="project-category"
+                  name="category_id"
                   value={selectedCategoryId}
-                  onChange={e => setSelectedCategoryId(e.target.value)}
-                  style={{ ...inputStyle, cursor: 'pointer' }}
+                  onChange={e => {
+                    setSelectedCategoryId(e.target.value)
+                    if (e.target.value) clearFieldError('category_id')
+                  }}
+                  style={{
+                    ...inputStyle,
+                    cursor: 'pointer',
+                    borderColor: fe.category_id ? '#E50914' : '#2B2B2B',
+                  }}
                   onFocus={e => e.currentTarget.style.borderColor = '#E50914'}
-                  onBlur={e => e.currentTarget.style.borderColor = '#2B2B2B'}
+                  onBlur={e => e.currentTarget.style.borderColor = fe.category_id ? '#E50914' : '#2B2B2B'}
                 >
                   <option value="">Select category…</option>
                   {categories.map(c => (
@@ -314,12 +511,23 @@ export default function SubmitPage() {
                 <FieldError msg={fe.category_id} />
               </div>
 
-              <div>
+              <div id="project-stage-container">
                 <Label required>Stage</Label>
-                <select id="project-stage" name="stage" required
-                  style={{ ...inputStyle, cursor: 'pointer' }}
+                <select
+                  id="project-stage"
+                  name="stage"
+                  value={selectedStage}
+                  onChange={e => {
+                    setSelectedStage(e.target.value)
+                    if (e.target.value) clearFieldError('stage')
+                  }}
+                  style={{
+                    ...inputStyle,
+                    cursor: 'pointer',
+                    borderColor: fe.stage ? '#E50914' : '#2B2B2B',
+                  }}
                   onFocus={e => e.currentTarget.style.borderColor = '#E50914'}
-                  onBlur={e => e.currentTarget.style.borderColor = '#2B2B2B'}
+                  onBlur={e => e.currentTarget.style.borderColor = fe.stage ? '#E50914' : '#2B2B2B'}
                 >
                   <option value="">Select stage…</option>
                   {STAGES.map(s => (
@@ -330,7 +538,7 @@ export default function SubmitPage() {
               </div>
             </div>
 
-            <div>
+            <div id="project-platforms-section">
               <Label required>Platforms</Label>
               <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                 {PLATFORMS.map(p => {
@@ -358,7 +566,7 @@ export default function SubmitPage() {
               <FieldError msg={fe.platforms} />
             </div>
 
-            <div>
+            <div id="project-tags-section">
               <Label>Tags <span style={{ color: '#555', fontWeight: 400 }}>(Choose up to 5)</span></Label>
               <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', marginTop: '0.25rem' }}>
                 {AVAILABLE_TAGS.map(t => {
@@ -387,7 +595,15 @@ export default function SubmitPage() {
           </div>
 
           {/* ── Links ── */}
-          <div style={{ background: '#1F1F1F', border: '1px solid #2B2B2B', borderRadius: '0.75rem', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <div id="project-links-section" style={{
+            background: '#1F1F1F',
+            border: '1px solid #2B2B2B',
+            borderRadius: '0.75rem',
+            padding: '1.25rem',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '1rem',
+          }}>
             <div>
               <h2 style={{ fontSize: '0.9rem', fontWeight: 700, color: '#FFFFFF', margin: '0 0 0.15rem' }}>
                 Links <span style={{ color: '#E50914', fontWeight: 600, fontSize: '0.78rem' }}>*&nbsp;at least one required</span>
@@ -400,9 +616,20 @@ export default function SubmitPage() {
               <Label>Website URL</Label>
               <div style={{ position: 'relative' }}>
                 <Globe size={14} style={{ position: 'absolute', left: '0.85rem', top: '50%', transform: 'translateY(-50%)', color: '#555' }} />
-                <input id="website-url" name="website_url" type="url" placeholder="https://yourproject.com" style={{ ...inputStyle, paddingLeft: '2.4rem' }}
+                <input
+                  id="website-url"
+                  name="website_url"
+                  type="url"
+                  placeholder="https://yourproject.com"
+                  value={websiteUrl}
+                  onChange={e => {
+                    setWebsiteUrl(e.target.value)
+                    clearFieldError('links')
+                  }}
+                  style={{ ...inputStyle, paddingLeft: '2.4rem' }}
                   onFocus={e => e.currentTarget.style.borderColor = '#E50914'}
-                  onBlur={e => e.currentTarget.style.borderColor = '#2B2B2B'} />
+                  onBlur={e => e.currentTarget.style.borderColor = '#2B2B2B'}
+                />
               </div>
             </div>
 
@@ -411,9 +638,20 @@ export default function SubmitPage() {
               <Label>GitHub URL</Label>
               <div style={{ position: 'relative' }}>
                 <GitBranch size={14} style={{ position: 'absolute', left: '0.85rem', top: '50%', transform: 'translateY(-50%)', color: '#555' }} />
-                <input id="github-url" name="github_url" type="url" placeholder="https://github.com/you/project" style={{ ...inputStyle, paddingLeft: '2.4rem' }}
+                <input
+                  id="github-url"
+                  name="github_url"
+                  type="url"
+                  placeholder="https://github.com/you/project"
+                  value={githubUrl}
+                  onChange={e => {
+                    setGithubUrl(e.target.value)
+                    clearFieldError('links')
+                  }}
+                  style={{ ...inputStyle, paddingLeft: '2.4rem' }}
                   onFocus={e => e.currentTarget.style.borderColor = '#E50914'}
-                  onBlur={e => e.currentTarget.style.borderColor = '#2B2B2B'} />
+                  onBlur={e => e.currentTarget.style.borderColor = '#2B2B2B'}
+                />
               </div>
             </div>
 
@@ -422,9 +660,20 @@ export default function SubmitPage() {
               <Label>App Store URL</Label>
               <div style={{ position: 'relative' }}>
                 <Smartphone size={14} style={{ position: 'absolute', left: '0.85rem', top: '50%', transform: 'translateY(-50%)', color: '#555' }} />
-                <input id="appstore-url" name="appstore_url" type="url" placeholder="https://apps.apple.com/app/…" style={{ ...inputStyle, paddingLeft: '2.4rem' }}
+                <input
+                  id="appstore-url"
+                  name="appstore_url"
+                  type="url"
+                  placeholder="https://apps.apple.com/app/…"
+                  value={appstoreUrl}
+                  onChange={e => {
+                    setAppstoreUrl(e.target.value)
+                    clearFieldError('links')
+                  }}
+                  style={{ ...inputStyle, paddingLeft: '2.4rem' }}
                   onFocus={e => e.currentTarget.style.borderColor = '#E50914'}
-                  onBlur={e => e.currentTarget.style.borderColor = '#2B2B2B'} />
+                  onBlur={e => e.currentTarget.style.borderColor = '#2B2B2B'}
+                />
               </div>
             </div>
 
@@ -433,9 +682,20 @@ export default function SubmitPage() {
               <Label>Play Store URL</Label>
               <div style={{ position: 'relative' }}>
                 <Smartphone size={14} style={{ position: 'absolute', left: '0.85rem', top: '50%', transform: 'translateY(-50%)', color: '#555' }} />
-                <input id="playstore-url" name="playstore_url" type="url" placeholder="https://play.google.com/store/apps/details?id=…" style={{ ...inputStyle, paddingLeft: '2.4rem' }}
+                <input
+                  id="playstore-url"
+                  name="playstore_url"
+                  type="url"
+                  placeholder="https://play.google.com/store/apps/details?id=…"
+                  value={playstoreUrl}
+                  onChange={e => {
+                    setPlaystoreUrl(e.target.value)
+                    clearFieldError('links')
+                  }}
+                  style={{ ...inputStyle, paddingLeft: '2.4rem' }}
                   onFocus={e => e.currentTarget.style.borderColor = '#E50914'}
-                  onBlur={e => e.currentTarget.style.borderColor = '#2B2B2B'} />
+                  onBlur={e => e.currentTarget.style.borderColor = '#2B2B2B'}
+                />
               </div>
             </div>
 
