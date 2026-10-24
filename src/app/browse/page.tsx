@@ -11,7 +11,7 @@ import NetflixHorizonDivider from '@/components/ui/NetflixHorizonDivider'
 import NetflixTrendingRow from '@/components/projects/NetflixTrendingRow'
 import NetflixFooterCTA from '@/components/ui/NetflixFooterCTA'
 import DiscoverDevelopersSection from '@/components/developers/DiscoverDevelopersSection'
-import ViewModeToggle, { CardViewMode } from '@/components/ui/ViewModeToggle'
+import ViewModeToggle, { useCardViewMode } from '@/components/ui/ViewModeToggle'
 
 interface Category {
   id: number
@@ -95,23 +95,9 @@ export default function BrowsePage() {
   const [sort, setSort] = useState<SortOption>('top')
   const [search, setSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
-  const [viewMode, setViewMode] = useState<CardViewMode>('grid')
+  const [viewMode, handleViewModeChange] = useCardViewMode()
   const catScrollRef  = useRef<HTMLDivElement>(null)
   const sortScrollRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem('appflix_card_view_mode')
-      if (saved === 'pill' || saved === 'grid') setViewMode(saved)
-    } catch {}
-  }, [])
-
-  const handleViewModeChange = (mode: CardViewMode) => {
-    setViewMode(mode)
-    try {
-      localStorage.setItem('appflix_card_view_mode', mode)
-    } catch {}
-  }
 
   function scroll(ref: React.RefObject<HTMLDivElement | null>, dir: 'left' | 'right') {
     ref.current?.scrollBy({ left: dir === 'left' ? -240 : 240, behavior: 'smooth' })

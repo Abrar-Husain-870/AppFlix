@@ -4,6 +4,7 @@ import React from 'react'
 import { LayoutGrid, Rows3 } from 'lucide-react'
 
 export type CardViewMode = 'grid' | 'pill'
+export { useCardViewMode, CARD_VIEW_MODE_STORAGE_KEY, CARD_VIEW_MODE_EVENT } from '@/hooks/useCardViewMode'
 
 interface ViewModeToggleProps {
   viewMode: CardViewMode

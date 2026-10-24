@@ -1,9 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import ProjectCard from '@/components/projects/ProjectCard'
-import ViewModeToggle, { CardViewMode } from '@/components/ui/ViewModeToggle'
+import ViewModeToggle, { useCardViewMode } from '@/components/ui/ViewModeToggle'
 import AppIcon from '@/components/ui/AppIcon'
 import UpvoteButton from '@/components/projects/UpvoteButton'
 
@@ -20,24 +19,8 @@ export default function TopAppsSection({
   isAuthenticated,
   currentUserId,
 }: TopAppsSectionProps) {
-  const [viewMode, setViewMode] = useState<CardViewMode>('grid')
+  const [viewMode, handleViewChange] = useCardViewMode()
   const upvotedSet = new Set(userUpvotedIds)
-
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem('appflix_card_view_mode')
-      if (saved === 'pill' || saved === 'grid') {
-        setViewMode(saved)
-      }
-    } catch {}
-  }, [])
-
-  const handleViewChange = (mode: CardViewMode) => {
-    setViewMode(mode)
-    try {
-      localStorage.setItem('appflix_card_view_mode', mode)
-    } catch {}
-  }
 
   if (!projects || projects.length === 0) return null
 
