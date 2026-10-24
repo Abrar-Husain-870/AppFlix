@@ -88,10 +88,11 @@ export default function BookmarkButton({
         alignItems: 'center',
         justifyContent: 'center',
         gap: '0.4rem',
-        padding: isHero ? '0.55rem 0.75rem' : isDesktop ? '0.6rem 1rem' : '0',
-        width: isDesktop ? '100%' : '38px',
+        padding: isHero ? '0.55rem 0.65rem' : isDesktop ? '0.6rem 1rem' : '0',
+        width: isHero ? 'auto' : isDesktop ? '100%' : '38px',
         height: isDesktop ? 'auto' : '38px',
-        flex: isHero ? 1 : 'none',
+        flex: isHero ? '1 1 auto' : 'none',
+        minWidth: isHero ? '85px' : 'auto',
         background: isHero
           ? (bookmarked ? 'rgba(229,9,20,0.18)' : '#222226')
           : (bookmarked ? 'rgba(229,9,20,0.12)' : 'rgba(255,255,255,0.05)'),

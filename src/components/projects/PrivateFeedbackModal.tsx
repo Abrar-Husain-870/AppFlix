@@ -448,8 +448,9 @@ export function PrivateFeedbackButton({
           borderRadius: '0.5rem',
           cursor: 'pointer',
           transition: 'all 0.18s ease',
-          width: isHero ? '100%' : variant === 'full' ? '100%' : 'auto',
-          flex: isHero ? 1.25 : 'none',
+          width: isHero ? 'auto' : variant === 'full' ? '100%' : 'auto',
+          flex: isHero ? '1 1 auto' : 'none',
+          minWidth: isHero ? '115px' : 'auto',
           whiteSpace: 'nowrap',
         }}
         onMouseEnter={e => {

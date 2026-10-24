@@ -381,8 +381,8 @@ export default async function ProjectDetailPage({ params }: Props) {
               margin: '0.1rem 0',
             }} />
 
-            {/* Bottom Row: Secondary Grey Pill Buttons (Bookmark + Report + Private Feedback) */}
-            <div style={{ display: 'flex', gap: '0.45rem', width: '100%', alignItems: 'center' }}>
+            {/* Bottom Row: Secondary Grey Pill Buttons (Bookmark + Report + Private Feedback + Admin Actions) */}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.45rem', width: '100%', alignItems: 'center' }}>
               <BookmarkButton
                 projectId={project.id}
                 initialBookmarked={isBookmarked}
@@ -415,7 +415,7 @@ export default async function ProjectDetailPage({ params }: Props) {
                   href={`/dashboard/projects/edit/${project.id}`}
                   id="edit-app-btn"
                   style={{
-                    display: 'flex',
+                    display: 'inline-flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     gap: '0.4rem',
@@ -429,7 +429,8 @@ export default async function ProjectDetailPage({ params }: Props) {
                     textDecoration: 'none',
                     transition: 'all 0.2s',
                     whiteSpace: 'nowrap',
-                    flex: 1,
+                    flex: '1 1 auto',
+                    minWidth: '95px',
                   }}
                 >
                   <Pencil size={13} style={{ color: '#E50914' }} /> Edit App
@@ -437,7 +438,7 @@ export default async function ProjectDetailPage({ params }: Props) {
               )}
 
               {isAdmin && (
-                <AdminDeleteButton projectId={project.id} appName={project.name} />
+                <AdminDeleteButton projectId={project.id} appName={project.name} variant="hero" />
               )}
             </div>
           </div>

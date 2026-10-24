@@ -5,7 +5,18 @@ import { useRouter } from 'next/navigation'
 import { Trash2, Loader2, AlertTriangle } from 'lucide-react'
 import { adminDeleteProject } from '@/app/actions/admin'
 
-export default function AdminDeleteButton({ projectId, appName }: { projectId: string; appName: string }) {
+export default function AdminDeleteButton({
+  projectId,
+  appName,
+  variant = 'default',
+  style,
+}: {
+  projectId: string
+  appName: string
+  variant?: 'default' | 'hero'
+  style?: React.CSSProperties
+}) {
+  const isHero = variant === 'hero'
   const [showConfirm, setShowConfirm] = useState(false)
   const [reason, setReason] = useState('')
   const [isPending, startTransition] = useTransition()
@@ -29,20 +40,23 @@ export default function AdminDeleteButton({ projectId, appName }: { projectId: s
         id="admin-delete-app-btn"
         onClick={() => setShowConfirm(true)}
         style={{
-          display: 'flex',
+          display: 'inline-flex',
           alignItems: 'center',
           justifyContent: 'center',
           gap: '0.4rem',
-          padding: '0.6rem 1rem',
+          padding: isHero ? '0.55rem 0.75rem' : '0.6rem 1rem',
           background: 'rgba(239, 68, 68, 0.15)',
           border: '1px solid rgba(239, 68, 68, 0.4)',
           color: '#EF4444',
-          fontWeight: 700,
-          fontSize: '0.85rem',
+          fontWeight: isHero ? 600 : 700,
+          fontSize: isHero ? '0.78rem' : '0.85rem',
           borderRadius: '0.5rem',
           cursor: 'pointer',
           transition: 'all 0.2s',
           whiteSpace: 'nowrap',
+          flex: isHero ? '1 1 auto' : 'none',
+          minWidth: isHero ? '105px' : 'auto',
+          ...style,
         }}
         onMouseEnter={e => {
           e.currentTarget.style.background = '#EF4444'
@@ -53,7 +67,8 @@ export default function AdminDeleteButton({ projectId, appName }: { projectId: s
           e.currentTarget.style.color = '#EF4444'
         }}
       >
-        <Trash2 size={14} /> Delete App (Admin)
+        <Trash2 size={isHero ? 13 : 14} style={{ flexShrink: 0 }} />
+        <span>{isHero ? 'Delete App' : 'Delete App (Admin)'}</span>
       </button>
 
       {/* Confirmation Modal */}
