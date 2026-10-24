@@ -2,14 +2,15 @@
 
 import React, { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { applyPublicVisibilityFilter } from '@/lib/supabase/public-queries'
+import { ProfileCard } from '@/components/ui/card-5'
 
 import {
   Users, Search, Flame, ThumbsUp, Eye, ShieldCheck, MapPin,
-  ArrowUpRight, Award, Trophy, Sparkles, Crown, Medal
+  Award, Trophy, Sparkles, Crown, Medal
 } from 'lucide-react'
-
 
 interface Developer {
   id: string
@@ -19,6 +20,8 @@ interface Developer {
   avatar_url: string | null
   location: string | null
   created_at: string
+  github_url?: string | null
+  website_url?: string | null
   published_apps_count: number
   total_upvotes: number
   total_views: number
@@ -32,6 +35,7 @@ interface Developer {
 type DevSortOption = 'upvotes' | 'apps' | 'views'
 
 export default function DiscoverDevelopersSection() {
+  const router = useRouter()
   const [developers, setDevelopers] = useState<Developer[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
@@ -72,7 +76,7 @@ export default function DiscoverDevelopersSection() {
         // 2. Fetch profiles for these developer user IDs
         const { data: profilesData, error: profErr } = await supabase
           .from('profiles')
-          .select('id, username, display_name, bio, avatar_url, location, created_at')
+          .select('id, username, display_name, bio, avatar_url, location, created_at, github_url, website_url')
           .in('id', devUserIds)
 
         if (profErr || !profilesData) {
@@ -96,6 +100,8 @@ export default function DiscoverDevelopersSection() {
             avatar_url: item.avatar_url,
             location: item.location,
             created_at: item.created_at,
+            github_url: item.github_url,
+            website_url: item.website_url,
             published_apps_count: appsCount,
             total_upvotes: totalUpvotes,
             total_views: totalViews,
@@ -313,7 +319,7 @@ export default function DiscoverDevelopersSection() {
         {loading ? (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 280px), 1fr))', gap: '1.25rem' }}>
             {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="skeleton" style={{ height: '180px', borderRadius: '0.85rem', background: '#1F1F1F' }} />
+              <div key={i} className="skeleton" style={{ height: '320px', borderRadius: '1rem', background: '#1F1F1F' }} />
             ))}
           </div>
         ) : filteredDevelopers.length === 0 ? (
@@ -335,152 +341,57 @@ export default function DiscoverDevelopersSection() {
         ) : (
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 280px), 1fr))',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 290px), 1fr))',
             gap: '1.25rem',
           }}>
             {filteredDevelopers.map(dev => {
-              const displayName = dev.display_name || `@${dev.username}`
+              const displayName = dev.display_name || dev.username
+              const avatarSrc = dev.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(displayName)}`
+              const handle = dev.credibilityBadge?.label
+                ? `@${dev.username} • ${dev.credibilityBadge.label}`
+                : `@${dev.username}`
+              const bio = dev.bio?.trim()
+                ? dev.bio
+                : `Student developer building apps on AppFlix.`
+
+              const stats = [
+                { label: 'Apps', value: dev.published_apps_count },
+                { label: 'Upvotes', value: dev.total_upvotes },
+                { label: 'Views', value: dev.total_views },
+              ]
+
+              const actions = [
+                {
+                  label: 'View Profile',
+                  variant: 'default' as const,
+                  onClick: () => router.push(`/developer/${dev.username}`),
+                  className: 'bg-[#E50914] hover:bg-[#F40612] text-white font-semibold shadow-[0_2px_12px_rgba(229,9,20,0.35)] transition-all cursor-pointer',
+                },
+                {
+                  label: dev.github_url ? 'GitHub' : 'Explore Apps',
+                  variant: 'secondary' as const,
+                  onClick: () => {
+                    if (dev.github_url) {
+                      window.open(dev.github_url, '_blank', 'noopener,noreferrer')
+                    } else {
+                      router.push(`/developer/${dev.username}`)
+                    }
+                  },
+                  className: 'bg-white/[0.06] hover:bg-white/[0.12] text-white/90 hover:text-white border border-white/[0.1] backdrop-blur-md transition-all cursor-pointer',
+                },
+              ]
 
               return (
-                <Link
+                <ProfileCard
                   key={dev.id}
-                  href={`/developer/${dev.username}`}
-                  style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}
-                >
-                  <div
-                    className="dev-card"
-                    style={{
-                      background: 'linear-gradient(145deg, #141414 0%, #0d0d0d 100%)',
-                      border: '1px solid #242424',
-                      borderRadius: '0.75rem',
-                      padding: '1.25rem',
-                      height: '100%',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      justifyContent: 'space-between',
-                      transition: 'border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease',
-                      boxSizing: 'border-box',
-                      cursor: 'pointer',
-                      position: 'relative',
-                    }}
-                    onMouseEnter={e => {
-                      e.currentTarget.style.transform = 'translateY(-3px)'
-                      e.currentTarget.style.borderColor = '#E50914'
-                      e.currentTarget.style.boxShadow = '0 12px 28px rgba(0, 0, 0, 0.75), 0 0 16px rgba(229, 9, 20, 0.2)'
-                      const arrow = e.currentTarget.querySelector('.dev-card-arrow') as HTMLElement
-                      if (arrow) {
-                        arrow.style.color = '#E50914'
-                        arrow.style.transform = 'translate(2px, -2px)'
-                      }
-                    }}
-                    onMouseLeave={e => {
-                      e.currentTarget.style.transform = 'translateY(0)'
-                      e.currentTarget.style.borderColor = '#242424'
-                      e.currentTarget.style.boxShadow = 'none'
-                      const arrow = e.currentTarget.querySelector('.dev-card-arrow') as HTMLElement
-                      if (arrow) {
-                        arrow.style.color = '#666666'
-                        arrow.style.transform = 'translate(0, 0)'
-                      }
-                    }}
-                  >
-                    <div>
-                      {/* Top Header Row */}
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.85rem' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                          {/* Avatar */}
-                          <div style={{
-                            width: '44px', height: '44px', borderRadius: '50%',
-                            background: '#1a1a1a',
-                            border: '1px solid rgba(255, 255, 255, 0.12)',
-                            overflow: 'hidden',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            fontSize: '1.15rem', fontWeight: 800, color: '#FFFFFF',
-                            flexShrink: 0,
-                          }}>
-                            {dev.avatar_url ? (
-                              <img src={dev.avatar_url} alt={displayName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                            ) : (
-                              <div style={{
-                                width: '100%', height: '100%',
-                                background: 'linear-gradient(135deg, #E50914 0%, #B20710 100%)',
-                                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                color: '#FFFFFF', fontWeight: 800,
-                              }}>
-                                {displayName[0].toUpperCase()}
-                              </div>
-                            )}
-                          </div>
-
-                          <div>
-                            <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#FFFFFF', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '145px' }}>
-                              {displayName}
-                            </h3>
-                            <p style={{ fontSize: '0.78rem', color: '#777777', margin: '0.15rem 0 0 0' }}>
-                              @{dev.username}
-                            </p>
-                          </div>
-                        </div>
-
-                        {/* Top-right link arrow */}
-                        <div
-                          className="dev-card-arrow"
-                          style={{
-                            color: '#666666',
-                            transition: 'color 0.2s ease, transform 0.2s ease',
-                            display: 'flex', alignItems: 'center',
-                          }}
-                        >
-                          <ArrowUpRight size={16} />
-                        </div>
-                      </div>
-
-                      {/* Minimalist Theme-Aligned Badge */}
-                      <div style={{ marginTop: '0.2rem' }}>
-                        <span style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '0.35rem',
-                          background: 'rgba(255, 255, 255, 0.05)',
-                          color: '#CCCCCC',
-                          fontSize: '0.75rem',
-                          fontWeight: 600,
-                          padding: '0.25rem 0.65rem',
-                          borderRadius: '0.375rem',
-                          border: '1px solid rgba(255, 255, 255, 0.08)',
-                        }}>
-                          {dev.credibilityBadge.icon}
-                          <span>{dev.credibilityBadge.label}</span>
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Footer Stats Row */}
-                    <div style={{
-                      marginTop: '1.25rem',
-                      paddingTop: '0.75rem',
-                      borderTop: '1px solid #1f1f1f',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      fontSize: '0.8rem',
-                    }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', color: '#FFFFFF', fontWeight: 600 }}>
-                        <Flame size={13} style={{ color: '#E50914' }} />
-                        <span>{dev.published_apps_count} {dev.published_apps_count === 1 ? 'App' : 'Apps'}</span>
-                      </div>
-
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-                        <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', color: '#E50914', fontWeight: 700 }}>
-                          <ThumbsUp size={11} /> {dev.total_upvotes}
-                        </span>
-                        <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', color: '#777777' }}>
-                          <Eye size={12} /> {dev.total_views}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </Link>
+                  avatarSrc={avatarSrc}
+                  name={displayName}
+                  handle={handle}
+                  bio={bio}
+                  stats={stats}
+                  actions={actions}
+                  className="max-w-none h-full justify-between hover:border-[#E50914]/50 hover:shadow-[0_16px_40px_rgba(0,0,0,0.8),0_0_24px_rgba(229,9,20,0.22),inset_0_1px_0_rgba(255,255,255,0.12)] hover:-translate-y-1 transition-all duration-300"
+                />
               )
             })}
           </div>

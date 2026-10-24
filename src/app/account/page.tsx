@@ -7,7 +7,7 @@ import { signOut } from '@/app/actions/auth'
 import {
   User, Camera, Globe, GitBranch, AtSign, Briefcase, MapPin,
   Lock, LogOut, CheckCircle, AlertTriangle, Loader2,
-  BarChart2, FolderKanban, Shield, ExternalLink, Mail,
+  BarChart2, FolderKanban, Shield, ExternalLink, Mail, Check, Trash2,
 } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -140,33 +140,181 @@ export default function AccountPage() {
 
           {/* Avatar + identity */}
           <Section title="Profile">
-            {/* Avatar with Interactive Crop & Zoom Modal */}
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1.25rem', marginBottom: '1.25rem' }}>
-              <AvatarUploadCropper
-                currentAvatarUrl={avatarUrl}
-                username={profile.username}
-                displayName={profile.display_name ?? ''}
-                onAvatarChange={(newUrl) => {
-                  setAvatarUrl(newUrl)
-                  setProfile((prev) => (prev ? { ...prev, avatar_url: newUrl } : null))
-                  router.refresh()
-                }}
-              />
-              <div style={{ flex: 1 }}>
-                <p style={{ color: '#FFFFFF', fontWeight: 700, fontSize: '1rem' }}>{profile.display_name || profile.username}</p>
-                <p style={{ color: '#666', fontSize: '0.82rem' }}>@{profile.username}</p>
-                <p style={{ color: '#555', fontSize: '0.75rem', marginTop: '0.3rem' }}>Member since {joinDate}</p>
-                {profile.role === 'admin' && (
-                  <span style={{
-                    display: 'inline-flex', alignItems: 'center', gap: '0.25rem',
-                    fontSize: '0.65rem', fontWeight: 700, padding: '0.15rem 0.5rem',
-                    background: 'rgba(229,9,20,0.12)', border: '1px solid rgba(229,9,20,0.3)',
-                    borderRadius: '9999px', color: '#E50914', marginTop: '0.35rem',
-                    textTransform: 'uppercase', letterSpacing: '0.05em',
-                  }}>
-                    <Shield size={10} /> Admin
-                  </span>
-                )}
+            {/* Avatar Upload + Preset Avatars on the side */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '1.5rem',
+              marginBottom: '1.5rem',
+              flexWrap: 'wrap',
+              background: '#161616',
+              border: '1px solid #2B2B2B',
+              borderRadius: '0.75rem',
+              padding: '1.25rem',
+            }}>
+              {/* Primary Avatar with Camera Uploader / Cropper */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                <AvatarUploadCropper
+                  currentAvatarUrl={avatarUrl}
+                  username={profile.username}
+                  displayName={profile.display_name ?? ''}
+                  onAvatarChange={(newUrl) => {
+                    setAvatarUrl(newUrl)
+                    setProfile((prev) => (prev ? { ...prev, avatar_url: newUrl } : null))
+                    router.refresh()
+                  }}
+                />
+                <div>
+                  <p style={{ color: '#FFFFFF', fontWeight: 700, fontSize: '1rem', margin: '0 0 0.15rem' }}>
+                    {profile.display_name || profile.username}
+                  </p>
+                  <p style={{ color: '#666', fontSize: '0.82rem', margin: 0 }}>@{profile.username}</p>
+                  <p style={{ color: '#555', fontSize: '0.75rem', margin: '0.25rem 0 0' }}>Member since {joinDate}</p>
+                  {profile.role === 'admin' && (
+                    <span style={{
+                      display: 'inline-flex', alignItems: 'center', gap: '0.25rem',
+                      fontSize: '0.65rem', fontWeight: 700, padding: '0.15rem 0.5rem',
+                      background: 'rgba(229,9,20,0.12)', border: '1px solid rgba(229,9,20,0.3)',
+                      borderRadius: '9999px', color: '#E50914', marginTop: '0.35rem',
+                      textTransform: 'uppercase', letterSpacing: '0.05em',
+                    }}>
+                      <Shield size={10} /> Admin
+                    </span>
+                  )}
+                  {Boolean(avatarUrl) && (
+                    <div>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          setAvatarUrl('')
+                          setProfile((prev) => (prev ? { ...prev, avatar_url: null } : null))
+                          if (userId) {
+                            const supabase = createClient()
+                            await supabase.from('profiles').update({ avatar_url: null }).eq('id', userId)
+                          }
+                          if (typeof window !== 'undefined') {
+                            window.dispatchEvent(new CustomEvent('profile_updated', { detail: { avatar_url: null } }))
+                          }
+                          router.refresh()
+                        }}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.35rem',
+                          marginTop: '0.45rem',
+                          background: 'rgba(255, 255, 255, 0.05)',
+                          border: '1px solid rgba(255, 255, 255, 0.1)',
+                          color: '#AAAAAA',
+                          fontSize: '0.72rem',
+                          fontWeight: 600,
+                          padding: '0.2rem 0.6rem',
+                          borderRadius: '0.35rem',
+                          cursor: 'pointer',
+                          transition: 'all 0.15s ease',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.color = '#E50914'
+                          e.currentTarget.style.borderColor = 'rgba(229, 9, 20, 0.4)'
+                          e.currentTarget.style.background = 'rgba(229, 9, 20, 0.08)'
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.color = '#AAAAAA'
+                          e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)'
+                          e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'
+                        }}
+                        title="Remove profile picture and revert to default"
+                      >
+                        <Trash2 size={11} /> Clear picture
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Vertical divider on desktop */}
+              <div style={{ width: '1px', alignSelf: 'stretch', background: '#2B2B2B', minHeight: '64px' }} className="hidden sm:block" />
+
+              {/* Preset Avatars on the side */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem', justifyContent: 'center' }}>
+                <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#AAAAAA' }}>
+                  Or choose an avatar:
+                </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  {[
+                    { id: 'boy', label: 'Boy Avatar', src: '/assets/boy-avatar.png' },
+                    { id: 'girl', label: 'Girl Avatar', src: '/assets/girl-avatar.png' },
+                  ].map((preset) => {
+                    const isSelected = avatarUrl === preset.src
+                    return (
+                      <button
+                        key={preset.id}
+                        type="button"
+                        onClick={async () => {
+                          setAvatarUrl(preset.src)
+                          setProfile((prev) => (prev ? { ...prev, avatar_url: preset.src } : null))
+                          if (userId) {
+                            const supabase = createClient()
+                            await supabase.from('profiles').update({ avatar_url: preset.src }).eq('id', userId)
+                          }
+                          if (typeof window !== 'undefined') {
+                            window.dispatchEvent(new CustomEvent('profile_updated', { detail: { avatar_url: preset.src } }))
+                          }
+                          router.refresh()
+                        }}
+                        title={`Choose ${preset.label}`}
+                        style={{
+                          position: 'relative',
+                          width: '50px',
+                          height: '50px',
+                          borderRadius: '50%',
+                          border: isSelected ? '2px solid #E50914' : '2px solid #333333',
+                          background: '#1A1A1A',
+                          padding: 0,
+                          cursor: 'pointer',
+                          overflow: 'hidden',
+                          boxShadow: isSelected ? '0 0 16px rgba(229, 9, 20, 0.45)' : 'none',
+                          transform: isSelected ? 'scale(1.06)' : 'scale(1)',
+                          transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                        }}
+                        onMouseEnter={(e) => {
+                          if (!isSelected) {
+                            e.currentTarget.style.borderColor = '#888'
+                            e.currentTarget.style.transform = 'scale(1.04)'
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (!isSelected) {
+                            e.currentTarget.style.borderColor = '#333333'
+                            e.currentTarget.style.transform = 'scale(1)'
+                          }
+                        }}
+                      >
+                        <img
+                          src={preset.src}
+                          alt={preset.label}
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        />
+                        {isSelected && (
+                          <div style={{
+                            position: 'absolute',
+                            bottom: 0,
+                            right: 0,
+                            background: '#E50914',
+                            borderRadius: '50%',
+                            width: '16px',
+                            height: '16px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            border: '1.5px solid #141414',
+                          }}>
+                            <Check size={10} style={{ color: '#fff', strokeWidth: 3 }} />
+                          </div>
+                        )}
+                      </button>
+                    )
+                  })}
+                </div>
               </div>
             </div>
 

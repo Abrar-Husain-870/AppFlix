@@ -16,6 +16,7 @@ import type { Metadata } from 'next'
 import ShareCard from '@/components/projects/ShareCard'
 import ProjectCommentsSection from '@/components/projects/ProjectCommentsSection'
 import { getProjectComments } from '@/app/actions/comments'
+import { ProfileCard } from '@/components/ui/card-5'
 
 /** Authentic Windows 4-pane icon */
 function WindowsIcon({ size = 13, style }: { size?: number; style?: React.CSSProperties }) {
@@ -134,16 +135,24 @@ export default async function ProjectDetailPage({ params }: Props) {
     ? (initialComments.reduce((acc, c) => acc + (c.rating ?? 5), 0) / reviewsCount).toFixed(1)
     : null
 
-  // Fetch developer's total approved apps count
+  // Fetch developer's approved projects stats (total apps, upvotes, views)
   let devAppsCount = 1
+  let devTotalUpvotes = 0
+  let devTotalViews = 0
+
   if (project.user_id) {
-    const { count } = await supabaseService
+    const { data: devProjects } = await supabaseService
       .from('projects')
-      .select('id', { count: 'exact', head: true })
+      .select('id, upvote_count, view_count')
       .eq('user_id', project.user_id)
       .eq('status', 'approved')
       .is('deleted_at', null)
-    if (count) devAppsCount = count
+
+    if (devProjects && devProjects.length > 0) {
+      devAppsCount = devProjects.length
+      devTotalUpvotes = devProjects.reduce((sum: number, p: any) => sum + (p.upvote_count ?? 0), 0)
+      devTotalViews = devProjects.reduce((sum: number, p: any) => sum + (p.view_count ?? 0), 0)
+    }
   }
 
   function formatCount(num: number | null | undefined): string {
@@ -784,80 +793,21 @@ export default async function ProjectDetailPage({ params }: Props) {
             <ShareCard projectName={project.name} projectSlug={project.slug} variant="inline" />
           </div>
 
-          {/* ── CARD 2: Developer Card ── */}
+          {/* ── CARD 2: Developer Card (Compact ProfileCard with Apps, Upvotes & Views) ── */}
           {(project.profiles as any)?.username && (
-            <div style={{
-              background: '#0D0D0E',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
-              borderRadius: '16px',
-              padding: '1.25rem',
-            }}>
-              <h3 style={{
-                fontSize: '0.75rem',
-                fontWeight: 700,
-                color: '#8E8E93',
-                letterSpacing: '0.04em',
-                textTransform: 'uppercase',
-                margin: '0 0 0.75rem 0',
-              }}>
-                Developer
-              </h3>
-              <Link
-                href={`/developer/${(project.profiles as any).username}`}
-                className="sidepanel-dev-card"
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  textDecoration: 'none',
-                  padding: '0.35rem 0.25rem',
-                  borderRadius: '8px',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', minWidth: 0 }}>
-                  <div style={{
-                    width: '42px',
-                    height: '42px',
-                    borderRadius: '50%',
-                    background: 'linear-gradient(135deg, #2A2A30 0%, #1A1A1E 100%)',
-                    border: '1px solid rgba(255, 255, 255, 0.12)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0,
-                    overflow: 'hidden',
-                  }}>
-                    {(project.profiles as any).avatar_url ? (
-                      <img
-                        src={(project.profiles as any).avatar_url}
-                        alt={(project.profiles as any).username}
-                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                      />
-                    ) : (
-                      <span style={{ fontSize: '0.95rem', fontWeight: 800, color: '#FFFFFF' }}>
-                        {((project.profiles as any).username?.[0] || 'D').toUpperCase()}
-                      </span>
-                    )}
-                  </div>
-                  <div style={{ minWidth: 0 }}>
-                    <div style={{
-                      fontSize: '0.9rem',
-                      fontWeight: 700,
-                      color: '#FFFFFF',
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                    }}>
-                      {(project.profiles as any).display_name || (project.profiles as any).username}
-                    </div>
-                    <div style={{ fontSize: '0.76rem', color: '#71717A', marginTop: '0.1rem' }}>
-                      {devAppsCount} {devAppsCount === 1 ? 'app' : 'apps'}
-                    </div>
-                  </div>
-                </div>
-                <ChevronRight size={16} style={{ color: '#555555', flexShrink: 0 }} />
-              </Link>
-            </div>
+            <ProfileCard
+              variant="compact"
+              title="DEVELOPER"
+              name={(project.profiles as any).display_name || (project.profiles as any).username}
+              handle={`@${(project.profiles as any).username}`}
+              avatarSrc={(project.profiles as any).avatar_url || ''}
+              stats={[
+                { label: 'Apps', value: devAppsCount },
+                { label: 'Upvotes', value: devTotalUpvotes },
+                { label: 'Views', value: devTotalViews },
+              ]}
+              href={`/developer/${(project.profiles as any).username}`}
+            />
           )}
         </aside>
 

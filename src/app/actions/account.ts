@@ -31,7 +31,7 @@ export async function updateProfile(prevState: unknown, formData: FormData) {
     updated_at: new Date().toISOString(),
   }
   if (email) update.email = email
-  if (avatarUrl) update.avatar_url = avatarUrl
+  update.avatar_url = avatarUrl
 
   const { error } = await supabase
     .from('profiles')

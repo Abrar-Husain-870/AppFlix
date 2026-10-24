@@ -14,6 +14,7 @@ import {
   Loader2,
   User,
   Sparkles,
+  Trash2,
 } from 'lucide-react'
 
 interface AvatarUploadCropperProps {
@@ -65,9 +66,7 @@ export default function AvatarUploadCropper({
 
   // Synchronize incoming avatar URL
   useEffect(() => {
-    if (currentAvatarUrl) {
-      setLiveAvatarUrl(currentAvatarUrl)
-    }
+    setLiveAvatarUrl(currentAvatarUrl || null)
   }, [currentAvatarUrl])
 
   // Handle file selection
@@ -908,7 +907,46 @@ export default function AvatarUploadCropper({
                 Choose Another Image
               </button>
 
-              <div style={{ display: 'flex', gap: '0.75rem' }}>
+              <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                {liveAvatarUrl && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setLiveAvatarUrl(null)
+                      onAvatarChange('')
+                      if (typeof window !== 'undefined') {
+                        window.dispatchEvent(new CustomEvent('profile_updated', { detail: { avatar_url: null } }))
+                      }
+                      setModalOpen(false)
+                    }}
+                    disabled={loading}
+                    style={{
+                      background: 'transparent',
+                      border: '1px solid rgba(229, 9, 20, 0.4)',
+                      color: '#E50914',
+                      fontSize: '0.82rem',
+                      fontWeight: 600,
+                      padding: '0.55rem 0.95rem',
+                      borderRadius: '0.45rem',
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.35rem',
+                      transition: 'background 0.15s, border-color 0.15s',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = 'rgba(229, 9, 20, 0.1)'
+                      e.currentTarget.style.borderColor = '#E50914'
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'transparent'
+                      e.currentTarget.style.borderColor = 'rgba(229, 9, 20, 0.4)'
+                    }}
+                  >
+                    <Trash2 size={13} /> Remove Photo
+                  </button>
+                )}
+
                 <button
                   type="button"
                   onClick={() => setModalOpen(false)}
