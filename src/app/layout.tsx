@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import Navbar from "@/components/layout/Navbar";
 import PwaRegister from "@/components/pwa/PwaRegister";
 import HeroPosterWall from "@/components/layout/HeroPosterWall";
+import MobileViewportGuard from "@/components/layout/MobileViewportGuard";
 
 const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
@@ -13,6 +14,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
+  userScalable: false,
   themeColor: "#E50914",
 };
 
@@ -67,14 +69,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={cn("h-full", "antialiased", "font-sans", geist.variable)} suppressHydrationWarning data-scroll-behavior="smooth">
+    <html lang="en" className={cn("h-full", "antialiased", "font-sans", geist.variable)} style={{ maxWidth: '100vw', overflowX: 'clip' }} suppressHydrationWarning data-scroll-behavior="smooth">
       <body
-        className="min-h-full flex flex-col relative"
-        style={{ backgroundColor: "#080808", color: "#FFFFFF" }}
+        className="min-h-full flex flex-col relative w-full"
+        style={{ backgroundColor: "#080808", color: "#FFFFFF", maxWidth: '100vw', overflowX: 'clip' }}
         suppressHydrationWarning
       >
         <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
         <PwaRegister />
+        <MobileViewportGuard />
         <HeroPosterWall />
         <Navbar />
         {children}

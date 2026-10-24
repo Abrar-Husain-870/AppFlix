@@ -94,6 +94,33 @@ function Thumbnails({ items, activeIndex, onSelect }: ThumbnailsProps) {
     }
   }, [activeIndex]);
 
+  // Prevent multi-touch pinch zoom on the thumbnail strip
+  useEffect(() => {
+    const el = thumbnailsRef.current;
+    if (!el) return;
+
+    const handleTouch = (e: TouchEvent) => {
+      if (e.touches && e.touches.length > 1 && e.cancelable) {
+        e.preventDefault();
+      }
+    };
+    const handleGesture = (e: Event) => {
+      if (e.cancelable) e.preventDefault();
+    };
+
+    el.addEventListener('touchstart', handleTouch, { passive: false });
+    el.addEventListener('touchmove', handleTouch, { passive: false });
+    el.addEventListener('gesturestart', handleGesture);
+    el.addEventListener('gesturechange', handleGesture);
+
+    return () => {
+      el.removeEventListener('touchstart', handleTouch);
+      el.removeEventListener('touchmove', handleTouch);
+      el.removeEventListener('gesturestart', handleGesture);
+      el.removeEventListener('gesturechange', handleGesture);
+    };
+  }, []);
+
   if (items.length <= 1) return null;
 
   return (
@@ -105,6 +132,7 @@ function Thumbnails({ items, activeIndex, onSelect }: ThumbnailsProps) {
         msOverflowStyle: 'none',
         WebkitOverflowScrolling: 'touch',
         touchAction: 'pan-x',
+        maxWidth: '100%',
       }}
     >
       <style>{`
@@ -174,9 +202,9 @@ function Thumbnails({ items, activeIndex, onSelect }: ThumbnailsProps) {
 
 const slideVariants = {
   enter: (direction: number) => ({
-    x: direction > 0 ? 500 : -500,
+    x: direction > 0 ? '100%' : '-100%',
     opacity: 0,
-    scale: 0.95,
+    scale: 0.98,
   }),
   center: {
     zIndex: 1,
@@ -186,9 +214,9 @@ const slideVariants = {
   },
   exit: (direction: number) => ({
     zIndex: 0,
-    x: direction < 0 ? 500 : -500,
+    x: direction < 0 ? '100%' : '-100%',
     opacity: 0,
-    scale: 0.95,
+    scale: 0.98,
   }),
 };
 
@@ -218,8 +246,88 @@ export default function ThumbnailCarousel({
   const activeItem = items[imageIndex];
   const hasMultiple = items.length > 1;
 
+  // Container ref for touch gesture management & directional lock
+  const containerRef = useRef<HTMLDivElement>(null);
+
   // Distinguish between swiping/dragging and clicking
   const hasDraggedRef = useRef(false);
+
+  // Gesture handling:
+  // 1. Prevent pinch to zoom on images (multi-touch & gesture events)
+  // 2. Prevent page vertical scrolling / horizontal shifting while swiping horizontally
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    let startX = 0;
+    let startY = 0;
+    let isHorizontalGesture = false;
+    let isVerticalGesture = false;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      // Block multi-touch pinch gestures
+      if (e.touches && e.touches.length > 1) {
+        if (e.cancelable) e.preventDefault();
+        e.stopPropagation();
+        return;
+      }
+      if (e.touches && e.touches.length === 1) {
+        startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
+        isHorizontalGesture = false;
+        isVerticalGesture = false;
+      }
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      // Block multi-touch pinch in progress
+      if (e.touches && e.touches.length > 1) {
+        if (e.cancelable) e.preventDefault();
+        e.stopPropagation();
+        return;
+      }
+
+      if (e.touches && e.touches.length === 1) {
+        const dx = Math.abs(e.touches[0].clientX - startX);
+        const dy = Math.abs(e.touches[0].clientY - startY);
+
+        if (!isHorizontalGesture && !isVerticalGesture) {
+          if (dx >= dy && dx > 1) {
+            isHorizontalGesture = true;
+          } else if (dy > dx && dy > 1) {
+            isVerticalGesture = true;
+          }
+        }
+
+        // If user is swiping horizontally, stop event propagation and cancel default scroll/shift
+        if (isHorizontalGesture) {
+          if (e.cancelable) {
+            e.preventDefault();
+          }
+          e.stopPropagation();
+        }
+      }
+    };
+
+    const handleGesture = (e: Event) => {
+      if (e.cancelable) e.preventDefault();
+      e.stopPropagation();
+    };
+
+    el.addEventListener('touchstart', handleTouchStart, { passive: false });
+    el.addEventListener('touchmove', handleTouchMove, { passive: false });
+    el.addEventListener('gesturestart', handleGesture);
+    el.addEventListener('gesturechange', handleGesture);
+    el.addEventListener('gestureend', handleGesture);
+
+    return () => {
+      el.removeEventListener('touchstart', handleTouchStart);
+      el.removeEventListener('touchmove', handleTouchMove);
+      el.removeEventListener('gesturestart', handleGesture);
+      el.removeEventListener('gesturechange', handleGesture);
+      el.removeEventListener('gestureend', handleGesture);
+    };
+  }, []);
 
   // Infinite directional pagination
   const paginate = (newDirection: number) => {
@@ -237,12 +345,21 @@ export default function ThumbnailCarousel({
   };
 
   return (
-    <div className={`w-full max-w-4xl mx-auto ${className}`}>
-      <div className='flex flex-col gap-3'>
-        {/* Main Infinite Carousel Container — touchAction: pan-y allows vertical page scrolling */}
+    <div className={`w-full max-w-4xl mx-auto ${className}`} style={{ maxWidth: '100%', overflowX: 'clip' }}>
+      <div className='flex flex-col gap-3' style={{ maxWidth: '100%', overflowX: 'clip' }}>
+        {/* Main Infinite Carousel Container */}
         <div
-          className='relative overflow-hidden rounded-xl bg-transparent'
-          style={{ touchAction: 'pan-y', height: 'clamp(340px, 60vh, 580px)' }}
+          ref={containerRef}
+          className='relative rounded-xl bg-transparent w-full'
+          style={{
+            touchAction: 'pan-y',
+            height: 'clamp(340px, 60vh, 580px)',
+            maxWidth: '100%',
+            width: '100%',
+            overflow: 'clip',
+            contain: 'paint',
+            WebkitMaskImage: '-webkit-radial-gradient(white, black)',
+          }}
         >
           <AnimatePresence initial={false} custom={direction}>
             <motion.div
@@ -260,8 +377,8 @@ export default function ThumbnailCarousel({
               drag={hasMultiple ? 'x' : false}
               dragDirectionLock={true}
               dragConstraints={{ left: 0, right: 0 }}
-              dragElastic={0.4}
-              style={{ touchAction: 'pan-y' }}
+              dragElastic={0.65}
+              style={{ touchAction: 'pan-y', maxWidth: '100%', width: '100%', overflow: 'clip' }}
               onDragStart={() => {
                 hasDraggedRef.current = true;
               }}
@@ -301,6 +418,11 @@ export default function ThumbnailCarousel({
                 style={{
                   filter:
                     'drop-shadow(0 24px 38px rgba(0, 0, 0, 0.88)) drop-shadow(0 8px 16px rgba(0, 0, 0, 0.65))',
+                  pointerEvents: 'none',
+                  touchAction: 'none',
+                  userSelect: 'none',
+                  WebkitUserSelect: 'none',
+                  WebkitTouchCallout: 'none',
                 }}
                 draggable={false}
               />

@@ -17,7 +17,7 @@ interface ProductGalleryProps {
 
 const fullscreenVariants = {
   enter: (dir: number) => ({
-    x: dir > 0 ? 400 : dir < 0 ? -400 : 0,
+    x: dir > 0 ? '100%' : dir < 0 ? '-100%' : 0,
     opacity: 0,
     scale: 0.96,
   }),
@@ -29,7 +29,7 @@ const fullscreenVariants = {
   },
   exit: (dir: number) => ({
     zIndex: 0,
-    x: dir < 0 ? 400 : -400,
+    x: dir < 0 ? '100%' : '-100%',
     opacity: 0,
     scale: 0.96,
   }),
@@ -65,16 +65,35 @@ export default function ProductGallery({ screenshots, projectName }: ProductGall
     )
   }
 
-  // Prevent background page scrolling on mobile while modal is open
+  // Prevent background page scrolling & pinch gestures on mobile while modal is open
   useEffect(() => {
     if (selectedIndex !== null) {
       const originalOverflow = document.body.style.overflow
       const originalTouchAction = document.body.style.touchAction
       document.body.style.overflow = 'hidden'
       document.body.style.touchAction = 'none'
+
+      const preventMultiTouch = (e: TouchEvent) => {
+        if (e.touches && e.touches.length > 1 && e.cancelable) {
+          e.preventDefault()
+        }
+      }
+      const preventGesture = (e: Event) => {
+        if (e.cancelable) e.preventDefault()
+      }
+
+      window.addEventListener('touchstart', preventMultiTouch, { passive: false })
+      window.addEventListener('touchmove', preventMultiTouch, { passive: false })
+      window.addEventListener('gesturestart', preventGesture)
+      window.addEventListener('gesturechange', preventGesture)
+
       return () => {
         document.body.style.overflow = originalOverflow
         document.body.style.touchAction = originalTouchAction
+        window.removeEventListener('touchstart', preventMultiTouch)
+        window.removeEventListener('touchmove', preventMultiTouch)
+        window.removeEventListener('gesturestart', preventGesture)
+        window.removeEventListener('gesturechange', preventGesture)
       }
     }
   }, [selectedIndex])
@@ -101,7 +120,7 @@ export default function ProductGallery({ screenshots, projectName }: ProductGall
     selectedIndex !== null ? screenshots[selectedIndex] : null
 
   return (
-    <div style={{ marginBottom: '2.5rem' }}>
+    <div style={{ marginBottom: '2.5rem', width: '100%', maxWidth: '100%', overflowX: 'clip' }}>
       <h2 style={{
         fontSize: '1.1rem',
         fontWeight: 800,
@@ -278,7 +297,7 @@ export default function ProductGallery({ screenshots, projectName }: ProductGall
                 drag={hasMultiple ? 'x' : false}
                 dragDirectionLock={true}
                 dragConstraints={{ left: 0, right: 0 }}
-                dragElastic={0.45}
+                dragElastic={0.15}
                 style={{ touchAction: 'none' }}
                 onDragEnd={(_e, info: PanInfo) => {
                   const offset = info.offset.x
@@ -307,6 +326,9 @@ export default function ProductGallery({ screenshots, projectName }: ProductGall
                     objectFit: 'contain',
                     border: '1px solid rgba(255, 255, 255, 0.12)',
                     userSelect: 'none',
+                    WebkitUserSelect: 'none',
+                    WebkitTouchCallout: 'none',
+                    touchAction: 'none',
                     pointerEvents: 'none',
                   }}
                   draggable={false}

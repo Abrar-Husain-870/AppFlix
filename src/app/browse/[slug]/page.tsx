@@ -162,7 +162,7 @@ export default async function ProjectDetailPage({ params }: Props) {
   })
 
   return (
-    <div style={{ minHeight: '100vh', background: '#080808' }}>
+    <div style={{ minHeight: '100vh', background: '#080808', width: '100%', maxWidth: '100vw', overflowX: 'clip' }}>
       {/* View event tracker — fires client-side with proper visitor_id */}
       <ViewTracker projectId={project.id} deviceType={deviceType} />
       {/* Hero banner */}
@@ -170,6 +170,10 @@ export default async function ProjectDetailPage({ params }: Props) {
         background: 'linear-gradient(180deg, rgba(229,9,20,0.06) 0%, #080808 100%)',
         borderBottom: '1px solid #2B2B2B',
         padding: '2.5rem 1.5rem',
+        width: '100%',
+        maxWidth: '100vw',
+        overflowX: 'clip',
+        boxSizing: 'border-box',
       }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
           {project.status !== 'approved' && (
@@ -442,10 +446,10 @@ export default async function ProjectDetailPage({ params }: Props) {
     </div>
 
       {/* Main body */}
-      <div className="details-layout-container" style={{ maxWidth: '1100px', margin: '0 auto', padding: '2rem 1.5rem' }}>
+      <div className="details-layout-container" style={{ width: '100%', maxWidth: '1100px', margin: '0 auto', padding: '2rem 1.5rem', boxSizing: 'border-box', overflowX: 'clip' }}>
 
         {/* Left / Main column — screenshots + description + tags */}
-        <div className="details-main-content">
+        <div className="details-main-content" style={{ width: '100%', maxWidth: '100%', overflowX: 'clip' }}>
 
           {/* Screenshots Gallery with Arrows & Lightbox */}
           <ProductGallery screenshots={screenshots} projectName={project.name} />
